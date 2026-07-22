@@ -9,7 +9,8 @@ interface StatCardProps {
   delta?: string;
   deltaType?: "up" | "down" | "neutral";
   icon: LucideIcon;
-  color: string;
+  color?: string;
+  colorType?: string;
   index?: number;
 }
 
@@ -20,6 +21,7 @@ export function StatCard({
   deltaType = "neutral",
   icon: Icon,
   color,
+  colorType,
   index = 0,
 }: StatCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -156,7 +158,7 @@ export function StatCard({
         <span
           className={cn(
             "flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06] border border-white/10 shadow-inner transition-transform duration-300 group-hover:scale-110",
-            color
+            color || colorType
           )}
         >
           <Icon className="h-5 w-5" />

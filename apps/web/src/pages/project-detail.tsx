@@ -465,7 +465,7 @@ function OverviewTab({
           </h3>
           <div className="mt-3 flex flex-wrap gap-2">
             {project.tags.length > 0 ? (
-              project.tags.map((tag) => (
+              project.tags.map((tag: string) => (
                 <span key={tag} className="rounded-md bg-surface-2 px-2 py-1 text-xs text-neutral-400">
                   {tag}
                 </span>
