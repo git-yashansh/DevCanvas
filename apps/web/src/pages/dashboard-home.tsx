@@ -86,7 +86,7 @@ export function DashboardHomePage() {
       <div className="relative z-10 w-full px-6 lg:px-12 space-y-10">
         
         {/* ── Page Header & Hero Title ── */}
-        <div className="relative pb-4 pt-8">
+        <div className="relative pt-10 pb-4">
           {/* Subtle Invisible Radial Glow backdrop */}
           <div
             className="absolute -top-12 left-1/3 h-[320px] w-[450px] rounded-full opacity-25 pointer-events-none"
@@ -97,11 +97,11 @@ export function DashboardHomePage() {
           />
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="space-y-1 text-left">
-              <h1 className="font-heading text-2xl sm:text-3.5xl font-extrabold tracking-tight text-white bg-clip-text">
+            <div className="space-y-1.5 text-left">
+              <h1 className="font-heading text-4xl font-extrabold tracking-tight text-white sm:text-5xl bg-clip-text">
                 Welcome back, {profile?.full_name?.split(" ")[0] ?? "engineer"}
               </h1>
-              <p className="text-xs sm:text-sm text-neutral-400 font-medium leading-relaxed">
+              <p className="text-base text-neutral-400">
                 Your AI engineering workspace. Generate, analyze, and ship production-ready architectures.
               </p>
             </div>
