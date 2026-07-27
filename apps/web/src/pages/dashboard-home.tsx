@@ -52,6 +52,7 @@ export function DashboardHomePage() {
           deltaType="up"
           icon={FolderKanban}
           colorType="blue"
+          onClick={() => navigate("/app/projects")}
         />
         <StatCard
           label="Generations"
@@ -60,6 +61,7 @@ export function DashboardHomePage() {
           deltaType="up"
           icon={Boxes}
           colorType="purple"
+          onClick={() => navigate("/app/chat")}
         />
         <StatCard
           label="Avg. security score"
@@ -68,6 +70,7 @@ export function DashboardHomePage() {
           deltaType="up"
           icon={TrendingUp}
           colorType="green"
+          onClick={() => navigate("/app/security")}
         />
         <StatCard
           label="Active this week"
@@ -79,6 +82,7 @@ export function DashboardHomePage() {
           deltaType="up"
           icon={Zap}
           colorType="orange"
+          onClick={() => navigate("/app/projects")}
         />
       </div>
 

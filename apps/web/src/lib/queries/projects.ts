@@ -12,6 +12,7 @@ export interface CreateProjectInput {
   name: string;
   description?: string;
   tags?: string[];
+  specification?: any;
 }
 
 export function useProjects() {
@@ -56,6 +57,7 @@ export function useCreateProject() {
           description: input.description ?? null,
           tags: input.tags ?? [],
           status: "active",
+          specification: input.specification ?? null,
         })
         .select()
         .single();

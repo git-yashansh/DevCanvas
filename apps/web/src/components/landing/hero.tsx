@@ -233,7 +233,7 @@ export function Hero() {
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/30">
                 <Sparkles className="h-3 w-3 text-indigo-300" />
               </span>
-              AI-powered engineering platform · Gemini 1.5 Flash
+              AI-powered engineering platform · Gemini 2.5 Flash
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
             </span>
           </motion.div>
@@ -403,7 +403,7 @@ export function Hero() {
                 <div className="rounded-xl border border-white/10 bg-black/50 backdrop-blur-sm p-4 text-xs font-mono text-white/70 space-y-2">
                   <div className="flex items-center justify-between text-white/40 text-[10px]">
                     <span>// GENERATION PROMPT</span>
-                    <span>Gemini 1.5 Flash · 0.42s</span>
+                    <span>Gemini 2.5 Flash · 0.42s</span>
                   </div>
                   <p className="text-indigo-200 font-medium leading-relaxed">
                     "Build a scalable multi-tenant SaaS backend with PostgreSQL read-replicas, Redis caching, Stripe subscription webhooks, RBAC security, and Docker microservices."

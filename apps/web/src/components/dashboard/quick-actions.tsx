@@ -8,11 +8,11 @@ import {
   ShieldCheck,
   GitBranch,
   FileText,
-  DollarSign,
+  Rocket,
   Network,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@utils/index";
+import { cn } from "@utils/cn";
 
 interface QuickAction {
   id: string;
@@ -67,18 +67,18 @@ const actions: QuickAction[] = [
   {
     id: "docs",
     label: "Docs",
-    href: "/app",
+    href: "/app/documentation",
     icon: FileText,
     color: "text-amber-400",
     accentBg: "from-amber-500/20 to-amber-500/5",
   },
   {
-    id: "cost",
-    label: "Cost",
-    href: "/app",
-    icon: DollarSign,
-    color: "text-teal-400",
-    accentBg: "from-teal-500/20 to-teal-500/5",
+    id: "deployment",
+    label: "CI/CD Deployment",
+    href: "/app/deployment",
+    icon: Rocket,
+    color: "text-rose-400",
+    accentBg: "from-rose-500/20 to-rose-500/5",
   },
   {
     id: "system-design",

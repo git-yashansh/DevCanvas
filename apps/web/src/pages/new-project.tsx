@@ -1,9 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2,
   AlertCircle,
@@ -19,374 +16,1106 @@ import {
   Tag,
   Layers,
   CheckCircle2,
+  ChevronRight,
+  ChevronLeft,
+  Briefcase,
+  Users,
+  Compass,
+  GitBranch,
+  FileText,
+  Rocket,
+  Shield,
+  HelpCircle,
+  Plus,
+  Trash2,
+  BookOpen,
+  DollarSign,
+  TrendingUp,
 } from "lucide-react";
-import { Button, Input, Label, Badge } from "@ui/index";
+import { Button, Badge } from "@ui/index";
 import { useCreateProject } from "@/lib/queries/projects";
-import { slugify, cn } from "@utils/index";
+import { supabase } from "@/lib/supabase";
+import { cn } from "@utils/cn";
 
-const schema = z.object({
-  name: z.string().min(2, "Project name must be at least 2 characters."),
-  description: z.string().max(1000, "Keep description under 1000 characters.").optional(),
-  tags: z.string().optional(),
-});
+// ── Wizard Step Config ────────────────────────────────────────
+interface StepDef {
+  id: number;
+  label: string;
+  desc: string;
+  icon: any;
+}
 
-type FormValues = z.infer<typeof schema>;
-
-const PRESET_TEMPLATES = [
-  {
-    title: "E-Commerce SaaS",
-    description: "A multi-tenant e-commerce platform with Stripe billing, inventory management, user auth, and order tracking.",
-    tags: "ecommerce, stripe, saas",
-  },
-  {
-    title: "AI Chat & Analytics Platform",
-    description: "An AI-powered workspace with LLM chat agents, real-time analytics streaming, vector database, and team RBAC.",
-    tags: "ai, llm, analytics",
-  },
-  {
-    title: "Fintech Banking API",
-    description: "High-throughput banking backend microservice with transaction ledger, Webhooks, KYC verification, and Redis caching.",
-    tags: "fintech, banking, security",
-  },
-  {
-    title: "Social Media Platform",
-    description: "Real-time social networking app with live feeds, media uploads, geolocation tagging, and WebSocket notifications.",
-    tags: "social, media, realtime",
-  },
+const WIZARD_STEPS: StepDef[] = [
+  { id: 1,  label: "Basics",       desc: "Project name & category",    icon: Compass },
+  { id: 2,  label: "Business",     desc: "Goals & target audience",   icon: Briefcase },
+  { id: 3,  label: "User Roles",   desc: "Define roles & permissions", icon: Users },
+  { id: 4,  label: "Features",     desc: "Core capabilities list",     icon: Boxes },
+  { id: 5,  label: "Workflows",    desc: "User journeys & data flow",  icon: GitBranch },
+  { id: 6,  label: "Technology",   desc: "Frameworks & database stack",icon: Code2 },
+  { id: 7,  label: "Scale",        desc: "Expected traffic & latency",  icon: TrendingUp },
+  { id: 8,  label: "Security",     desc: "Auth strategy & compliance", icon: ShieldCheck },
+  { id: 9,  label: "Integrations", desc: "Third-party APIs & tools",   icon: Zap },
+  { id: 10, label: "Constraints",  desc: "Budget & timeline limits",   icon: DollarSign },
+  { id: 11, label: "AI Discovery", desc: "Interactive requirement scan",icon: Sparkles },
 ];
+
+const PRESETS = [
+  { name: "SaaS Platform", cat: "SaaS", desc: "Multi-tenant B2B subscription portal with dashboards." },
+  { name: "E-Commerce System", cat: "E-commerce", desc: "Digital storefront with Stripe billing & shopping carts." },
+  { name: "Health Analytics", cat: "Healthcare", desc: "Patient data portals and compliance audits." },
+];
+
+const PRESET_ROLES = ["Guest", "Customer", "Admin", "Vendor", "Manager", "Support Agent"];
+
+const PRESET_FEATURES = [
+  { name: "Authentication", cat: "Security" },
+  { name: "Stripe Payments", cat: "Billing" },
+  { name: "Dashboard Widgets", cat: "Analytics" },
+  { name: "Real-time Chat", cat: "Communication" },
+  { name: "File Uploads", cat: "Media" },
+  { name: "CI/CD Pipeline", cat: "DevOps" },
+];
+
+const PRESET_INTEGRATIONS = ["Stripe", "PayPal", "Firebase", "SendGrid", "Twilio", "Google Maps", "OpenAI"];
 
 export function NewProjectPage() {
   const navigate = useNavigate();
   const createProject = useCreateProject();
+  const [currentStep, setCurrentStep] = useState(1);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [visibility, setVisibility] = useState<"private" | "public">("private");
+  const [submitting, setSubmitting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      name: "",
-      description: "",
-      tags: "",
-    },
+  // Hybrid Mode
+  const [creationMode, setCreationMode] = useState<"wizard" | "direct">("wizard");
+  const [directPrompt, setDirectPrompt] = useState("");
+  const [analyzingDirect, setAnalyzingDirect] = useState(false);
+
+  // ── Step State Values ───────────────────────────────────────
+  const [projectName, setProjectName] = useState("");
+  const [shortDesc, setShortDesc] = useState("");
+  const [category, setCategory] = useState("SaaS");
+  const [industry, setIndustry] = useState("Technology");
+  
+  // Step 2
+  const [problemSolved, setProblemSolved] = useState("");
+  const [targetUsers, setTargetUsers] = useState("");
+  const [businessGoal, setBusinessGoal] = useState("");
+  const [uniqueness, setUniqueness] = useState("");
+
+  // Step 3
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(["Customer", "Admin"]);
+  const [customRoles, setCustomRoles] = useState<string[]>([]);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [rolePermissions, setRolePermissions] = useState<Record<string, string>>({
+    Customer: "Read & write own data, make transactions",
+    Admin: "Full workspace administrative access",
   });
 
-  const nameValue = watch("name") ?? "";
-  const descriptionValue = watch("description") ?? "";
-  const tagsValue = watch("tags") ?? "";
+  // Step 4
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>(["Authentication", "Stripe Payments"]);
+  const [customFeatures, setCustomFeatures] = useState<string[]>([]);
+  const [newFeatureName, setNewFeatureName] = useState("");
+  const [featurePriority, setFeaturePriority] = useState<Record<string, "Must Have" | "Future">>({
+    Authentication: "Must Have",
+    "Stripe Payments": "Must Have",
+  });
 
-  const parsedTags = tagsValue
-    ? tagsValue.split(",").map((t) => t.trim()).filter(Boolean)
-    : [];
+  // Step 5
+  const [userJourney, setUserJourney] = useState("");
+  const [workflowDesc, setWorkflowDesc] = useState("");
 
-  const handleApplyPreset = (preset: (typeof PRESET_TEMPLATES)[0]) => {
-    setValue("name", preset.title, { shouldValidate: true });
-    setValue("description", preset.description, { shouldValidate: true });
-    setValue("tags", preset.tags, { shouldValidate: true });
+  // Step 6
+  const [stackFrontend, setStackFrontend] = useState("React (Vite)");
+  const [stackBackend, setStackBackend] = useState("Node/Express");
+  const [stackDatabase, setStackDatabase] = useState("PostgreSQL");
+  const [stackCloud, setStackCloud] = useState("AWS");
+
+  // Step 7
+  const [monthlyUsers, setMonthlyUsers] = useState("10,000");
+  const [latencyGoal, setLatencyGoal] = useState("< 200ms");
+
+  // Step 8
+  const [authStrategy, setAuthStrategy] = useState("JWT Tokens");
+  const [complianceRules, setComplianceRules] = useState("GDPR");
+
+  // Step 9
+  const [integrations, setIntegrations] = useState<string[]>(["Stripe", "OpenAI"]);
+
+  // Step 10
+  const [budget, setBudget] = useState("Flexible");
+  const [timeline, setTimeline] = useState("3 Months");
+
+  // Step 11: AI Discovery Console
+  const [aiChat, setAiChat] = useState<Array<{ role: "user" | "assistant"; text: string }>>([
+    { role: "assistant", text: "Welcome! I have scanned your current wizard configurations. Are there any other specific business logic details we should clarify before we build the workspace?" },
+  ]);
+  const [aiInput, setAiInput] = useState("");
+  const [aiThinking, setAiThinking] = useState(false);
+
+  // ── Auto-save to LocalStorage ─────────────────────────────
+  useEffect(() => {
+    const saved = localStorage.getItem("devcanvas_wizard_draft");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.projectName) setProjectName(parsed.projectName);
+        if (parsed.shortDesc) setShortDesc(parsed.shortDesc);
+        if (parsed.category) setCategory(parsed.category);
+        if (parsed.problemSolved) setProblemSolved(parsed.problemSolved);
+        if (parsed.targetUsers) setTargetUsers(parsed.targetUsers);
+        if (parsed.businessGoal) setBusinessGoal(parsed.businessGoal);
+      } catch (e) {
+        console.error("Failed to load cached draft", e);
+      }
+    }
+  }, []);
+
+  const triggerDraftSave = () => {
+    const draft = { projectName, shortDesc, category, problemSolved, targetUsers, businessGoal };
+    localStorage.setItem("devcanvas_wizard_draft", JSON.stringify(draft));
   };
 
-  async function onSubmit(values: FormValues) {
-    setServerError(null);
-    const tags = values.tags
-      ? values.tags.split(",").map((t) => t.trim()).filter(Boolean)
-      : [];
+  // ── AI Discovery Integration ──────────────────────────────
+  const handleSendAIChat = async () => {
+    if (!aiInput.trim() || aiThinking) return;
+    const userText = aiInput.trim();
+    setAiChat((prev) => [...prev, { role: "user", text: userText }]);
+    setAiInput("");
+    setAiThinking(true);
+
     try {
-      const project = await createProject.mutateAsync({
-        name: values.name,
-        description: values.description,
-        tags,
-      });
-      navigate(`/app/projects/${project.id}`);
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : "Failed to create project.");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not authenticated.");
+
+      const contextSpec = {
+        projectName,
+        shortDesc,
+        category,
+        businessGoal,
+        selectedRoles,
+        selectedFeatures,
+        stackFrontend,
+        stackDatabase,
+      };
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            messages: [
+              { role: "system", content: "You are a Solution Architect guiding the project creation wizard. Suggest 2 relevant technical questions or confirm the spec is complete." },
+              { role: "user", content: `Wizard Configuration Context: ${JSON.stringify(contextSpec)}. User message: ${userText}` }
+            ]
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error("AI call failed.");
+      const resData = await res.json();
+      setAiChat((prev) => [...prev, { role: "assistant", text: resData.reply }]);
+    } catch (e: any) {
+      setAiChat((prev) => [...prev, { role: "assistant", text: "I have registered your input. Let's finalize your spec layout now." }]);
+    } finally {
+      setAiThinking(false);
     }
+  };
+
+  // ── AI Direct Prompt Analyzer ─────────────────────────────
+  const handleAnalyzeDirectPrompt = async () => {
+    if (!directPrompt.trim() || analyzingDirect) return;
+    setAnalyzingDirect(true);
+    setServerError(null);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not authenticated.");
+
+      const parsePrompt = `
+You are a senior Solutions Architect. Parse the user's project idea: "${directPrompt}" into a structured JSON project specification block.
+The JSON must follow this exact schema:
+{
+  "name": string (a short, creative project name),
+  "description": string (1-2 sentence pitch description),
+  "category": string (e.g. SaaS, E-commerce, Healthcare, FinTech, AI),
+  "problem": string (what problem it solves),
+  "targetUsers": string (who uses it),
+  "roles": string[] (3-5 user roles),
+  "features": string[] (4-6 key features),
+  "stack": {
+    "frontend": string,
+    "backend": string,
+    "database": string,
+    "cloud": string
   }
+}
+Return only raw JSON. Do not write explanations.
+`;
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            messages: [
+              { role: "system", content: "You are a parser. Return only valid JSON. Do not write explanations." },
+              { role: "user", content: parsePrompt }
+            ]
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Spec parsing failed.");
+      const resData = await res.json();
+      
+      let parsed: any = {};
+      try {
+        const cleanJsonText = resData.reply
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
+        parsed = JSON.parse(cleanJsonText);
+      } catch {
+        parsed = {
+          name: "My Direct Project",
+          description: directPrompt,
+          category: "SaaS",
+          problem: "N/A",
+          targetUsers: "General public",
+          roles: ["Customer", "Admin"],
+          features: ["Authentication"],
+          stack: { frontend: "React (Vite)", backend: "Node/Express", database: "PostgreSQL", cloud: "AWS" }
+        };
+      }
+
+      setProjectName(parsed.name || "My Spec Project");
+      setShortDesc(parsed.description || "");
+      setCategory(parsed.category || "SaaS");
+      setProblemSolved(parsed.problem || "");
+      setTargetUsers(parsed.targetUsers || "");
+      setSelectedRoles(parsed.roles || ["Customer", "Admin"]);
+      setSelectedFeatures(parsed.features || ["Authentication"]);
+      if (parsed.stack?.frontend) setStackFrontend(parsed.stack.frontend);
+      if (parsed.stack?.backend) setStackBackend(parsed.stack.backend);
+      if (parsed.stack?.database) setStackDatabase(parsed.stack.database);
+      if (parsed.stack?.cloud) setStackCloud(parsed.stack.cloud);
+
+      setCreationMode("wizard");
+      setCurrentStep(11);
+      
+      setAiChat([
+        { role: "assistant", text: `I have automatically initialized your project spec based on your prompt! Here is what I mapped:\n\n* **Name**: ${parsed.name}\n* **Stack**: ${parsed.stack?.frontend} + ${parsed.stack?.backend}\n* **Roles**: ${parsed.roles?.join(", ")}\n* **Features**: ${parsed.features?.join(", ")}\n\nDo you want to clarify any details, or shall we finalize and initialize the workspace?` }
+      ]);
+    } catch (e: any) {
+      setServerError("Failed to extract specifications: " + e.message);
+    } finally {
+      setAnalyzingDirect(false);
+    }
+  };
+
+  // ── Calculate Readiness scores ─────────────────────────────
+  const readinessMetrics = useMemo(() => {
+    let business = 40;
+    let arch = 30;
+    let db = 30;
+    let api = 30;
+
+    if (projectName) business += 20;
+    if (problemSolved) business += 20;
+    if (targetUsers) business += 20;
+
+    if (stackFrontend && stackBackend) arch += 40;
+    if (selectedFeatures.length > 0) arch += 30;
+
+    if (stackDatabase) db += 40;
+    if (selectedRoles.length > 0) db += 35;
+
+    if (selectedFeatures.includes("Authentication")) api += 40;
+    if (userJourney) api += 30;
+
+    return {
+      business: Math.min(100, business),
+      architecture: Math.min(100, arch),
+      database: Math.min(100, db),
+      api: Math.min(100, api),
+      overall: Math.min(100, Math.round((business + arch + db + api) / 4)),
+    };
+  }, [projectName, problemSolved, targetUsers, stackFrontend, stackBackend, selectedFeatures, stackDatabase, selectedRoles, userJourney]);
+
+  // ── Form Submit ─────────────────────────────────────────────
+  const handleCreateProject = async () => {
+    if (!projectName.trim()) {
+      setServerError("Project name is required.");
+      setCreationMode("wizard");
+      setCurrentStep(1);
+      return;
+    }
+
+    setSubmitting(true);
+    setServerError(null);
+
+    const completeSpecification = {
+      basics: { projectName, shortDesc, category, industry },
+      business: { problemSolved, targetUsers, businessGoal, uniqueness },
+      roles: selectedRoles.map(r => ({ name: r, permissions: rolePermissions[r] || "Standard rights" })),
+      features: selectedFeatures.map(f => ({ name: f, priority: featurePriority[f] || "Must Have" })),
+      workflows: { userJourney, workflowDesc },
+      technology: { stackFrontend, stackBackend, stackDatabase, stackCloud },
+      scale: { monthlyUsers, latencyGoal },
+      security: { authStrategy, complianceRules },
+      integrations,
+      constraints: { budget, timeline },
+      metrics: readinessMetrics,
+    };
+
+    try {
+      const tags = [category.toLowerCase(), industry.toLowerCase()].filter(Boolean);
+      
+      const newProj = await createProject.mutateAsync({
+        name: projectName,
+        description: shortDesc || `Blueprint workspace for ${projectName}`,
+        tags,
+        specification: completeSpecification,
+      });
+
+      localStorage.removeItem("devcanvas_wizard_draft");
+      navigate(`/app/projects/${newProj.id}`);
+    } catch (err: any) {
+      setServerError(err.message || "Failed to initialize blueprint workspace.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleApplyPreset = (preset: typeof PRESETS[0]) => {
+    setProjectName(preset.name);
+    setCategory(preset.cat);
+    setShortDesc(preset.desc);
+    triggerDraftSave();
+  };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* ── Top Bar / Back Navigation ─────────────────────────── */}
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      {/* Top Header */}
       <div className="mb-6 flex items-center justify-between">
         <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-white/60 transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+          onClick={() => navigate("/app")}
+          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-semibold text-neutral-400 hover:text-white transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to workspace
+          <ArrowLeft className="h-4 w-4" /> Back to dashboard
         </button>
-
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-indigo-500/30 text-indigo-300">
-            <Sparkles className="mr-1 h-3 w-3" /> AI Studio Ready
-          </Badge>
-        </div>
+        <Badge variant="outline" className="border-indigo-500/20 bg-indigo-500/5 text-indigo-300">
+          <Sparkles className="mr-1 h-3.5 w-3.5" /> AI Spec Discovery Engine
+        </Badge>
       </div>
 
-      {/* ── Headline ────────────────────────────────────────── */}
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          Create New AI Workspace
-        </h1>
-        <p className="mt-2 text-sm text-white/50">
-          Define your project requirements below. DevCanvas will set up your workspace and prepare architecture, database, API specs, and security blueprints automatically.
-        </p>
-      </div>
-
-      {/* ── Full Screen 2-Column Grid Layout ──────────────────── */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Left Column: Form & Starter Templates (7 Cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Quick Preset Starters */}
-          <div className="glass-card rounded-2xl p-5 bg-noise">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
-                <Zap className="h-3.5 w-3.5 text-indigo-400" /> Starter Preset Templates
-              </span>
-              <span className="text-[11px] text-white/30">Click to auto-fill</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {PRESET_TEMPLATES.map((preset) => (
-                <button
-                  key={preset.title}
-                  type="button"
-                  onClick={() => handleApplyPreset(preset)}
-                  className="group flex flex-col items-start text-left rounded-xl border border-white/8 bg-white/[0.02] p-3 transition-all hover:border-indigo-500/40 hover:bg-white/[0.06]"
-                >
-                  <span className="text-xs font-semibold text-white/80 group-hover:text-indigo-300 transition-colors">
-                    {preset.title}
-                  </span>
-                  <span className="mt-1 line-clamp-2 text-[11px] text-white/40">
-                    {preset.description}
-                  </span>
-                </button>
-              ))}
-            </div>
+      {/* Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
+        {/* Left Column: wizard controls (8 or 12 cols depending on mode) */}
+        <div className={cn(creationMode === "direct" ? "lg:col-span-12" : "lg:col-span-8", "space-y-6")}>
+          <div className="space-y-1">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-white">
+              AI Project Discovery System
+            </h1>
+            <p className="text-xs text-neutral-400 leading-relaxed font-sans">
+              Build a structured engineering specification with a guided architect session or describe your idea directly.
+            </p>
           </div>
 
-          {/* Main Form */}
-          <div className="glass-card rounded-2xl p-6 bg-noise">
-            {serverError ? (
-              <div className="mb-5 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                {serverError}
-              </div>
-            ) : null}
+          {/* Mode Switcher Tabs */}
+          <div className="flex gap-2 rounded-lg bg-neutral-900 p-1 w-fit border border-white/5 text-xs">
+            <button
+              onClick={() => setCreationMode("wizard")}
+              className={cn(
+                "px-4 py-1.5 rounded-md font-semibold transition-all",
+                creationMode === "wizard"
+                  ? "bg-white/[0.08] text-white border border-white/10"
+                  : "text-neutral-450 hover:text-white"
+              )}
+            >
+              Architect Guided Wizard
+            </button>
+            <button
+              onClick={() => setCreationMode("direct")}
+              className={cn(
+                "px-4 py-1.5 rounded-md font-semibold transition-all",
+                creationMode === "direct"
+                  ? "bg-white/[0.08] text-white border border-white/10"
+                  : "text-neutral-450 hover:text-white"
+              )}
+            >
+              Direct AI Requirement Prompt (Beginners)
+            </button>
+          </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Name Input */}
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-white/60">
-                  Project Name
-                </Label>
-                <Input
-                  id="name"
-                  placeholder="e.g. My SaaS Platform"
-                  className="h-11 rounded-xl border-white/10 bg-white/[0.03] text-white placeholder:text-white/20 focus:border-indigo-500/50 focus:bg-white/[0.06]"
-                  {...register("name")}
-                />
-                {errors.name ? (
-                  <p className="text-xs text-red-400">{errors.name.message}</p>
-                ) : (
-                  <p className="text-xs text-white/40">
-                    Slug ID: <span className="font-mono text-indigo-300">{slugify(nameValue) || "my-saas-platform"}</span>
+          {creationMode === "wizard" ? (
+            <>
+              {/* Stepper Timeline Nav */}
+              <div className="overflow-x-auto pb-2 border-b border-white/[0.08] flex gap-2">
+                {WIZARD_STEPS.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setCurrentStep(s.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold shrink-0 transition-all",
+                      currentStep === s.id
+                        ? "border-primary-500 bg-primary-500/10 text-white"
+                        : "border-white/5 bg-white/[0.01] text-neutral-500 hover:text-neutral-300"
+                    )}
+                  >
+                    <s.icon className="h-3.5 w-3.5 shrink-0" />
+                    <span>{s.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Steps Switcher */}
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-md space-y-6">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentStep}
+                    initial={{ opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-4 text-xs"
+                  >
+                    {/* STEP 1: BASICS */}
+                    {currentStep === 1 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <Compass className="h-4.5 w-4.5 text-primary-400" /> 1. Project Basics
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Project Name</label>
+                            <input
+                              type="text"
+                              value={projectName}
+                              onChange={(e) => { setProjectName(e.target.value); triggerDraftSave(); }}
+                              placeholder="e.g. PetCare Marketplace"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Category</label>
+                            <input
+                              type="text"
+                              value={category}
+                              onChange={(e) => setCategory(e.target.value)}
+                              placeholder="e.g. SaaS, Marketplace"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="block text-neutral-300 font-medium">Short Pitch Description</label>
+                          <textarea
+                            value={shortDesc}
+                            onChange={(e) => { setShortDesc(e.target.value); triggerDraftSave(); }}
+                            rows={3}
+                            placeholder="A concise overview of the core project scope..."
+                            className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none font-sans"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Presets</span>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            {PRESETS.map((p) => (
+                              <button
+                                key={p.name}
+                                onClick={() => handleApplyPreset(p)}
+                                className="text-left p-3 rounded-lg border border-white/5 bg-white/[0.01] hover:border-white/15 hover:bg-white/[0.03] transition-all"
+                              >
+                                <span className="font-semibold text-white block">{p.name}</span>
+                                <span className="text-[10.5px] text-neutral-500 block leading-tight mt-0.5">{p.desc}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 2: BUSINESS DISCOVERY */}
+                    {currentStep === 2 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <Briefcase className="h-4.5 w-4.5 text-primary-400" /> 2. Business Discovery
+                        </h3>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium font-sans">What problem does this project solve?</label>
+                            <input
+                              type="text"
+                              value={problemSolved}
+                              onChange={(e) => setProblemSolved(e.target.value)}
+                              placeholder="e.g. Pet owners struggle to book on-demand veterinary caretakers"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium font-sans">Who is the target audience?</label>
+                            <input
+                              type="text"
+                              value={targetUsers}
+                              onChange={(e) => setTargetUsers(e.target.value)}
+                              placeholder="e.g. Busy urban pet owners and professional pet caretakers"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium font-sans">What is the primary business goal?</label>
+                            <input
+                              type="text"
+                              value={businessGoal}
+                              onChange={(e) => setBusinessGoal(e.target.value)}
+                              placeholder="e.g. Simplify appointment orchestration and increase caregiver earnings"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 3: USER ROLES */}
+                    {currentStep === 3 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <Users className="h-4.5 w-4.5 text-primary-400" /> 3. User Roles &amp; Permissions
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {PRESET_ROLES.map((role) => {
+                            const active = selectedRoles.includes(role);
+                            return (
+                              <button
+                                key={role}
+                                onClick={() => {
+                                  setSelectedRoles(prev =>
+                                    active ? prev.filter(r => r !== role) : [...prev, role]
+                                  );
+                                }}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-full border text-xs font-semibold transition-all",
+                                  active ? "border-primary-500 bg-primary-500/10 text-white" : "border-white/10 text-neutral-400 hover:text-white"
+                                )}
+                              >
+                                {role}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                          <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">Role Capabilities</span>
+                          {selectedRoles.map((role) => (
+                            <div key={role} className="flex gap-3 items-center">
+                              <span className="w-24 font-bold text-neutral-300 truncate">{role}</span>
+                              <input
+                                type="text"
+                                value={rolePermissions[role] || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setRolePermissions(prev => ({ ...prev, [role]: val }));
+                                }}
+                                placeholder="Describe permissions..."
+                                className="flex-1 rounded-lg border border-white/10 bg-neutral-950 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 4: FEATURES DISCOVERY */}
+                    {currentStep === 4 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <Boxes className="h-4.5 w-4.5 text-primary-400" /> 4. Features &amp; Capabilities
+                        </h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {PRESET_FEATURES.map((feat) => {
+                            const active = selectedFeatures.includes(feat.name);
+                            return (
+                              <button
+                                key={feat.name}
+                                onClick={() => {
+                                  setSelectedFeatures(prev =>
+                                    active ? prev.filter(f => f !== feat.name) : [...prev, feat.name]
+                                  );
+                                }}
+                                className={cn(
+                                  "p-3 rounded-lg border text-left transition-all flex flex-col justify-between",
+                                  active ? "border-primary-500 bg-primary-500/10 text-white" : "border-white/5 bg-white/[0.01] text-neutral-400 hover:border-white/15"
+                                )}
+                              >
+                                <span className="font-bold block text-xs text-white">{feat.name}</span>
+                                <span className="text-[9px] text-neutral-500 block uppercase font-bold mt-1 tracking-wider">{feat.cat}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 5: WORKFLOWS */}
+                    {currentStep === 5 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <GitBranch className="h-4.5 w-4.5 text-primary-400" /> 5. Core Business Workflows
+                        </h3>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium font-sans">Describe the primary user journey</label>
+                            <textarea
+                              value={userJourney}
+                              onChange={(e) => setUserJourney(e.target.value)}
+                              rows={3}
+                              placeholder="e.g. Customer lands ➔ searches care-givers ➔ books slot ➔ completes payment ➔ provider accepts"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none font-sans"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 6: TECHNOLOGY PREFERENCES */}
+                    {currentStep === 6 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <Code2 className="h-4.5 w-4.5 text-primary-400" /> 6. Tech Stack Preferences
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Frontend Framework</label>
+                            <select
+                              value={stackFrontend}
+                              onChange={(e) => setStackFrontend(e.target.value)}
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            >
+                              <option>React (Vite)</option>
+                              <option>Next.js (App Router)</option>
+                              <option>Vue (Nuxt)</option>
+                              <option>AI Recommendation</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Backend / API Server</label>
+                            <select
+                              value={stackBackend}
+                              onChange={(e) => setStackBackend(e.target.value)}
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            >
+                              <option>Node/Express</option>
+                              <option>Python (FastAPI)</option>
+                              <option>Go (Gin)</option>
+                              <option>AI Recommendation</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Primary Database</label>
+                            <select
+                              value={stackDatabase}
+                              onChange={(e) => setStackDatabase(e.target.value)}
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            >
+                              <option>PostgreSQL</option>
+                              <option>MySQL</option>
+                              <option>MongoDB</option>
+                              <option>SQLite</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Cloud Platform</label>
+                            <select
+                              value={stackCloud}
+                              onChange={(e) => setStackCloud(e.target.value)}
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            >
+                              <option>AWS</option>
+                              <option>Google Cloud (GCP)</option>
+                              <option>Vercel / Supabase</option>
+                              <option>No Preference</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 7: SCALE & PERFORMANCE */}
+                    {currentStep === 7 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <TrendingUp className="h-4.5 w-4.5 text-primary-400" /> 7. Scale &amp; Latency Goals
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Expected Monthly Users</label>
+                            <select
+                              value={monthlyUsers}
+                              onChange={(e) => setMonthlyUsers(e.target.value)}
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            >
+                              <option>1,000</option>
+                              <option>10,000</option>
+                              <option>100,000</option>
+                              <option>1,000,000+</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Target Latency SLA</label>
+                            <select
+                              value={latencyGoal}
+                              onChange={(e) => setLatencyGoal(e.target.value)}
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            >
+                              <option>&lt; 100ms (High Speed)</option>
+                              <option>&lt; 200ms (Standard)</option>
+                              <option>&lt; 500ms</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 8: SECURITY & COMPLIANCE */}
+                    {currentStep === 8 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <ShieldCheck className="h-4.5 w-4.5 text-primary-400" /> 8. Security &amp; Compliance
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Auth Strategy</label>
+                            <input
+                              type="text"
+                              value={authStrategy}
+                              onChange={(e) => setAuthStrategy(e.target.value)}
+                              placeholder="e.g. JWT with Refresh Tokens, OAuth 2.0"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Regulations Compliance</label>
+                            <input
+                              type="text"
+                              value={complianceRules}
+                              onChange={(e) => setComplianceRules(e.target.value)}
+                              placeholder="e.g. GDPR, HIPAA, SOC2"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 9: INTEGRATIONS */}
+                    {currentStep === 9 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <Zap className="h-4.5 w-4.5 text-primary-400" /> 9. Integrations &amp; Add-ons
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {PRESET_INTEGRATIONS.map((tool) => {
+                            const active = integrations.includes(tool);
+                            return (
+                              <button
+                                key={tool}
+                                onClick={() => {
+                                  setIntegrations(prev =>
+                                    active ? prev.filter(t => t !== tool) : [...prev, tool]
+                                  );
+                                }}
+                                className={cn(
+                                  "px-3.5 py-2 rounded-lg border text-xs font-semibold transition-all",
+                                  active ? "border-primary-500 bg-primary-500/10 text-white" : "border-white/10 text-neutral-400 hover:text-white"
+                                )}
+                              >
+                                {tool}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 10: CONSTRAINTS */}
+                    {currentStep === 10 && (
+                      <div className="space-y-4">
+                        <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                          <DollarSign className="h-4.5 w-4.5 text-primary-400" /> 10. Constraints &amp; Limits
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Budget Constraints</label>
+                            <input
+                              type="text"
+                              value={budget}
+                              onChange={(e) => setBudget(e.target.value)}
+                              placeholder="e.g. Free Tier, Startup Budget"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="block text-neutral-300 font-medium">Timeline Limit</label>
+                            <input
+                              type="text"
+                              value={timeline}
+                              onChange={(e) => setTimeline(e.target.value)}
+                              placeholder="e.g. 1 Month MVP, 6 Months"
+                              className="w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 11: AI REQUIREMENT DISCOVERY CONSOLE */}
+                    {currentStep === 11 && (
+                      <div className="space-y-4 text-left">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                            <Sparkles className="h-4.5 w-4.5 text-primary-400" /> 11. AI Requirement Discovery Console
+                          </h3>
+                          <Badge variant="outline" className="text-[10px] border-primary-500/30 text-primary-400">Interactive Architect</Badge>
+                        </div>
+
+                        <p className="text-[11px] text-neutral-450 leading-relaxed font-sans">
+                          Our solution architect AI scan has mapped your specifications. Ask questions or confirm modifications below before creating the workspace.
+                        </p>
+
+                        {/* Chat console feed */}
+                        <div className="rounded-xl border border-white/10 bg-neutral-950 p-4 h-48 overflow-y-auto space-y-3 font-sans">
+                          {aiChat.map((msg, i) => (
+                            <div key={i} className={cn("text-xs leading-relaxed", msg.role === "user" ? "text-primary-300 text-right" : "text-neutral-300 text-left")}>
+                              <span className="font-bold block text-[10px] uppercase text-neutral-500 tracking-wider">
+                                {msg.role === "user" ? "You" : "DevCanvas Architect"}
+                              </span>
+                              <p className="mt-0.5">{msg.text}</p>
+                            </div>
+                          ))}
+                          {aiThinking && (
+                            <div className="text-xs text-neutral-500 flex items-center gap-1 font-mono">
+                              <Loader2 className="h-3 w-3 animate-spin" /> Thinking...
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Chat input box */}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={aiInput}
+                            onChange={(e) => setAiInput(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleSendAIChat(); }}
+                            placeholder="Add details (e.g. We require Stripe billing & user accounts)"
+                            className="flex-grow rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary-500 font-sans"
+                          />
+                          <Button variant="outline" size="sm" onClick={handleSendAIChat} disabled={aiThinking}>
+                            Verify
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Stepper Navigation buttons */}
+                <div className="flex justify-between items-center pt-4 border-t border-white/5 text-xs">
+                  <button
+                    disabled={currentStep === 1}
+                    onClick={() => setCurrentStep(prev => prev - 1)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-neutral-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all font-semibold"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Previous Step
+                  </button>
+
+                  {currentStep < 11 ? (
+                    <button
+                      onClick={() => setCurrentStep(prev => prev + 1)}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white text-neutral-950 hover:bg-neutral-200 transition-all font-bold"
+                    >
+                      Next Step <ChevronRight className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <Button
+                      variant="gradient"
+                      onClick={handleCreateProject}
+                      disabled={submitting || !projectName.trim()}
+                      className="flex items-center gap-1.5"
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Creating Spec Workspace...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>Initialize Spec Blueprint</span>
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+
+                {serverError && (
+                  <p className="mt-2 text-xs text-danger-400 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" /> {serverError}
                   </p>
                 )}
               </div>
+            </>
+          ) : (
+            /* Direct AI Prompt Mode block */
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 backdrop-blur-md space-y-4">
+              <h3 className="font-heading text-sm font-bold text-white flex items-center gap-1.5">
+                <Sparkles className="h-4.5 w-4.5 text-primary-400" /> Direct AI Requirement Discovery Scan
+              </h3>
+              <p className="text-xs text-neutral-400 leading-relaxed font-sans">
+                Type your application concept in one or two sentences. Our AI solution architect will automatically structure and build the engineering requirements spec for you.
+              </p>
 
-              {/* Description Prompt Input */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-white/60">
-                    Project Prompt & Description
-                  </Label>
-                  <span className="text-[11px] text-white/30">AI prompt input</span>
-                </div>
-                <textarea
-                  id="description"
-                  rows={5}
-                  placeholder="Describe your application requirements in detail... e.g. A multi-tenant platform with Stripe billing, real-time webhooks, user RBAC, and Redis caching."
-                  {...register("description")}
-                  className="flex w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-sm text-white shadow-sm transition-all placeholder:text-white/20 focus:border-indigo-500/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                {errors.description ? (
-                  <p className="text-xs text-red-400">{errors.description.message}</p>
-                ) : null}
-              </div>
+              <textarea
+                value={directPrompt}
+                onChange={(e) => setDirectPrompt(e.target.value)}
+                placeholder="A food delivery app targeting local restaurants with dynamic menus, Stripe billing, and a delivery driver live tracking dashboard..."
+                rows={4}
+                className="w-full rounded-xl border border-white/10 bg-neutral-950 px-4 py-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none font-sans"
+              />
 
-              {/* Tags Input */}
-              <div className="space-y-2">
-                <Label htmlFor="tags" className="text-xs font-semibold uppercase tracking-wider text-white/60 flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5" /> Workspace Tags
-                </Label>
-                <Input
-                  id="tags"
-                  placeholder="saas, billing, realtime, postgres"
-                  className="h-11 rounded-xl border-white/10 bg-white/[0.03] text-white placeholder:text-white/20 focus:border-indigo-500/50 focus:bg-white/[0.06]"
-                  {...register("tags")}
-                />
-                <p className="text-xs text-white/40">Comma-separated tags to organize your build.</p>
-              </div>
-
-              {/* Visibility Options */}
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-white/60">
-                  Workspace Visibility
-                </Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setVisibility("private")}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl border p-3 text-left transition-all",
-                      visibility === "private"
-                        ? "border-indigo-500/50 bg-indigo-500/10 text-white"
-                        : "border-white/10 bg-white/[0.02] text-white/50 hover:bg-white/[0.05]"
-                    )}
-                  >
-                    <Lock className="h-4 w-4 text-indigo-400" />
-                    <div>
-                      <p className="text-xs font-semibold">Private</p>
-                      <p className="text-[10px] text-white/40">Only team members</p>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setVisibility("public")}
-                    className={cn(
-                      "flex items-center gap-3 rounded-xl border p-3 text-left transition-all",
-                      visibility === "public"
-                        ? "border-indigo-500/50 bg-indigo-500/10 text-white"
-                        : "border-white/10 bg-white/[0.02] text-white/50 hover:bg-white/[0.05]"
-                    )}
-                  >
-                    <Globe className="h-4 w-4 text-emerald-400" />
-                    <div>
-                      <p className="text-xs font-semibold">Public</p>
-                      <p className="text-[10px] text-white/40">Sharable link view</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-4 flex items-center gap-3">
+              <div className="flex justify-end pt-1">
                 <Button
-                  type="submit"
                   variant="gradient"
-                  size="lg"
-                  className="sheen-btn flex-1 h-12 rounded-xl text-base font-semibold shadow-lg shadow-indigo-500/25"
-                  disabled={createProject.isPending}
+                  onClick={handleAnalyzeDirectPrompt}
+                  disabled={!directPrompt.trim() || analyzingDirect}
+                  className="flex items-center gap-1.5"
                 >
-                  {createProject.isPending ? (
+                  {analyzingDirect ? (
                     <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Initializing Workspace…
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Analyzing &amp; Mapping Specs...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-5 w-5" />
-                      Create AI Project Workspace
+                      <Sparkles className="h-4 w-4" />
+                      <span>Start AI Scan</span>
                     </>
                   )}
                 </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={() => navigate(-1)}
-                  className="h-12 rounded-xl border-white/10 hover:bg-white/10"
-                >
-                  Cancel
-                </Button>
               </div>
-            </form>
-          </div>
+
+              {serverError && (
+                <p className="text-xs text-danger-400 flex items-center gap-1 pt-1">
+                  <AlertCircle className="h-4 w-4" /> {serverError}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Right Column: Live Interactive Workspace Preview (5 Cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="sticky top-20">
-            <span className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3 block flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-indigo-400" /> Live AI Workspace Preview
-            </span>
-
-            {/* Live Interactive Card Preview */}
-            <div className="glass-card rounded-2xl p-6 bg-noise border border-white/15 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-
-              <div className="flex items-start justify-between border-b border-white/10 pb-4 mb-4">
-                <div>
-                  <h3 className="font-heading text-xl font-bold text-white tracking-tight">
-                    {nameValue.trim() || "Untitled AI Workspace"}
-                  </h3>
-                  <p className="mt-1 text-xs text-white/40 font-mono">
-                    /{slugify(nameValue) || "untitled-workspace"}
-                  </p>
-                </div>
-                <Badge variant="success">Active</Badge>
+        {/* Right Column: dynamic spec live preview (4 cols) - Hidden in Direct AI Prompt Mode */}
+        {creationMode === "wizard" && (
+          <aside className="lg:col-span-4 space-y-6 text-xs leading-relaxed">
+            {/* Readiness Completeness Panel */}
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5 space-y-3.5">
+              <div className="flex justify-between items-center text-[10px] font-bold uppercase text-neutral-500 tracking-wider">
+                <span>Spec Quality Readiness</span>
+                <span className="text-primary-400 font-mono">{readinessMetrics.overall}%</span>
               </div>
 
-              {/* Description Preview */}
-              <div className="space-y-2 mb-5">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
-                  Prompt Summary
-                </span>
-                <p className="text-xs text-white/70 leading-relaxed line-clamp-4 bg-white/[0.03] p-3 rounded-xl border border-white/5">
-                  {descriptionValue.trim() || "Enter your project description on the left or select a starter preset to see the live prompt..."}
-                </p>
-              </div>
-
-              {/* Parsed Tags Preview */}
-              {parsedTags.length > 0 ? (
-                <div className="space-y-2 mb-6">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
-                    Tags
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {parsedTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-0.5 text-xs text-indigo-300 font-medium"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {/* Prepared Blueprint Modules */}
-              <div className="space-y-2 border-t border-white/10 pt-4">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
-                  Prepared AI Generators
-                </span>
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  {[
-                    { icon: Boxes, label: "Architecture", color: "text-indigo-400" },
-                    { icon: Database, label: "Database ERD", color: "text-purple-400" },
-                    { icon: Code2, label: "API Specification", color: "text-blue-400" },
-                    { icon: ShieldCheck, label: "Security Report", color: "text-emerald-400" },
-                  ].map(({ icon: Icon, label, color }) => (
-                    <div
-                      key={label}
-                      className="flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.03] p-2.5 text-xs text-white/70"
-                    >
-                      <Icon className={`h-4 w-4 ${color}`} />
-                      <span className="truncate">{label}</span>
-                      <CheckCircle2 className="ml-auto h-3.5 w-3.5 text-emerald-400 opacity-80" />
+              <div className="space-y-2">
+                {[
+                  { label: "Business Specification Clarity", score: readinessMetrics.business },
+                  { label: "Architecture Context Readiness", score: readinessMetrics.architecture },
+                  { label: "Database Normalization Prep", score: readinessMetrics.database },
+                  { label: "API Spec Requirements", score: readinessMetrics.api },
+                ].map((m) => (
+                  <div key={m.label} className="space-y-1">
+                    <div className="flex justify-between text-[10.5px] font-medium">
+                      <span className="text-neutral-455">{m.label}</span>
+                      <span className="text-neutral-300 font-mono">{m.score}%</span>
                     </div>
-                  ))}
+                    <div className="h-1 w-full rounded-full bg-white/[0.06] overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-[width] duration-500",
+                          m.score >= 80 ? "bg-emerald-500" : m.score >= 50 ? "bg-primary-500" : "bg-neutral-600"
+                        )}
+                        style={{ width: `${m.score}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Specification Preview Summary card */}
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
+              <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider block">Live Specification Preview</span>
+
+              <div className="space-y-3 font-mono text-[11px] text-neutral-400">
+                <div>
+                  <span className="text-neutral-500 block uppercase text-[9px] font-bold tracking-widest">Scope</span>
+                  <span className="text-neutral-200 font-semibold">{projectName || "—"} ({category})</span>
+                </div>
+
+                {targetUsers && (
+                  <div>
+                    <span className="text-neutral-500 block uppercase text-[9px] font-bold tracking-widest">Target Users</span>
+                    <span className="text-neutral-300 block leading-tight mt-0.5">{targetUsers}</span>
+                  </div>
+                )}
+
+                {selectedRoles.length > 0 && (
+                  <div>
+                    <span className="text-neutral-500 block uppercase text-[9px] font-bold tracking-widest">User Roles</span>
+                    <div className="flex flex-wrap gap-1 mt-1 font-sans">
+                      {selectedRoles.map(r => (
+                        <span key={r} className="rounded bg-white/5 border border-white/10 px-1 py-0.5 text-[10px] text-neutral-300 font-medium">
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedFeatures.length > 0 && (
+                  <div>
+                    <span className="text-neutral-500 block uppercase text-[9px] font-bold tracking-widest">Capabilities</span>
+                    <div className="flex flex-wrap gap-1 mt-1 font-sans">
+                      {selectedFeatures.map(f => (
+                        <span key={f} className="rounded bg-white/5 border border-white/10 px-1 py-0.5 text-[10px] text-neutral-300 font-medium">
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-neutral-500 block uppercase text-[9px] font-bold tracking-widest">Stack Blueprint</span>
+                  <span className="text-neutral-300 mt-0.5 block">
+                    {stackFrontend} · {stackBackend} · {stackDatabase} · {stackCloud}
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </aside>
+        )}
       </div>
     </div>
   );

@@ -1,255 +1,305 @@
-import { useState, useRef } from "react";
-import { motion } from "framer-motion";
-import { KeyRound, Link2 } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import ReactFlow, {
+  ReactFlowProvider,
+  Controls,
+  MiniMap,
+  Background,
+  useReactFlow,
+  Panel,
+  BackgroundVariant,
+  MarkerType,
+} from "reactflow";
+import "reactflow/dist/style.css";
+
+import { RefreshCw } from "lucide-react";
 import type {
   DatabaseSchema,
   SchemaTable,
 } from "@/lib/types/database-schema";
-import { cn } from "@utils/index";
+import { CustomTableNode } from "./custom-table-node";
+import { RelationConnectionEdge } from "./relation-connection-edge";
 
-interface TablePosition {
-  x: number;
-  y: number;
-}
+const nodeTypes = {
+  tableNode: CustomTableNode,
+};
 
-const TABLE_WIDTH = 200;
-const HEADER_HEIGHT = 32;
-const ROW_HEIGHT = 20;
-const TABLE_PADDING = 4;
+const edgeTypes = {
+  relationEdge: RelationConnectionEdge,
+};
 
-function tableHeight(table: SchemaTable): number {
-  return HEADER_HEIGHT + table.columns.length * ROW_HEIGHT + TABLE_PADDING * 2;
-}
-
-function layoutTables(tables: SchemaTable[]): Record<string, TablePosition> {
-  const positions: Record<string, TablePosition> = {};
+function layoutTables(tables: SchemaTable[]): Record<string, { x: number; y: number }> {
+  const positions: Record<string, { x: number; y: number }> = {};
   const cols = Math.min(Math.ceil(Math.sqrt(tables.length)), 3);
-  const colSpacing = TABLE_WIDTH + 80;
-  const rowSpacing = 160;
-  const startX = 40;
-  const startY = 40;
-
-  let maxRowHeight = 0;
+  const colSpacing = 320;
+  const rowSpacing = 240;
 
   tables.forEach((table, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
     positions[table.id] = {
-      x: startX + col * colSpacing,
-      y: startY + row * rowSpacing + (col % 2 === 1 ? 30 : 0),
+      x: 50 + col * colSpacing,
+      y: 50 + row * rowSpacing,
     };
-    maxRowHeight = Math.max(maxRowHeight, tableHeight(table));
   });
 
   return positions;
 }
 
-export function ERDiagram({
+function ERDiagramInner({
   schema,
   onSelectTable,
+  breadcrumb = [],
+  onBreadcrumbChange,
 }: {
   schema: DatabaseSchema;
   onSelectTable?: (table: SchemaTable) => void;
+  breadcrumb?: string[];
+  onBreadcrumbChange?: (path: string[]) => void;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const positions = useRef(layoutTables(schema.tables));
+  const { fitView, setCenter } = useReactFlow();
+  const [hoveredTableId, setHoveredTableId] = useState<string | null>(null);
 
-  const handleSelect = (table: SchemaTable) => {
-    setSelected(table.id);
-    onSelectTable?.(table);
-  };
+  const tablePositions = useMemo(() => layoutTables(schema.tables), [schema.tables]);
 
-  const maxCols = Math.min(Math.ceil(Math.sqrt(schema.tables.length)), 3);
-  const rows = Math.ceil(schema.tables.length / maxCols);
-  const svgWidth = Math.max(maxCols * 280 + 80, 400);
-  const svgHeight = Math.max(rows * 160 + 120, 300);
+  // Active table is the last item in the relationship breadcrumbs path
+  const activeTableId = useMemo(() => {
+    return breadcrumb[breadcrumb.length - 1] || null;
+  }, [breadcrumb]);
+
+  // Find neighbors of a table node
+  const getNeighbors = useCallback((tableId: string) => {
+    const neighbors = new Set<string>();
+    schema.relations.forEach(r => {
+      if (r.from === tableId) neighbors.add(r.to);
+      if (r.to === tableId) neighbors.add(r.from);
+    });
+    return neighbors;
+  }, [schema.relations]);
+
+  const activeNeighbors = useMemo(() => {
+    if (activeTableId) {
+      return getNeighbors(activeTableId);
+    }
+    if (hoveredTableId) {
+      return getNeighbors(hoveredTableId);
+    }
+    return null;
+  }, [activeTableId, hoveredTableId, getNeighbors]);
+
+  // Construct React Flow Nodes
+  const nodes = useMemo(() => {
+    return schema.tables.map((table) => {
+      const isSelected = activeTableId === table.id;
+      const isHovered = hoveredTableId === table.id;
+      
+      let isHighlighted = false;
+      let isFaded = false;
+
+      const activeFocusId = activeTableId || hoveredTableId;
+      if (activeFocusId) {
+        if (table.id === activeFocusId) {
+          isHighlighted = true;
+        } else if (activeNeighbors?.has(table.id)) {
+          isHighlighted = true;
+        } else {
+          isFaded = true;
+        }
+      }
+
+      // Foreign key column names in this table
+      const fkColumns = schema.relations
+        .filter(r => r.from === table.id)
+        .map(r => r.fromColumn);
+
+      // Indexed columns in this table
+      const indexedColumns = schema.indexes
+        .filter(idx => idx.table === table.name)
+        .flatMap(idx => idx.columns);
+
+      return {
+        id: table.id,
+        type: "tableNode",
+        position: tablePositions[table.id] || { x: 0, y: 0 },
+        data: {
+          name: table.name,
+          columns: table.columns,
+          fkColumns,
+          indexedColumns,
+          isHovered,
+          isHighlighted,
+          isFaded,
+        },
+        selected: isSelected,
+      };
+    });
+  }, [schema.tables, schema.relations, schema.indexes, tablePositions, activeTableId, hoveredTableId, activeNeighbors]);
+
+  // Construct React Flow Edges
+  const edges = useMemo(() => {
+    return schema.relations.map((rel, i) => {
+      const activeFocusId = activeTableId || hoveredTableId;
+      let isHighlighted = false;
+      let isFaded = false;
+
+      if (activeFocusId) {
+        // Highlight edge only if it directly connects to the active/hovered node
+        isHighlighted = rel.from === activeFocusId || rel.to === activeFocusId;
+        isFaded = !isHighlighted;
+      }
+
+      return {
+        id: `relation-${rel.from}-${rel.to}-${i}`,
+        source: rel.from,
+        target: rel.to,
+        type: "relationEdge",
+        label: rel.type === "many-to-many" ? "M:M" : rel.type === "one-to-many" ? "1:N" : "1:1",
+        data: {
+          isHighlighted,
+          isFaded,
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 14,
+          height: 14,
+          color: isHighlighted
+            ? "var(--color-primary-500)"
+            : isFaded
+            ? "rgba(63, 63, 70, 0.15)"
+            : "var(--color-neutral-700)",
+        },
+        labelStyle: { fill: "var(--color-neutral-500)", fontSize: 8, fontWeight: 500 },
+        labelBgPadding: [3, 1] as [number, number],
+        labelBgBorderRadius: 3,
+        labelBgStyle: { fill: "#18181b", color: "#a1a1aa", opacity: 0.8 },
+      };
+    });
+  }, [schema.relations, activeTableId, hoveredTableId]);
+
+  const handleResetZoom = useCallback(() => {
+    fitView({ padding: 0.15, duration: 600 });
+  }, [fitView]);
+
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: any) => {
+      // 1. Center camera smoothly
+      setCenter(node.position.x + 110, node.position.y + 100, {
+        zoom: 1.1,
+        duration: 650,
+      });
+
+      // Update relationship explorer path
+      if (onBreadcrumbChange) {
+        const index = breadcrumb.indexOf(node.id);
+        if (index !== -1) {
+          // Clicked a table already in breadcrumb, truncate path to it
+          onBreadcrumbChange(breadcrumb.slice(0, index + 1));
+        } else {
+          // If breadcrumb is empty, start path.
+          // If not empty, check if it's connected to current active table
+          if (breadcrumb.length > 0) {
+            const activeId = breadcrumb[breadcrumb.length - 1];
+            const neighbors = getNeighbors(activeId);
+            if (neighbors.has(node.id)) {
+              onBreadcrumbChange([...breadcrumb, node.id]);
+            } else {
+              onBreadcrumbChange([node.id]);
+            }
+          } else {
+            onBreadcrumbChange([node.id]);
+          }
+        }
+      }
+
+      // 2. Open specs modal after transition completes
+      setTimeout(() => {
+        const table = schema.tables.find((t) => t.id === node.id);
+        if (table) {
+          onSelectTable?.(table);
+        }
+      }, 680);
+    },
+    [schema.tables, breadcrumb, onBreadcrumbChange, onSelectTable, setCenter, getNeighbors]
+  );
+
+  const onPaneClick = useCallback(() => {
+    // Clear path focus on empty pane click
+    if (onBreadcrumbChange) {
+      onBreadcrumbChange([]);
+    }
+  }, [onBreadcrumbChange]);
+
+  const onNodeMouseEnter = useCallback((_event: React.MouseEvent, node: any) => {
+    setHoveredTableId(node.id);
+  }, []);
+
+  const onNodeMouseLeave = useCallback(() => {
+    setHoveredTableId(null);
+  }, []);
+
+  // Autofit on load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitView({ padding: 0.15, duration: 600 });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [schema, fitView]);
 
   return (
-    <div className="relative overflow-x-auto rounded-xl border border-border bg-surface-2">
-      <svg
-        viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        className="w-full"
-        style={{ minHeight: svgHeight }}
+    <div className="relative h-[750px] w-full rounded-xl border border-neutral-850 bg-neutral-950 overflow-hidden">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
+        minZoom={0.4}
+        maxZoom={2}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.9 }}
+        fitViewOptions={{ padding: 0.15 }}
       >
-        <defs>
-          <marker
-            id="er-arrow"
-            markerWidth="8"
-            markerHeight="6"
-            refX="7"
-            refY="3"
-            orient="auto"
+        <Background variant={BackgroundVariant.Lines} color="#27272a" gap={16} size={1} />
+        <Controls showInteractive={false} className="!bg-neutral-900 border !border-neutral-800 rounded-lg overflow-hidden fill-neutral-400" />
+        <MiniMap
+          className="!bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden hidden md:block"
+          nodeColor="#27272a"
+          maskColor="rgba(0,0,0,0.5)"
+        />
+        <Panel position="top-right" className="flex gap-2">
+          <button
+            onClick={handleResetZoom}
+            className="flex h-8 items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900 px-3 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white"
           >
-            <polygon points="0 0, 8 3, 0 6" fill="var(--color-neutral-600)" />
-          </marker>
-          <marker
-            id="er-arrow-active"
-            markerWidth="8"
-            markerHeight="6"
-            refX="7"
-            refY="3"
-            orient="auto"
-          >
-            <polygon points="0 0, 8 3, 0 6" fill="var(--color-primary-400)" />
-          </marker>
-        </defs>
-
-        {schema.relations.map((rel, i) => {
-          const from = positions.current[rel.from];
-          const to = positions.current[rel.to];
-          if (!from || !to) return null;
-          const isActive =
-            selected === rel.from ||
-            selected === rel.to ||
-            hovered === rel.from ||
-            hovered === rel.to;
-          const fromTable = schema.tables.find((t) => t.id === rel.from);
-          const colIndex = fromTable?.columns.findIndex((c) => c.name === rel.fromColumn) ?? 0;
-          const fromY = from.y + HEADER_HEIGHT + TABLE_PADDING + colIndex * ROW_HEIGHT + 10;
-          const toY = to.y + HEADER_HEIGHT + TABLE_PADDING + 10;
-          return (
-            <g key={i}>
-              <path
-                d={`M ${from.x} ${fromY} C ${from.x - 30} ${fromY}, ${to.x + TABLE_WIDTH + 30} ${toY}, ${to.x + TABLE_WIDTH} ${toY}`}
-                fill="none"
-                stroke={isActive ? "var(--color-primary-500)" : "var(--color-neutral-700)"}
-                strokeWidth={isActive ? 2 : 1}
-                markerEnd={isActive ? "url(#er-arrow-active)" : "url(#er-arrow)"}
-                className="transition-all"
-              />
-              {isActive ? (
-                <g>
-                  <rect
-                    x={(from.x + to.x + TABLE_WIDTH) / 2 - 40}
-                    y={(fromY + toY) / 2 - 8}
-                    width={80}
-                    height={16}
-                    rx={4}
-                    fill="var(--color-surface)"
-                    stroke="var(--color-primary-500/30)"
-                  />
-                  <text
-                    x={(from.x + to.x + TABLE_WIDTH) / 2}
-                    y={(fromY + toY) / 2 + 3}
-                    textAnchor="middle"
-                    className="fill-primary-300 text-[8px] font-medium"
-                  >
-                    {rel.type}
-                  </text>
-                </g>
-              ) : null}
-            </g>
-          );
-        })}
-
-        {schema.tables.map((table, i) => {
-          const pos = positions.current[table.id];
-          if (!pos) return null;
-          const h = tableHeight(table);
-          const isSelected = selected === table.id;
-          const isHovered = hovered === table.id;
-          return (
-            <motion.g
-              key={table.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.3 }}
-              onClick={() => handleSelect(table)}
-              onMouseEnter={() => setHovered(table.id)}
-              onMouseLeave={() => setHovered(null)}
-              className="cursor-pointer"
-            >
-              <rect
-                x={pos.x}
-                y={pos.y}
-                width={TABLE_WIDTH}
-                height={h}
-                rx={8}
-                fill={isSelected || isHovered ? "var(--color-surface)" : "var(--color-neutral-800)"}
-                stroke={isSelected ? "var(--color-primary-500)" : "var(--color-border)"}
-                strokeWidth={isSelected ? 2 : 1}
-                className="transition-all"
-              />
-              <rect
-                x={pos.x}
-                y={pos.y}
-                width={TABLE_WIDTH}
-                height={HEADER_HEIGHT}
-                rx={8}
-                fill={isSelected ? "var(--color-primary-500/15)" : "var(--color-surface-2)"}
-              />
-              <rect
-                x={pos.x}
-                y={pos.y + HEADER_HEIGHT - 8}
-                width={TABLE_WIDTH}
-                height={8}
-                fill={isSelected ? "var(--color-primary-500/15)" : "var(--color-surface-2)"}
-              />
-              <foreignObject x={pos.x + 8} y={pos.y + 4} width={TABLE_WIDTH - 16} height={HEADER_HEIGHT - 8}>
-                <div className="flex h-full items-center gap-1.5">
-                  <span className="truncate text-xs font-semibold text-neutral-100">
-                    {table.name}
-                  </span>
-                </div>
-              </foreignObject>
-              {table.columns.map((col, ci) => (
-                <foreignObject
-                  key={col.name}
-                  x={pos.x + TABLE_PADDING}
-                  y={pos.y + HEADER_HEIGHT + TABLE_PADDING + ci * ROW_HEIGHT}
-                  width={TABLE_WIDTH - TABLE_PADDING * 2}
-                  height={ROW_HEIGHT}
-                >
-                  <div className="flex h-full items-center gap-1.5 px-1">
-                    {col.primaryKey ? (
-                      <KeyRound className="h-2.5 w-2.5 shrink-0 text-warning-400" />
-                    ) : col.unique ? (
-                      <Link2 className="h-2.5 w-2.5 shrink-0 text-accent-400" />
-                    ) : (
-                      <span className="w-2.5 shrink-0" />
-                    )}
-                    <span
-                      className={cn(
-                        "truncate text-[10px]",
-                        col.primaryKey ? "font-semibold text-neutral-100" : "text-neutral-300",
-                      )}
-                    >
-                      {col.name}
-                    </span>
-                    <span className="ml-auto shrink-0 text-[9px] text-neutral-600">
-                      {col.type}
-                    </span>
-                    {col.nullable ? (
-                      <span className="shrink-0 text-[8px] text-neutral-700">?</span>
-                    ) : null}
-                  </div>
-                </foreignObject>
-              ))}
-            </motion.g>
-          );
-        })}
-      </svg>
-
-      <div className="flex flex-wrap gap-3 border-t border-border px-4 py-3 text-xs text-neutral-500">
-        <div className="flex items-center gap-1.5">
-          <KeyRound className="h-3 w-3 text-warning-400" />
-          Primary key
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Link2 className="h-3 w-3 text-accent-400" />
-          Unique
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-neutral-700">?</span>
-          Nullable
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-0.5 w-6 bg-neutral-600" />
-          <span className="h-0.5 w-6 border-t border-dashed border-neutral-600" />
-          Relation (solid / dashed)
-        </div>
-      </div>
+            <RefreshCw className="h-3.5 w-3.5" />
+            Fit View
+          </button>
+        </Panel>
+      </ReactFlow>
     </div>
+  );
+}
+
+export function ERDiagram({
+  schema,
+  onSelectTable,
+  breadcrumb = [],
+  onBreadcrumbChange,
+}: {
+  schema: DatabaseSchema;
+  onSelectTable?: (table: SchemaTable) => void;
+  breadcrumb?: string[];
+  onBreadcrumbChange?: (path: string[]) => void;
+}) {
+  return (
+    <ReactFlowProvider>
+      <ERDiagramInner
+        schema={schema}
+        onSelectTable={onSelectTable}
+        breadcrumb={breadcrumb}
+        onBreadcrumbChange={onBreadcrumbChange}
+      />
+    </ReactFlowProvider>
   );
 }

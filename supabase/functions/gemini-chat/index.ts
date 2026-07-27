@@ -1,10 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { callGemini, corsHeaders, AIServiceError } from "../_shared/ai-service.ts";
 
 interface ChatRequest {
   messages: { role: "user" | "assistant" | "system"; content: string }[];
@@ -27,7 +22,7 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Missing authorization header." }),
+        JSON.stringify({ error: "Missing authorization header.", code: "UNAUTHORIZED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -41,23 +36,15 @@ Deno.serve(async (req: Request) => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData.user) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized." }),
+        JSON.stringify({ error: "Unauthorized.", code: "UNAUTHORIZED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "AI service not configured. Set GEMINI_API_KEY." }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const body: ChatRequest = await req.json();
     if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Messages array is required." }),
+        JSON.stringify({ error: "Messages array is required.", code: "BAD_REQUEST" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -71,43 +58,29 @@ Deno.serve(async (req: Request) => {
       })),
     ];
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-            topP: 0.95,
-          },
-        }),
+    const geminiRes = await callGemini({
+      contents,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+        topP: 0.95,
       },
-    );
-
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      return new Response(
-        JSON.stringify({ error: `Gemini API error (${geminiRes.status}): ${errText}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const geminiData = await geminiRes.json();
-    const reply =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ??
-      "I couldn't generate a response. Please try rephrasing.";
+    });
 
     return new Response(
-      JSON.stringify({ reply }),
+      JSON.stringify({ reply: geminiRes.reply }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
+    const status = err instanceof AIServiceError ? err.status : 500;
+    const code = err instanceof AIServiceError ? err.code : "INTERNAL_ERROR";
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ 
+        error: err instanceof Error ? err.message : "Internal error.", 
+        code 
+      }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
+

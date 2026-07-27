@@ -17,7 +17,7 @@ const steps = [
   {
     num: "02",
     title: "AI generates the assets",
-    description: "DevCanvas calls Gemini 1.5 Flash and returns a full architecture diagram, normalized schema, OpenAPI spec, and security report — in under 15 seconds.",
+    description: "DevCanvas calls Gemini 2.5 Flash and returns a full architecture diagram, normalized schema, OpenAPI spec, and security report — in under 15 seconds.",
     color: "text-accent-400",
     glow: "bg-accent-500/15",
   },

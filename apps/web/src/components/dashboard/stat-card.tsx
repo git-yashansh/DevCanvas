@@ -12,6 +12,7 @@ interface StatCardProps {
   color?: string;
   colorType?: string;
   index?: number;
+  onClick?: () => void;
 }
 
 export function StatCard({
@@ -23,6 +24,7 @@ export function StatCard({
   color,
   colorType,
   index = 0,
+  onClick,
 }: StatCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const spotlightRef = useRef<HTMLDivElement>(null);
@@ -134,6 +136,7 @@ export function StatCard({
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={onClick}
       style={{ perspective: 1000, transformStyle: "preserve-3d" }}
       className="glass-card stat-card-anim group relative overflow-hidden rounded-2xl p-5 cursor-pointer bg-noise"
     >

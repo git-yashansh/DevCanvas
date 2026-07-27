@@ -1,10 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+import { callGemini, corsHeaders, AIServiceError, robustJsonParse } from "../_shared/ai-service.ts";
 
 interface GenerateRequest {
   prompt: string;
@@ -70,7 +65,7 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Missing authorization header." }),
+        JSON.stringify({ error: "Missing authorization header.", code: "UNAUTHORIZED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -84,23 +79,15 @@ Deno.serve(async (req: Request) => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData.user) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized." }),
+        JSON.stringify({ error: "Unauthorized.", code: "UNAUTHORIZED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: "AI service not configured. Set GEMINI_API_KEY." }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const body: GenerateRequest = await req.json();
     if (!body.prompt || body.prompt.trim().length < 5) {
       return new Response(
-        JSON.stringify({ error: "A prompt of at least 5 characters is required." }),
+        JSON.stringify({ error: "A prompt of at least 5 characters is required.", code: "BAD_REQUEST" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -112,55 +99,35 @@ Deno.serve(async (req: Request) => {
       { role: "user", parts: [{ text: `Generate a ${dialect} database schema for: ${body.prompt}` }] },
     ];
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 8192,
-            topP: 0.9,
-            responseMimeType: "application/json",
-          },
-        }),
+    const geminiRes = await callGemini({
+      contents,
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 8192,
+        topP: 0.9,
+        responseMimeType: "application/json",
       },
-    );
+    });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      return new Response(
-        JSON.stringify({ error: `Gemini API error (${geminiRes.status}): ${errText}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    const rawText = geminiRes.reply;
 
-    const geminiData = await geminiRes.json();
-    const rawText =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const schema = robustJsonParse(rawText);
 
-    let schema: unknown;
-    try {
-      schema = JSON.parse(rawText);
-    } catch {
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        schema = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("AI did not return valid JSON.");
-      }
-    }
 
     return new Response(
       JSON.stringify({ schema }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
+    const status = err instanceof AIServiceError ? err.status : 500;
+    const code = err instanceof AIServiceError ? err.code : "INTERNAL_ERROR";
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ 
+        error: err instanceof Error ? err.message : "Internal error.", 
+        code 
+      }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
+

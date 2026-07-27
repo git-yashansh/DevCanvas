@@ -41,11 +41,27 @@ export function ChatPanel({ projectId }: { projectId: string }) {
     try {
       await sendMessage.mutateAsync({ projectId, content });
 
-      const history = messages ?? [];
-      const allMessages = [
-        ...history.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user" as const, content },
-      ];
+      const rawHistory = messages ?? [];
+      const formattedHistory: { role: "user" | "assistant"; content: string }[] = [];
+      
+      rawHistory.forEach((msg) => {
+        if (msg.role === "system") return; // Skip system logs
+        
+        const lastMsg = formattedHistory[formattedHistory.length - 1];
+        if (lastMsg && lastMsg.role === msg.role) {
+          lastMsg.content += "\n" + msg.content;
+        } else {
+          formattedHistory.push({ role: msg.role as any, content: msg.content });
+        }
+      });
+
+      // Append new user message
+      const lastMsg = formattedHistory[formattedHistory.length - 1];
+      if (lastMsg && lastMsg.role === "user") {
+        lastMsg.content += "\n" + content;
+      } else {
+        formattedHistory.push({ role: "user", content });
+      }
 
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
@@ -60,7 +76,7 @@ export function ChatPanel({ projectId }: { projectId: string }) {
             Authorization: `Bearer ${token}`,
             apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
           },
-          body: JSON.stringify({ messages: allMessages }),
+          body: JSON.stringify({ messages: formattedHistory }),
         },
       );
 

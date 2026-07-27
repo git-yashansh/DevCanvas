@@ -22,6 +22,13 @@ export interface Project {
   status: ProjectStatus;
   visibility: ProjectVisibility;
   tags: string[];
+  architecture?: any;
+  database_schema?: any;
+  api_spec?: any;
+  security_report?: any;
+  deployment_plan?: any;
+  documentation?: any;
+  specification?: any;
   created_at: string;
   updated_at: string;
 }

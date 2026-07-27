@@ -6,7 +6,7 @@ import { cn } from "@utils/index";
 const faqs = [
   {
     question: "How does DevCanvas generate architecture from natural language?",
-    answer: "Your prompt is sent to Gemini 1.5 Flash with a structured system prompt that constrains the output to a defined JSON schema. DevCanvas parses the response into services, data stores, data flows, and interaction patterns, then renders an interactive diagram you can edit and export.",
+    answer: "Your prompt is sent to Gemini 2.5 Flash with a structured system prompt that constrains the output to a defined JSON schema. DevCanvas parses the response into services, data stores, data flows, and interaction patterns, then renders an interactive diagram you can edit and export.",
   },
   {
     question: "Can I use DevCanvas with an existing codebase?",

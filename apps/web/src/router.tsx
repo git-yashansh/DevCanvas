@@ -14,6 +14,9 @@ import { ArchitectureGeneratorPage } from "@/pages/architecture-generator";
 import { DatabaseDesignerPage } from "@/pages/database-designer";
 import { ApiGeneratorPage } from "@/pages/api-generator";
 import { SecurityCenterPage } from "@/pages/security-center";
+import { RepoAnalyzerPage } from "@/pages/repo-analyzer";
+import { DocumentationGeneratorPage } from "@/pages/documentation-generator";
+import { DeploymentGeneratorPage } from "@/pages/deployment-generator";
 import { SupportPage } from "@/pages/support";
 import { GeneratorPlaceholder } from "@/pages/generator-placeholder";
 
@@ -36,23 +39,10 @@ export function AppRouter() {
           <Route path="database" element={<DatabaseDesignerPage />} />
           <Route path="api-generator" element={<ApiGeneratorPage />} />
           <Route path="security" element={<SecurityCenterPage />} />
+          <Route path="repo" element={<RepoAnalyzerPage />} />
+          <Route path="documentation" element={<DocumentationGeneratorPage />} />
+          <Route path="deployment" element={<DeploymentGeneratorPage />} />
           <Route path="support" element={<SupportPage />} />
-          <Route
-            path="repo"
-            element={
-              <GeneratorPlaceholder
-                title="Repository Analyzer"
-                description="Connect a repo and get structure, quality metrics, and refactors."
-                icon={GitBranch}
-                features={[
-                  "Folder structure mapping",
-                  "Dependency graph",
-                  "Code quality metrics",
-                  "Refactoring suggestions",
-                ]}
-              />
-            }
-          />
         </Route>
 
         <Route path="*" element={<LandingPage />} />
