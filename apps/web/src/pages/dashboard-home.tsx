@@ -78,62 +78,63 @@ export function DashboardHomePage() {
   }, [activity, activityFilter]);
 
   return (
-    <div className="relative min-h-screen z-10 space-y-10 pb-16 font-sans">
+    <div className="relative min-h-screen z-10 space-y-12 pb-20 font-sans tracking-tight antialiased">
       {/* ── Precision Ambient Graphite grid ── */}
       <GraphiteAnimatedBackground />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-10">
+      {/* Utilise maximum left and right space of the dashboard page */}
+      <div className="relative z-10 w-full px-6 lg:px-12 space-y-10">
         
         {/* ── Page Header & Hero Title ── */}
         <div className="relative pb-4">
           {/* Subtle Invisible Radial Glow backdrop */}
           <div
-            className="absolute -top-12 left-1/3 h-[280px] w-[350px] rounded-full opacity-20 pointer-events-none"
+            className="absolute -top-12 left-1/3 h-[320px] w-[450px] rounded-full opacity-25 pointer-events-none"
             style={{
               background: "radial-gradient(circle, rgba(124, 92, 255, 0.15) 0%, rgba(59, 130, 246, 0.05) 60%, transparent 100%)",
-              filter: "blur(40px)",
+              filter: "blur(50px)",
             }}
           />
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="space-y-1 text-left">
-              <h1 className="font-heading text-3xl font-extrabold tracking-tight text-white sm:text-4xl bg-clip-text">
+            <div className="space-y-1.5 text-left">
+              <h1 className="font-heading text-4xl font-extrabold tracking-tight text-white sm:text-5xl bg-clip-text">
                 Welcome back, {profile?.full_name?.split(" ")[0] ?? "engineer"}
               </h1>
-              <p className="text-sm text-neutral-450">
+              <p className="text-base text-neutral-400">
                 Your AI engineering workspace. Generate, analyze, and ship production-ready architectures.
               </p>
             </div>
             <button
               onClick={() => navigate("/app/projects/new")}
-              className="flex items-center gap-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 px-4 py-2 text-xs font-bold text-white transition-all shadow-[0_4px_12px_rgba(99,102,241,0.15)] active:scale-[0.98]"
+              className="flex items-center gap-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-all shadow-[0_4px_12px_rgba(99,102,241,0.15)] active:scale-[0.98]"
             >
-              <Plus className="h-4 w-4" /> New Project
+              <Plus className="h-4.5 w-4.5" /> New Project
             </button>
           </div>
         </div>
 
         {/* ── Search Command Bar Widget ── */}
-        <div className="relative group max-w-3xl">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-xl blur-md opacity-30 group-hover:opacity-50 transition-opacity" />
-          <div className="relative flex items-center bg-[#09090B] border border-white/10 rounded-xl px-3.5 py-2.5 shadow-xl">
-            <Search className="h-4.5 w-4.5 text-neutral-500 mr-2.5" />
+        <div className="relative group max-w-4xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-xl blur-md opacity-35 group-hover:opacity-50 transition-opacity" />
+          <div className="relative flex items-center bg-[#09090B] border border-white/10 rounded-xl px-4 py-3 shadow-xl">
+            <Search className="h-5 w-5 text-neutral-500 mr-3" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search projects, blueprints, technical specifications or type Ctrl + K..."
-              className="w-full bg-transparent text-sm text-white placeholder-neutral-500 focus:outline-none"
+              className="w-full bg-transparent text-base text-white placeholder-neutral-500 focus:outline-none py-0.5"
             />
-            <div className="hidden sm:flex items-center gap-1 border border-white/10 bg-white/[0.04] rounded px-1.5 py-0.5 text-[10px] text-neutral-400 font-mono">
-              <Command className="h-3 w-3" />
+            <div className="hidden sm:flex items-center gap-1 border border-white/10 bg-white/[0.04] rounded px-2 py-1 text-xs text-neutral-400 font-mono">
+              <Command className="h-3.5 w-3.5" />
               <span>K</span>
             </div>
           </div>
         </div>
 
         {/* ── Statistics Cards with top borders ── */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Total Projects"
             value={projects?.length ?? 0}
@@ -179,36 +180,36 @@ export function DashboardHomePage() {
 
         {/* ── Quick Action Generator Modules ── */}
         <div className="space-y-4">
-          <h2 className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5" /> Quick Actions Spec Generators
+          <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
+            <Layers className="h-4 w-4" /> Quick Actions Spec Generators
           </h2>
           <QuickActions />
         </div>
 
         {/* ── Horizontal Progress Spec Widget ── */}
-        <div className="rounded-xl border border-white/5 bg-[#09090B] p-5 space-y-4 shadow-sm text-left">
+        <div className="rounded-xl border border-white/5 bg-[#09090B] p-6 space-y-4 shadow-sm text-left">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-550">Engineering Delivery Pipeline</span>
-            <span className="text-[10.5px] text-neutral-450 font-mono">Current state: Database design validation</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-neutral-550">Engineering Delivery Pipeline</span>
+            <span className="text-xs text-neutral-450 font-mono">Current state: Database design validation</span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-7 gap-2 pt-2">
+          <div className="grid grid-cols-2 md:grid-cols-7 gap-3 pt-2">
             {SPEC_PIPELINE_STAGES.map((stg) => (
               <div
                 key={stg.id}
                 className={cn(
-                  "p-3 rounded-lg border text-xs",
+                  "p-4 rounded-lg border text-sm font-semibold transition-all",
                   stg.status === "complete"
                     ? "border-indigo-500/20 bg-indigo-500/5 text-indigo-300"
                     : stg.status === "current"
-                    ? "border-primary-500/30 bg-primary-500/10 text-white font-semibold"
+                    ? "border-primary-500/30 bg-primary-500/10 text-white font-bold"
                     : "border-white/5 bg-white/[0.01] text-neutral-550"
                 )}
               >
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   <span
                     className={cn(
-                      "h-1.5 w-1.5 rounded-full",
+                      "h-2 w-2 rounded-full",
                       stg.status === "complete" ? "bg-indigo-400" : stg.status === "current" ? "bg-emerald-400 animate-pulse" : "bg-neutral-600"
                     )}
                   />
@@ -222,7 +223,7 @@ export function DashboardHomePage() {
         {/* ── Recent Projects Grid with Stack Badges & Actions ── */}
         <div className="space-y-4 text-left">
           <div className="flex items-center justify-between">
-            <h2 className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-500">
               Recent specifications
             </h2>
             <button
@@ -233,7 +234,7 @@ export function DashboardHomePage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => <ProjectCardSkeleton key={i} />)
             ) : filteredProjects.length === 0 ? (
@@ -246,28 +247,28 @@ export function DashboardHomePage() {
                 return (
                   <div
                     key={project.id}
-                    className="group relative rounded-xl border border-white/10 bg-[#09090B] hover:border-white/20 transition-all p-5 flex flex-col justify-between"
+                    className="group relative rounded-xl border border-white/10 bg-[#09090B] hover:border-white/20 transition-all p-6 flex flex-col justify-between"
                   >
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div className="flex justify-between items-start">
-                        <h3 className="font-heading text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">
+                        <h3 className="font-heading text-lg font-bold text-white group-hover:text-indigo-400 transition-colors">
                           {project.name}
                         </h3>
-                        <Badge variant="outline" className="text-[10px] border-emerald-500/20 text-emerald-400">
+                        <Badge variant="outline" className="text-xs font-bold border-emerald-500/20 text-emerald-400">
                           Score {specMetrics.overall}%
                         </Badge>
                       </div>
 
-                      <p className="text-xs text-neutral-400 line-clamp-2 leading-relaxed">
+                      <p className="text-sm text-neutral-300 line-clamp-2 leading-relaxed">
                         {project.description || "No project description provided."}
                       </p>
 
                       {/* Tech stack badges */}
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1.5 pt-1">
                         {["React", "Node.js", "PostgreSQL", "AWS"].map((tech) => (
                           <span
                             key={tech}
-                            className="text-[9px] font-semibold text-neutral-400 bg-white/5 border border-white/5 rounded px-1.5 py-0.5"
+                            className="text-xs font-semibold text-neutral-400 bg-white/5 border border-white/5 rounded px-2.5 py-1"
                           >
                             {tech}
                           </span>
@@ -275,15 +276,15 @@ export function DashboardHomePage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3.5 border-t border-white/5 flex items-center justify-between text-xs">
-                      <span className="text-[10.5px] text-neutral-500">
+                    <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-xs">
+                      <span className="text-xs text-neutral-500 font-medium">
                         Updated {new Date(project.updated_at).toLocaleDateString()}
                       </span>
                       <button
                         onClick={() => navigate(`/app/projects/${project.id}`)}
-                        className="flex items-center gap-1 text-xs text-white group-hover:text-indigo-400 font-semibold"
+                        className="flex items-center gap-1.5 text-sm text-white group-hover:text-indigo-400 font-bold"
                       >
-                        Open Workspace <ChevronRight className="h-3.5 w-3.5" />
+                        Open Workspace <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -294,26 +295,26 @@ export function DashboardHomePage() {
         </div>
 
         {/* ── Activity Feed Filter Timeline ── */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 text-left">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 text-left">
           
           {/* Timeline Activity card */}
-          <div className="rounded-xl border border-white/5 bg-[#09090B] p-5 space-y-4 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+          <div className="rounded-xl border border-white/5 bg-[#09090B] p-6 space-y-5 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3.5">
               <div className="flex items-center gap-2">
-                <Activity className="h-4.5 w-4.5 text-indigo-400" />
-                <h3 className="font-heading text-xs font-bold uppercase tracking-wider text-neutral-400">
+                <Activity className="h-5 w-5 text-indigo-400" />
+                <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-neutral-400">
                   Recent activities timeline
                 </h3>
               </div>
 
               {/* Filters */}
-              <div className="flex flex-wrap gap-1 text-[9px] font-semibold">
+              <div className="flex flex-wrap gap-1.5 text-xs font-bold">
                 {["Architecture", "Database", "API", "Security"].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setActivityFilter(activityFilter === cat ? null : cat)}
                     className={cn(
-                      "px-2 py-0.5 rounded border transition-colors",
+                      "px-2.5 py-1 rounded border transition-colors",
                       activityFilter === cat
                         ? "bg-indigo-500/10 border-indigo-500 text-indigo-300"
                         : "bg-white/5 border-white/10 text-neutral-400 hover:text-white"
@@ -326,13 +327,13 @@ export function DashboardHomePage() {
             </div>
 
             {filteredActivities.length > 0 ? (
-              <div className="relative pl-4 border-l border-white/15 space-y-4 py-2 font-sans text-xs">
+              <div className="relative pl-5 border-l border-white/15 space-y-5 py-2 font-sans text-sm">
                 {filteredActivities.map((item) => (
                   <div key={item.id} className="relative space-y-1">
-                    <span className="absolute -left-[20.5px] top-1.5 h-2.5 w-2.5 rounded-full border border-[#09090B] bg-indigo-500" />
-                    <div className="flex justify-between items-center gap-3">
-                      <span className="text-neutral-300">{item.content}</span>
-                      <span className="text-[10px] text-neutral-500 font-mono shrink-0">
+                    <span className="absolute -left-[25.5px] top-1.5 h-3 w-3 rounded-full border border-[#09090B] bg-indigo-500" />
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-sm text-neutral-200">{item.content}</span>
+                      <span className="text-xs text-neutral-450 font-mono shrink-0">
                         {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -340,15 +341,15 @@ export function DashboardHomePage() {
                 ))}
               </div>
             ) : (
-              <div className="text-xs text-neutral-550 py-4">No matching timeline logs found.</div>
+              <div className="text-sm text-neutral-550 py-4">No matching timeline logs found.</div>
             )}
           </div>
 
           {/* Quick Platform Stats card */}
-          <div className="rounded-xl border border-white/5 bg-[#09090B] p-5 space-y-4 shadow-sm">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
-              <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
-              <h3 className="font-heading text-xs font-bold uppercase tracking-wider text-neutral-400">
+          <div className="rounded-xl border border-white/5 bg-[#09090B] p-6 space-y-5 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-3.5">
+              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-neutral-400">
                 Blueprint specifications by status
               </h3>
             </div>
@@ -365,11 +366,11 @@ export function DashboardHomePage() {
                   };
                   return (
                     <div key={status}>
-                      <div className="mb-1 flex justify-between text-[11px] font-sans">
-                        <span className="capitalize text-neutral-450 font-medium">{status}</span>
+                      <div className="mb-1.5 flex justify-between text-xs font-sans">
+                        <span className="capitalize text-neutral-450 font-semibold">{status}</span>
                         <span className="text-neutral-300 font-mono">{count}</span>
                       </div>
-                      <div className="relative h-1 w-full overflow-hidden rounded-full bg-white/5">
+                      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                         <div
                           className={`h-full rounded-full ${barColors[status]} transition-[width] duration-300`}
                           style={{ width: `${pct}%` }}
@@ -380,7 +381,7 @@ export function DashboardHomePage() {
                 })}
               </div>
             ) : (
-              <div className="flex h-32 items-center justify-center text-xs text-neutral-550">
+              <div className="flex h-32 items-center justify-center text-sm text-neutral-550">
                 No active projects recorded.
               </div>
             )}

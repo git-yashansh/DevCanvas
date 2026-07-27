@@ -148,31 +148,31 @@ export function StatCard({
 
       <div className="relative z-20 flex items-start justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-450">
             {label}
           </p>
           <p
             ref={numberRef}
-            className="mt-2 font-heading text-3xl font-bold tracking-tight text-white"
+            className="mt-3 font-heading text-4xl sm:text-5xl font-extrabold tracking-tight text-white"
           >
             {displayValue}
           </p>
         </div>
         <span
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06] border border-white/10 shadow-inner transition-transform duration-300 group-hover:scale-110",
+            "flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.06] border border-white/10 shadow-inner transition-transform duration-300 group-hover:scale-110",
             color || colorType
           )}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-5.5 w-5.5" />
         </span>
       </div>
 
       {delta ? (
-        <div className="relative z-20 mt-3 flex items-center gap-1.5 text-xs font-medium">
+        <div className="relative z-20 mt-4 flex items-center gap-1.5 text-sm font-medium">
           <span
             className={cn(
-              "h-1.5 w-1.5 rounded-full",
+              "h-2 w-2 rounded-full",
               deltaType === "up" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" : deltaType === "down" ? "bg-red-400" : "bg-white/30"
             )}
           />
