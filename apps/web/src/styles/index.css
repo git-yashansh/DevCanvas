@@ -87,8 +87,8 @@
   --color-neutral-950: #09090B;
 
   /* Fonts */
-  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-heading: "Instrument Serif", "Playfair Display", "Source Serif 4", Georgia, serif;
+  --font-sans: "Geist Sans", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: "Anthropic Serif", "Source Serif 4", Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* Radius */
@@ -164,7 +164,7 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     line-height: 1.2;
-    letter-spacing: 0.03em;
+    letter-spacing: -0.02em;
   }
 
   code, pre, kbd, samp {
