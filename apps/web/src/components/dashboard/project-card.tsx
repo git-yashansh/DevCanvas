@@ -133,14 +133,14 @@ export function ProjectCard({ project, index }: { project: Project; index: numbe
 
       <Link
         to={`/app/projects/${project.id}`}
-        className="relative z-20 block p-5"
+        className="relative z-20 block p-5.5"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
-            <h3 className="font-heading text-base font-semibold text-white/90 transition-colors group-hover:text-indigo-300">
+            <h3 className="font-heading text-lg font-semibold text-white/95 transition-colors group-hover:text-emerald-400">
               {project.name}
             </h3>
-            <p className="mt-1 line-clamp-2 text-sm text-white/40 leading-relaxed">
+            <p className="mt-1.5 line-clamp-2 text-sm text-neutral-300 leading-relaxed">
               {project.description ?? "No description"}
             </p>
           </div>
@@ -149,7 +149,7 @@ export function ProjectCard({ project, index }: { project: Project; index: numbe
               e.preventDefault();
               e.stopPropagation();
             }}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/30 opacity-0 transition-all hover:bg-white/10 hover:text-white group-hover:opacity-100"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/40 opacity-0 transition-all hover:bg-white/10 hover:text-white group-hover:opacity-100"
             aria-label="More options"
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -157,11 +157,11 @@ export function ProjectCard({ project, index }: { project: Project; index: numbe
         </div>
 
         {project.tags.length > 0 ? (
-          <div className="mt-3.5 flex flex-wrap gap-1.5">
+          <div className="mt-4 flex flex-wrap gap-1.5">
             {project.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-white/50"
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-xs font-semibold text-neutral-300"
               >
                 {tag}
               </span>
@@ -170,25 +170,25 @@ export function ProjectCard({ project, index }: { project: Project; index: numbe
         ) : null}
 
         <div className="mt-5 flex items-center justify-between border-t border-white/[0.08] pt-3.5">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {artifactIconItems.map(({ icon: Icon, active, color }, i) => (
               <span
                 key={i}
                 className={cn(
-                  "flex h-6 w-6 items-center justify-center rounded-md bg-white/[0.06] border border-white/10 transition-colors",
+                  "flex h-6.5 w-6.5 items-center justify-center rounded-md bg-white/[0.06] border border-white/10 transition-colors",
                   active ? color : "text-white/20",
                 )}
               >
-                <Icon className="h-3 w-3" />
+                <Icon className="h-3.5 w-3.5" />
               </span>
             ))}
-            <span className="ml-1.5 text-[11px] text-white/40 font-medium">
+            <span className="ml-1 text-xs text-neutral-300 font-semibold">
               {artifactCount} {artifactCount === 1 ? "artifact" : "artifacts"}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={status.variant}>{status.label}</Badge>
-            <span className="text-[11px] text-white/30">
+            <span className="text-xs text-neutral-400 font-medium">
               {formatRelative(project.updated_at)}
             </span>
           </div>

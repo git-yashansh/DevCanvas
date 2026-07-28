@@ -269,19 +269,19 @@ ${security
       </div>
 
       {/* Section 1: Executive Summary */}
-      <section className="rounded-xl border border-white/10 bg-white/[0.02] p-5 shadow-lg relative overflow-hidden group">
+      <section className="rounded-xl border border-white/10 bg-white/[0.02] p-5.5 shadow-lg relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-indigo-300 mb-3 flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5" />
+        <h3 className="font-heading text-xs font-extrabold uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-1.5">
+          <Sparkles className="h-4 w-4" />
           Executive Summary
         </h3>
-        <p className="text-xs text-neutral-300 leading-relaxed font-sans">{summary}</p>
+        <p className="text-sm text-neutral-200 leading-relaxed font-sans">{summary}</p>
       </section>
 
       {/* Section 2: Interactive Visualization */}
       {visualization && (
         <section className="space-y-3">
-          <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-neutral-400">
+          <h3 className="font-heading text-xs font-extrabold uppercase tracking-widest text-neutral-400">
             Interactive Visualization
           </h3>
           <div className="rounded-2xl border border-white/10 bg-black/40 overflow-hidden shadow-2xl relative h-[450px]">
@@ -292,7 +292,7 @@ ${security
 
       {/* Section 3: Detailed Breakdown Cards */}
       <section className="space-y-4">
-        <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-neutral-400">
+        <h3 className="font-heading text-xs font-extrabold uppercase tracking-widest text-neutral-400">
           Detailed Breakdown
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -305,18 +305,18 @@ ${security
                 layout
                 className="gradient-border rounded-xl group relative overflow-hidden"
               >
-                <div className="glass-strong rounded-xl p-4.5 space-y-3">
+                <div className="glass-strong rounded-xl p-5 space-y-3.5">
                   <div
                     className="flex items-center justify-between cursor-pointer"
                     onClick={() => toggleCard(card.title)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:scale-105 transition-transform">
-                        <CardIcon className="h-4.5 w-4.5" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform">
+                        <CardIcon className="h-5 w-5" />
                       </div>
-                      <h4 className="text-sm font-semibold text-neutral-100 tracking-tight">{card.title}</h4>
+                      <h4 className="text-base font-bold text-white tracking-tight">{card.title}</h4>
                     </div>
-                    <ChevronDown className={cn("h-4 w-4 text-neutral-500 transition-transform duration-200", isCollapsed && "rotate-180")} />
+                    <ChevronDown className={cn("h-4.5 w-4.5 text-neutral-400 transition-transform duration-200", isCollapsed && "rotate-180")} />
                   </div>
 
                   {!isCollapsed && (
@@ -325,26 +325,26 @@ ${security
                       animate={{ opacity: 1, height: "auto" }}
                       className="space-y-3"
                     >
-                      <p className="text-xs text-neutral-400 leading-relaxed">{card.description}</p>
+                      <p className="text-sm text-neutral-300 leading-relaxed">{card.description}</p>
                       {card.details && card.details.length > 0 && (
-                        <ul className="space-y-1.5">
+                        <ul className="space-y-2">
                           {card.details.map((detail, dIdx) => (
-                            <li key={dIdx} className="text-[11px] text-neutral-300 flex items-start gap-1.5">
-                              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400/80 mt-1 shrink-0" />
+                            <li key={dIdx} className="text-xs text-neutral-200 flex items-start gap-2">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
                               {detail}
                             </li>
                           ))}
                         </ul>
                       )}
                       {card.codeBlock && (
-                        <div className="relative rounded-lg bg-black/60 border border-white/5 p-3 overflow-x-auto text-[10px] font-mono text-indigo-200 group-code mt-2">
+                        <div className="relative rounded-lg bg-black/60 border border-white/5 p-3.5 overflow-x-auto text-xs font-mono text-emerald-200 group-code mt-2">
                           <button
                             onClick={async () => {
                               await navigator.clipboard.writeText(card.codeBlock || "");
                             }}
                             className="absolute right-2 top-2 p-1.5 rounded border border-white/10 bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white"
                           >
-                            <Copy className="h-3 w-3" />
+                            <Copy className="h-3.5 w-3.5" />
                           </button>
                           <pre>{card.codeBlock}</pre>
                         </div>
@@ -361,36 +361,36 @@ ${security
       {/* Section 4: Cost Estimation */}
       {cost && cost.length > 0 && (
         <section className="space-y-4">
-          <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-neutral-400">
+          <h3 className="font-heading text-xs font-extrabold uppercase tracking-widest text-neutral-400">
             Cost Estimation
           </h3>
           <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-white/10 bg-white/5 text-neutral-300 font-semibold">
-                  <th className="px-5 py-3">Infrastructure Category</th>
-                  <th className="px-5 py-3 text-right">Estimated Monthly Cost</th>
-                  <th className="px-5 py-3 text-right">Estimated Yearly Cost</th>
+                <tr className="border-b border-white/10 bg-white/5 text-neutral-200 font-semibold">
+                  <th className="px-5 py-3.5">Infrastructure Category</th>
+                  <th className="px-5 py-3.5 text-right">Estimated Monthly Cost</th>
+                  <th className="px-5 py-3.5 text-right">Estimated Yearly Cost</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-neutral-400">
+              <tbody className="divide-y divide-white/5 text-neutral-300">
                 {cost.map((row, idx) => (
                   <tr key={idx} className="hover:bg-white/[0.02]">
                     <td className="px-5 py-3.5 flex items-center gap-2 font-medium">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                       {row.category}
                     </td>
-                    <td className="px-5 py-3.5 text-right text-neutral-200 font-mono">${row.monthly.toFixed(2)}</td>
-                    <td className="px-5 py-3.5 text-right text-neutral-400 font-mono">${(row.monthly * 12).toFixed(2)}</td>
+                    <td className="px-5 py-3.5 text-right text-neutral-100 font-mono">${row.monthly.toFixed(2)}</td>
+                    <td className="px-5 py-3.5 text-right text-neutral-300 font-mono">${(row.monthly * 12).toFixed(2)}</td>
                   </tr>
                 ))}
-                <tr className="bg-white/5 font-semibold text-neutral-100">
+                <tr className="bg-white/5 font-bold text-white">
                   <td className="px-5 py-4 flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-emerald-400" />
+                    <DollarSign className="h-4.5 w-4.5 text-emerald-400" />
                     Total Infrastructure Cost
                   </td>
                   <td className="px-5 py-4 text-right text-emerald-400 font-mono">${totalCostMonthly.toFixed(2)}/mo</td>
-                  <td className="px-5 py-4 text-right text-emerald-500/80 font-mono">${(totalCostMonthly * 12).toFixed(2)}/yr</td>
+                  <td className="px-5 py-4 text-right text-emerald-400/80 font-mono">${(totalCostMonthly * 12).toFixed(2)}/yr</td>
                 </tr>
               </tbody>
             </table>
@@ -400,16 +400,16 @@ ${security
 
       {/* Section 5: Recommendations */}
       <section className="space-y-4">
-        <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-neutral-400">
+        <h3 className="font-heading text-xs font-extrabold uppercase tracking-widest text-neutral-400">
           AI Recommendations
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {recommendations.map((rec, idx) => (
-            <div key={idx} className="flex gap-3.5 rounded-xl border border-white/5 bg-white/[0.01] p-4 items-start hover:border-white/10 transition-colors">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400">
-                <CheckCircle2 className="h-3.5 w-3.5" />
+            <div key={idx} className="flex gap-3.5 rounded-xl border border-white/5 bg-white/[0.01] p-4.5 items-start hover:border-white/10 transition-colors">
+              <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mt-0.5">
+                <CheckCircle2 className="h-4 w-4" />
               </span>
-              <p className="text-xs text-neutral-300 font-sans leading-relaxed">{rec}</p>
+              <p className="text-sm text-neutral-200 font-sans leading-relaxed">{rec}</p>
             </div>
           ))}
         </div>
@@ -417,30 +417,30 @@ ${security
 
       {/* Section 6: Security Review */}
       <section className="space-y-4">
-        <h3 className="font-heading text-xs font-semibold uppercase tracking-wider text-neutral-400">
+        <h3 className="font-heading text-xs font-extrabold uppercase tracking-widest text-neutral-400">
           Security Review
         </h3>
         <div className="grid grid-cols-1 gap-4">
           {filteredSecurity.map((v, idx) => {
             const severityColor =
               v.severity === "critical"
-                ? "bg-danger-500/10 text-danger-400 border-danger-500/20"
+                ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
                 : v.severity === "high"
-                ? "bg-warning-500/10 text-warning-400 border-warning-500/20"
-                : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+                ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
             return (
-              <div key={idx} className="rounded-xl border border-white/10 bg-white/[0.01] p-5 space-y-3 relative overflow-hidden group">
-                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-indigo-500 to-purple-600" />
+              <div key={idx} className="rounded-xl border border-white/10 bg-white/[0.01] p-5 space-y-3.5 relative overflow-hidden group">
+                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-500 to-teal-500" />
                 <div className="flex items-center justify-between gap-3">
-                  <h4 className="text-sm font-semibold text-neutral-100">{v.title}</h4>
-                  <span className={cn("rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider", severityColor)}>
+                  <h4 className="text-base font-bold text-white">{v.title}</h4>
+                  <span className={cn("rounded-full border px-3 py-0.5 text-xs font-extrabold uppercase tracking-wider", severityColor)}>
                     {v.severity}
                   </span>
                 </div>
-                <p className="text-xs text-neutral-400 leading-relaxed font-sans">{v.description}</p>
-                <div className="rounded-lg bg-surface/50 p-3 border border-white/5 space-y-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Suggested Solution</span>
-                  <p className="text-xs text-neutral-300 leading-relaxed font-sans">{v.solution}</p>
+                <p className="text-sm text-neutral-300 leading-relaxed font-sans">{v.description}</p>
+                <div className="rounded-lg bg-surface/50 p-3.5 border border-white/5 space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-400">Suggested Solution</span>
+                  <p className="text-sm text-neutral-200 leading-relaxed font-sans">{v.solution}</p>
                 </div>
               </div>
             );

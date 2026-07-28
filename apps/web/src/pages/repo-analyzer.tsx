@@ -536,58 +536,15 @@ export function RepoAnalyzerPage() {
     }
   };
 
-  const downloadBlob = (content: string, filename: string, mimeType: string) => {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleExport = (format: string) => {
-    setExportOpen(false);
-    if (!report) return;
-    
-    switch (format) {
-      case "json":
-        downloadBlob(JSON.stringify({ report, files: REPO_EXPLORER_FILES }, null, 2), "codebase-spec-report.json", "application/json");
-        break;
-      case "yaml":
-        downloadBlob(
-          `# Repository Code Intelligence spec\nscore: ${report.score}\nmaintainability: ${report.maintainability}\ntechDebt: ${report.technicalDebt} days\n`,
-          "codebase-spec-report.yaml",
-          "text/yaml"
-        );
-        break;
-      case "markdown":
-        const mdText = `# DevCanvas Codebase Intelligence Report\n\n` +
-          `* Overall Score: ${report.score}%\n` +
-          `* Maintainability Index: ${report.maintainability}%\n` +
-          `* Architecture Integrity: ${report.architecture}%\n\n` +
-          `## Code Smells Review\n` +
-          CODE_QUALITY_ISSUES.map(c => `* [${c.severity.toUpperCase()}] ${c.file} - ${c.smell}: ${c.recommendation}`).join("\n");
-        downloadBlob(mdText, "codebase-intelligence.md", "text/markdown");
-        break;
-      default:
-        break;
-    }
-  };
-
   const toggleFolder = (id: string) => {
-    setCollapsedFolders(prev => ({ ...prev, [id]: !prev[id] }));
+    setCollapsedFolders((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Current selected file details object helper â€” uses live AI repoFiles data only
   const activeFile = useMemo(() => {
     if (!selectedFileId) return null;
     return repoFiles[selectedFileId] ?? null;
   }, [selectedFileId, repoFiles]);
 
-  // Current active step id during replay simulation
   const replayActiveId = useMemo(() => {
     if (replayStepIndex >= 0 && replayStepIndex < UNDERSTAND_REPLAY_STEPS.length) {
       return UNDERSTAND_REPLAY_STEPS[replayStepIndex].targetId;
@@ -596,54 +553,24 @@ export function RepoAnalyzerPage() {
   }, [replayStepIndex]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="w-full px-5 py-6 lg:px-8">
       <PageHeader
         title="Repository Analyzer"
         description="Connect any public GitHub repository to map dependencies, detect code smells, and scan structure vulnerabilities."
-        actions={
-          report ? (
-            <div className="flex gap-2 relative">
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setExportOpen(!exportOpen)}
-                  className="flex items-center gap-1.5"
-                >
-                  <Download className="h-4 w-4" />
-                  Export Workspace
-                </Button>
-                {exportOpen && (
-                  <div className="absolute right-0 top-full mt-1.5 w-52 flex flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-1 text-xs text-neutral-400 shadow-xl z-50">
-                    <span className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-neutral-600">Reports Formats</span>
-                    <button onClick={() => handleExport("markdown")} className="rounded px-2.5 py-1.5 text-left hover:bg-neutral-800 hover:text-white">Markdown Specs</button>
-                    <button onClick={() => handleExport("json")} className="rounded px-2.5 py-1.5 text-left hover:bg-neutral-800 hover:text-white">Raw JSON metrics</button>
-                    <button onClick={() => handleExport("yaml")} className="rounded px-2.5 py-1.5 text-left hover:bg-neutral-800 hover:text-white">YAML Architecture Report</button>
-                  </div>
-                )}
-              </div>
-
-              <Button variant="ghost" size="sm" onClick={handleAnalyze}>
-                <RefreshCw className="h-4 w-4" />
-                Re-analyze
-              </Button>
-            </div>
-          ) : null
-        }
       />
 
-      {/* Input panel aligned symmetric with architecture prompt editor */}
-      <div className="mt-8">
+      {/* ── TOP REPOSITORY LINK INPUT BOX ── */}
+      <div className="mt-6">
         <div className="gradient-border rounded-2xl">
-          <div className="glass-strong rounded-2xl p-6 text-left">
+          <div className="glass-strong rounded-2xl p-5 sm:p-6 text-left">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary-400" />
-                <span className="text-sm font-medium text-neutral-200">
+                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+                <span className="text-base font-bold text-white">
                   Enter GitHub Repository Details
                 </span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3 flex-col sm:flex-row">
                 <input
                   type="text"
                   value={repoUrl}
@@ -653,31 +580,26 @@ export function RepoAnalyzerPage() {
                       handleAnalyze();
                     }
                   }}
-                  placeholder="e.g. https://github.com/facebook/react"
-                  className="flex-grow rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                  placeholder="e.g. https://github.com/facebook/react or username/repository"
+                  className="flex-grow rounded-xl border border-white/10 bg-neutral-900/90 px-4 py-3.5 text-base text-white placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
                   disabled={generating}
                 />
                 <Button
                   variant="gradient"
                   onClick={handleAnalyze}
                   disabled={!repoUrl.trim() || generating}
+                  className="shrink-0 font-semibold text-base h-11 px-6"
                 >
                   {generating ? "Analyzing..." : "Analyze Repo"}
                 </Button>
               </div>
-              <p className="text-[10px] text-neutral-600">
-                Supports public repository configurations. Maps source directories structures and identifies imports modules pathways.
+              <p className="text-sm font-medium text-neutral-400">
+                Supports public GitHub repository links. Maps source directory structure, identifies dependencies, and audits code smells.
               </p>
             </div>
           </div>
         </div>
       </div>
-
-      {error ? (
-        <div className="mt-6 flex items-center gap-2 rounded-lg border border-danger-500/30 bg-danger-500/10 px-4 py-3 text-sm text-danger-300">
-          <AlertCircle className="h-4 w-4 shrink-0" />{error}
-        </div>
-      ) : null}
 
       <AnimatePresence mode="wait">
         {generating && !finishedLoading ? (
@@ -1186,12 +1108,12 @@ export function RepoAnalyzerPage() {
             className="mt-8 text-left space-y-6"
           >
             <div className="bg-neutral-900/30 border border-neutral-800/80 rounded-2xl p-8 flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-4">
-              <div className="p-4 rounded-full bg-primary-500/10 text-primary-400 border border-primary-500/20">
+              <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <GitBranch className="h-10 w-10 animate-pulse" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-heading font-bold text-white">Enter a repository link to inspect codebase structure</h3>
-                <p className="text-xs text-neutral-450 max-w-md">Provide a public GitHub link above to calculate quality metrics, build interactive dependency trees, map modular layer workflows, and audit code smell indices.</p>
+                <h3 className="text-xl font-sans font-bold text-white tracking-normal">Enter a repository link to inspect codebase structure</h3>
+                <p className="text-xs text-neutral-400 max-w-md leading-relaxed">Provide a public GitHub link above to calculate quality metrics, build interactive dependency trees, map modular layer workflows, and audit code smell indices.</p>
               </div>
             </div>
 
@@ -1203,11 +1125,11 @@ export function RepoAnalyzerPage() {
                 { title: "Technical Debt Estimation", desc: "Calculate overall maintainability scores, test coverage scopes, and estimate hours required to clean legacys.", icon: Clock }
               ].map((f, idx) => (
                 <div key={idx} className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-5 space-y-3">
-                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-850 text-primary-400 w-fit">
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-850 text-emerald-400 w-fit">
                     <f.icon className="h-5 w-5" />
                   </div>
-                  <h4 className="text-xs font-bold text-neutral-200 uppercase tracking-wide">{f.title}</h4>
-                  <p className="text-[11.5px] text-neutral-500 leading-relaxed">{f.desc}</p>
+                  <h4 className="text-xs font-sans font-extrabold text-neutral-200 uppercase tracking-widest leading-normal">{f.title}</h4>
+                  <p className="text-xs text-neutral-400 leading-relaxed">{f.desc}</p>
                 </div>
               ))}
             </div>
