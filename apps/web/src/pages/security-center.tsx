@@ -457,7 +457,7 @@ export function SecurityCenterPage() {
   }, [prompt]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="w-full px-5 py-6 lg:px-8">
       <PageHeader
         title="Security Center"
         description="Describe your application stack and get an OWASP-aligned security analysis with actionable remediation."
@@ -511,8 +511,8 @@ export function SecurityCenterPage() {
           <div className="glass-strong rounded-2xl p-6 text-left">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary-400" />
-                <span className="text-sm font-medium text-neutral-200">
+                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+                <span className="text-base font-bold text-white">
                   Describe your application architecture
                 </span>
               </div>
@@ -526,16 +526,16 @@ export function SecurityCenterPage() {
                 }}
                 rows={3}
                 placeholder="A Node.js REST API with JWT auth, PostgreSQL, file uploads on S3, and Redis caching…"
-                className="flex w-full rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-neutral-100 shadow-sm transition-colors placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
                 disabled={analyzing}
               />
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <p className="text-xs text-neutral-600">
+                  <p className="text-sm font-medium text-neutral-400">
                     Press Cmd/Ctrl + Enter to trigger security audits
                   </p>
                   {promptComplexity && (
-                    <Badge variant="outline" className="text-[9.5px] font-mono border-neutral-800 text-neutral-400 bg-neutral-900 uppercase">
+                    <Badge variant="outline" className="text-xs font-mono border-neutral-800 text-neutral-300 bg-neutral-900 uppercase font-bold">
                       {promptComplexity} Complexity
                     </Badge>
                   )}
@@ -544,6 +544,7 @@ export function SecurityCenterPage() {
                   variant="gradient"
                   onClick={() => handleAnalyze()}
                   disabled={!prompt.trim() || analyzing}
+                  className="shrink-0 text-base font-semibold h-11 px-6"
                 >
                   {analyzing ? "Analyzing..." : "Analyze security"}
                 </Button>
@@ -552,15 +553,15 @@ export function SecurityCenterPage() {
 
             {!analysis && !analyzing ? (
               <div className="mt-6">
-                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-neutral-500">
+                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
                   Try an example
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {EXAMPLE_PROMPTS.map((ex) => (
                     <button
                       key={ex}
                       onClick={() => handleAnalyze(ex)}
-                      className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-left text-xs text-neutral-400 transition-colors hover:border-border-hover hover:text-neutral-100"
+                      className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
                     >
                       {ex}
                     </button>

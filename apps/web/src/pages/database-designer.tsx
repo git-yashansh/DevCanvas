@@ -516,7 +516,7 @@ export function DatabaseDesignerPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="w-full px-5 py-6 lg:px-8">
       <PageHeader
         title="Database Designer"
         description="Describe your data model and get a normalized schema with ER diagram, indexes, and migration-ready SQL."
@@ -584,23 +584,23 @@ export function DatabaseDesignerPage() {
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary-400" />
-                  <span className="text-sm font-medium text-neutral-200">
+                  <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+                  <span className="text-base font-bold text-white">
                     Describe your data model
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-neutral-500">Dialect:</span>
-                  <div className="flex gap-1 rounded-lg border border-border bg-surface-2 p-0.5">
+                  <span className="text-xs font-semibold text-neutral-400">Dialect:</span>
+                  <div className="flex gap-1 rounded-lg border border-white/10 bg-surface-2 p-0.5">
                     {(["postgresql", "mysql", "sqlite"] as Dialect[]).map((d) => (
                       <button
                         key={d}
                         onClick={() => setDialect(d)}
                         className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                          "rounded-md px-2.5 py-1 text-xs font-bold transition-colors",
                           dialect === d
-                            ? "bg-primary-500/15 text-primary-300"
-                            : "text-neutral-400 hover:text-neutral-100",
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : "text-neutral-400 hover:text-white",
                         )}
                       >
                         {d === "postgresql" ? "Postgres" : d === "mysql" ? "MySQL" : "SQLite"}
@@ -619,17 +619,18 @@ export function DatabaseDesignerPage() {
                 }}
                 rows={3}
                 placeholder="A project management app with workspaces, projects, tasks, and comments…"
-                className="flex w-full rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-neutral-100 shadow-sm transition-colors placeholder:text-neutral-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
                 disabled={generating}
               />
               <div className="flex items-center justify-between gap-4">
-                <p className="text-xs text-neutral-600">
+                <p className="text-sm font-medium text-neutral-400">
                   Press Cmd/Ctrl + Enter to generate
                 </p>
                 <Button
                   variant="gradient"
                   onClick={() => handleGenerate()}
                   disabled={!prompt.trim() || generating}
+                  className="shrink-0 text-base font-semibold h-11 px-6"
                 >
                   {generating ? "Generating..." : "Generate schema"}
                 </Button>
@@ -638,15 +639,15 @@ export function DatabaseDesignerPage() {
 
             {!schema && !generating ? (
               <div className="mt-6">
-                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-neutral-500">
+                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
                   Try an example
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {EXAMPLE_PROMPTS.map((example) => (
                     <button
                       key={example}
                       onClick={() => handleGenerate(example)}
-                      className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-left text-xs text-neutral-400 transition-colors hover:border-border-hover hover:text-neutral-100"
+                      className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
                     >
                       {example}
                     </button>

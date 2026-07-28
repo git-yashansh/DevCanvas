@@ -141,21 +141,21 @@ export function ChatPanel({ projectId }: { projectId: string }) {
           </div>
         ) : !messages || messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/10">
-              <Sparkles className="h-6 w-6 text-primary-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+              <Sparkles className="h-6 w-6" />
             </div>
-            <h4 className="mt-4 font-heading text-sm font-semibold text-neutral-100">
+            <h4 className="mt-4 font-sans text-base font-bold text-white">
               Start a conversation
             </h4>
-            <p className="mt-1 max-w-xs text-xs text-neutral-400">
+            <p className="mt-1 max-w-xs text-sm text-neutral-300 leading-relaxed">
               Ask about architecture, databases, APIs, security, or system design.
             </p>
-            <div className="mt-6 grid w-full max-w-md grid-cols-1 gap-2">
+            <div className="mt-6 grid w-full max-w-md grid-cols-1 gap-2.5">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSend(s)}
-                  className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-left text-xs text-neutral-300 transition-colors hover:border-border-hover hover:text-neutral-100"
+                  className="rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-left text-xs font-medium text-neutral-200 transition-colors hover:border-border-hover hover:text-white"
                 >
                   {s}
                 </button>
@@ -175,20 +175,20 @@ export function ChatPanel({ projectId }: { projectId: string }) {
               )}
             >
               {msg.role !== "user" ? (
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-500/10">
-                  <Sparkles className="h-4 w-4 text-primary-400" />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                  <Sparkles className="h-4 w-4" />
                 </span>
               ) : null}
               <div
                 className={cn(
-                  "max-w-[80%] rounded-xl px-4 py-2.5 text-sm",
+                  "max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed",
                   msg.role === "user"
-                    ? "bg-primary-500/15 text-neutral-100"
+                    ? "bg-emerald-500/15 border border-emerald-500/30 text-white font-medium"
                     : "border border-border bg-surface-2 text-neutral-200",
                 )}
               >
                 <div className="whitespace-pre-wrap">{msg.content}</div>
-                <p className="mt-1.5 text-xs text-neutral-600">
+                <p className="mt-1.5 text-xs text-neutral-400 font-mono">
                   {formatRelative(msg.created_at)}
                 </p>
               </div>
