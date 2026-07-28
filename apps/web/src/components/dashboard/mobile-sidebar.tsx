@@ -44,8 +44,8 @@ function NavList({ items, onClick }: { items: NavItem[]; onClick: () => void }) 
               cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "bg-white/[0.07] text-white"
-                  : "text-white/40 hover:bg-white/[0.04] hover:text-white/80"
+                  ? "bg-[#00e699]/10 text-[#00e699] border border-[#00e699]/25 font-bold"
+                  : "text-neutral-400 hover:bg-neutral-900/60 hover:text-neutral-200"
               )
             }
           >
@@ -53,16 +53,17 @@ function NavList({ items, onClick }: { items: NavItem[]; onClick: () => void }) 
               <>
                 <item.icon className={cn(
                   "h-4 w-4 shrink-0 transition-colors",
-                  isActive ? "text-indigo-400" : "text-white/30"
+                  isActive ? "text-[#00e699]" : "text-neutral-400"
                 )} />
                 <span className="flex-1">{item.label}</span>
                 {item.badge && (
-                  <span className="rounded-full bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300">
+                  <span className="rounded-full bg-[#00e699]/20 border border-[#00e699]/30 px-1.5 py-0.5 text-[9px] font-bold text-[#00e699]">
                     {item.badge}
                   </span>
                 )}
               </>
             )}
+
           </NavLink>
         </li>
       ))}

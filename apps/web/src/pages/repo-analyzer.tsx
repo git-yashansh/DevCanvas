@@ -34,6 +34,7 @@ import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, Dialog
 import { PageHeader } from "@/components/dashboard/page-header";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
+import { useAIQueue } from "@/lib/ai-queue-context";
 import { cn } from "@utils/index";
 import { AILoader } from "@/components/dashboard/AILoader";
 
@@ -424,6 +425,7 @@ const COMPLIANCE_SECURITY_ITEMS = [
 export function RepoAnalyzerPage() {
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
+  const aiQueue = useAIQueue();
   
   const [repoUrl, setRepoUrl] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -463,13 +465,10 @@ export function RepoAnalyzerPage() {
         .select("description")
         .eq("id", projectId)
         .maybeSingle();
-      // data.description is available here for future use
       if (error) console.warn("Failed to load project repo:", error);
     }
     loadProjectRepo();
   }, [projectId]);
-
-
 
   // Understand walkthrough timing loop
   useEffect(() => {
@@ -514,28 +513,7 @@ export function RepoAnalyzerPage() {
     setRepoFiles({});
 
     try {
-      const token = session?.access_token;
-      if (!token) throw new Error("Not authenticated. Please sign in.");
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-repository`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({ repoUrl: repoUrl.trim() }),
-        }
-      );
-
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error ?? `Analysis failed (${res.status})`);
-      }
-
-      const data = await res.json();
+      const data = await aiQueue.enqueue('analyze-repository', repoUrl, { prompt: repoUrl });
       if (!data.analysis) throw new Error("No analysis returned from AI.");
 
       const analysis = data.analysis;
@@ -558,7 +536,6 @@ export function RepoAnalyzerPage() {
     }
   };
 
-  // Exporter blobs helper
   const downloadBlob = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);

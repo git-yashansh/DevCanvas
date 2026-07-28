@@ -19,10 +19,12 @@ import { AILoader } from "@/components/dashboard/AILoader";
 import { GeneratorReport } from "@/components/dashboard/GeneratorReport";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
+import { useAIQueue } from "@/lib/ai-queue-context";
 
 export function DeploymentGeneratorPage() {
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
+  const aiQueue = useAIQueue();
   
   const [deploymentPrompt, setDeploymentPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -66,28 +68,7 @@ export function DeploymentGeneratorPage() {
     setError(null);
 
     try {
-      const token = session?.access_token;
-      if (!token) throw new Error("Not authenticated.");
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-deployment-plan`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({ prompt: input }),
-        }
-      );
-
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error ?? `Request failed (${res.status})`);
-      }
-
-      const data = await res.json();
+      const data = await aiQueue.enqueue('generate-deployment-plan', input, { prompt: input });
       if (!data.plan) throw new Error("No deployment plan returned from AI.");
 
       setReport(data.plan);

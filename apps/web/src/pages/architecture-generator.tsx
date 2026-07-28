@@ -35,6 +35,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { ArchitectureDiagram } from "@/components/architecture/architecture-diagram";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
+import { useAIQueue } from "@/lib/ai-queue-context";
 import { cn } from "@utils/index";
 import { AILoader } from "@/components/dashboard/AILoader";
 import type {
@@ -101,6 +102,7 @@ export function ArchitectureGeneratorPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { session } = useAuth();
+  const aiQueue = useAIQueue();
   const [prompt, setPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,28 +150,7 @@ export function ArchitectureGeneratorPage() {
     if (text) setPrompt(text);
 
     try {
-      const token = session?.access_token;
-      if (!token) throw new Error("Not authenticated.");
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-architecture`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-          },
-          body: JSON.stringify({ prompt: input }),
-        },
-      );
-
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.error ?? `Request failed (${res.status})`);
-      }
-
-      const data = await res.json();
+      const data = await aiQueue.enqueue('generate-architecture', input, { prompt: input });
       if (!data.architecture) throw new Error("No architecture returned.");
 
       setArchitecture(data.architecture as Architecture);

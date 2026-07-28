@@ -42,16 +42,26 @@ import {
   Bot,
   Wand2,
   X,
+  Network,
+  TrendingUp,
+  Package,
   type LucideIcon,
 } from "lucide-react";
 import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@ui/index";
 import { useProject, useDeleteProject, useUpdateProject, useCreateProject } from "@/lib/queries/projects";
 import { ChatPanel } from "@/components/dashboard/chat-panel";
+import { ValidationCenterTab } from "@/components/project/validation-center-tab";
+import { ProjectInsightsTab } from "@/components/project/project-insights-tab";
+import { BlueprintCenterTab } from "@/components/project/blueprint-center-tab";
+import { ProjectKnowledgeGraphTab } from "@/components/project/knowledge-graph-tab";
+import { ProjectContextPanel } from "@/components/project/project-context-panel";
+import { analyzeProjectConsistency } from "@/lib/utils/consistency-checker";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { formatDate, cn } from "@utils/index";
 
-type Tab = "overview" | "artifacts" | "chat" | "settings";
+type Tab = "overview" | "validation" | "insights" | "blueprint" | "graph" | "artifacts" | "chat" | "settings";
+
 
 // ── Generator Definitions ─────────────────────────────────────
 interface GeneratorDef {
@@ -228,6 +238,8 @@ export function ProjectDetailPage() {
   const [renameDescValue, setRenameDescValue] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
 
+  const validationResult = useMemo(() => analyzeProjectConsistency(project), [project]);
+
   // Keyboard shortcut Ctrl+K / Cmd+K listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -302,10 +314,14 @@ export function ProjectDetailPage() {
   };
 
   const tabs: { id: Tab; label: string; icon: LucideIcon }[] = [
-    { id: "overview",  label: "Overview",   icon: Boxes },
-    { id: "artifacts", label: "Artifacts",  icon: FileText },
-    { id: "chat",      label: "AI Chat",    icon: MessageSquare },
-    { id: "settings",  label: "Settings",   icon: Settings },
+    { id: "overview",   label: "Overview",   icon: Boxes },
+    { id: "validation", label: "Validation", icon: ShieldCheck },
+    { id: "insights",   label: "Insights",   icon: TrendingUp },
+    { id: "blueprint",  label: "Blueprint",  icon: Package },
+    { id: "graph",      label: "Knowledge Graph", icon: Network },
+    { id: "artifacts",  label: "Artifacts",  icon: FileText },
+    { id: "chat",       label: "AI Chat",    icon: MessageSquare },
+    { id: "settings",   label: "Settings",   icon: Settings },
   ];
 
   return (
@@ -375,58 +391,69 @@ export function ProjectDetailPage() {
         </div>
       </header>
 
-      {/* ── MAIN CONTENT AREA ─────────────────────────────────── */}
-      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-        {/* Navigation Tabs */}
-        <div className="border-b border-white/[0.08] mb-6">
-          <nav className="flex gap-2">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  "relative flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors",
-                  tab === t.id ? "text-primary-400" : "text-neutral-400 hover:text-white"
-                )}
-              >
-                <t.icon className="h-4 w-4" />
-                {t.label}
-                {tab === t.id && (
-                  <motion.div
-                    layoutId="tab-underline"
-                    className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-gradient-to-r from-primary-500 to-indigo-500"
-                  />
-                )}
-              </button>
-            ))}
-          </nav>
+      {/* ── MAIN CONTENT & STICKY CONTEXT PANEL LAYOUT ─────────── */}
+      <div className="flex w-full min-h-[calc(100vh-3.5rem)]">
+        {/* Main Workspace Column */}
+        <div className="flex-1 min-w-0 mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+          {/* Navigation Tabs */}
+          <div className="border-b border-white/[0.08] mb-6 overflow-x-auto">
+            <nav className="flex gap-1 min-w-max">
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    "relative flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors",
+                    tab === t.id ? "text-primary-400" : "text-neutral-400 hover:text-white"
+                  )}
+                >
+                  <t.icon className="h-4 w-4" />
+                  {t.label}
+                  {tab === t.id && (
+                    <motion.div
+                      layoutId="tab-underline"
+                      className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-gradient-to-r from-primary-500 to-indigo-500"
+                    />
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          {tab === "overview" && (
+            <OverviewTab
+              project={project}
+              projectId={project.id}
+              setTab={setTab}
+              refetch={refetch}
+              onOpenExport={() => setExportModalOpen(true)}
+              onDuplicate={handleDuplicateProject}
+            />
+          )}
+          {tab === "validation" && <ValidationCenterTab project={project} />}
+          {tab === "insights"   && <ProjectInsightsTab project={project} />}
+          {tab === "blueprint"  && <BlueprintCenterTab project={project} />}
+          {tab === "graph"      && <ProjectKnowledgeGraphTab project={project} />}
+          {tab === "artifacts"  && <ArtifactsTab project={project} projectId={project.id} />}
+          {tab === "chat"       && <ChatPanel projectId={project.id} />}
+          {tab === "settings"   && (
+            <SettingsTab
+              project={project}
+              projectId={project.id}
+              onDelete={async () => {
+                await deleteProject.mutateAsync(project.id);
+                navigate("/app/projects");
+              }}
+              deleting={deleteProject.isPending}
+            />
+          )}
         </div>
 
-        {/* Tab Content */}
-        {tab === "overview" && (
-          <OverviewTab
-            project={project}
-            projectId={project.id}
-            setTab={setTab}
-            refetch={refetch}
-            onOpenExport={() => setExportModalOpen(true)}
-            onDuplicate={handleDuplicateProject}
-          />
-        )}
-        {tab === "artifacts" && <ArtifactsTab project={project} projectId={project.id} />}
-        {tab === "chat"      && <ChatPanel projectId={project.id} />}
-        {tab === "settings"  && (
-          <SettingsTab
-            project={project}
-            projectId={project.id}
-            onDelete={async () => {
-              await deleteProject.mutateAsync(project.id);
-              navigate("/app/projects");
-            }}
-            deleting={deleteProject.isPending}
-          />
-        )}
+        {/* Sticky Right Context Panel */}
+        <ProjectContextPanel project={project} overallScore={validationResult.overallScore} />
       </div>
+
 
       {/* ── GLOBAL EXPORT CENTER MODAL ───────────────────────── */}
       <ExportModal
