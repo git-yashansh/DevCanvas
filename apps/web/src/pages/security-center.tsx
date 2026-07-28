@@ -764,17 +764,29 @@ export function SecurityCenterPage() {
                   <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-5 md:col-span-1 text-left space-y-4">
                     <h3 className="font-heading text-xs font-bold uppercase tracking-wider text-neutral-300">Category Security Scores</h3>
                     <div className="space-y-3">
-                      {CATEGORY_SCORES.map((cat) => (
-                        <div key={cat.name} className="space-y-1 text-xs">
-                          <div className="flex justify-between">
-                            <span className="text-neutral-300 font-medium">{cat.name}</span>
-                            <span className="text-neutral-400 font-semibold">{cat.score}%</span>
+                      {(analysis.categoryScores ?? []).length > 0 ? (
+                        (analysis.categoryScores ?? []).map((cat: any) => (
+                          <div key={cat.name} className="space-y-1 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-neutral-300 font-medium">{cat.name}</span>
+                              <span className={cn(
+                                "font-semibold",
+                                cat.status === "Critical" ? "text-danger-400" : cat.status === "Needs Improvement" ? "text-warning-400" : "text-emerald-400"
+                              )}>{cat.score}%</span>
+                            </div>
+                            <div className="w-full bg-neutral-900 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={cn("h-full transition-all",
+                                  cat.status === "Critical" ? "bg-danger-500" : cat.status === "Needs Improvement" ? "bg-warning-500" : "bg-emerald-500"
+                                )}
+                                style={{ width: `${cat.score}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="w-full bg-neutral-900 h-1.5 rounded-full overflow-hidden">
-                            <div className={cn("h-full", cat.color)} style={{ width: `${cat.score}%` }} />
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-xs text-neutral-600 italic">Run a security analysis to generate category scores.</p>
+                      )}
                     </div>
                   </div>
 
@@ -784,31 +796,44 @@ export function SecurityCenterPage() {
                       <p className="text-[11px] text-neutral-500 mt-1">Summary of entry routes and external boundary endpoints evaluated.</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-xs">
                         <div className="p-3 bg-neutral-900/60 rounded-lg border border-neutral-850">
-                          <span className="text-neutral-500 text-[10px] block uppercase font-bold">Public APIs</span>
-                          <span className="text-sm font-bold text-white mt-1 block">6 endpoints</span>
+                          <span className="text-neutral-500 text-[10px] block uppercase font-bold">Critical Findings</span>
+                          <span className="text-sm font-bold text-danger-400 mt-1 block">
+                            {(analysis.findings ?? []).filter((f: any) => f.severity === "critical").length}
+                          </span>
                         </div>
                         <div className="p-3 bg-neutral-900/60 rounded-lg border border-neutral-850">
-                          <span className="text-neutral-500 text-[10px] block uppercase font-bold">Auth Points</span>
-                          <span className="text-sm font-bold text-white mt-1 block">2 interfaces</span>
+                          <span className="text-neutral-500 text-[10px] block uppercase font-bold">High Findings</span>
+                          <span className="text-sm font-bold text-orange-400 mt-1 block">
+                            {(analysis.findings ?? []).filter((f: any) => f.severity === "high").length}
+                          </span>
                         </div>
                         <div className="p-3 bg-neutral-900/60 rounded-lg border border-neutral-850">
-                          <span className="text-neutral-500 text-[10px] block uppercase font-bold">Admin routes</span>
-                          <span className="text-sm font-bold text-white mt-1 block">1 domain path</span>
+                          <span className="text-neutral-500 text-[10px] block uppercase font-bold">Medium Findings</span>
+                          <span className="text-sm font-bold text-warning-400 mt-1 block">
+                            {(analysis.findings ?? []).filter((f: any) => f.severity === "medium").length}
+                          </span>
                         </div>
                         <div className="p-3 bg-neutral-900/60 rounded-lg border border-neutral-850">
-                          <span className="text-neutral-500 text-[10px] block uppercase font-bold">External API</span>
-                          <span className="text-sm font-bold text-white mt-1 block">3 integrations</span>
+                          <span className="text-neutral-500 text-[10px] block uppercase font-bold">OWASP Coverage</span>
+                          <span className="text-sm font-bold text-white mt-1 block">
+                            {(analysis.owaspCoverage ?? []).length} checks
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="border-t border-neutral-850 pt-4 space-y-3">
-                      <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">AI Vulnerabilities Risk Audit</span>
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">AI Immediate Recommendations</span>
                       <div className="flex gap-2 p-3 bg-primary-500/5 border border-primary-500/20 text-xs rounded-xl text-neutral-300 leading-relaxed">
                         <Sparkles className="h-4 w-4 text-primary-400 shrink-0 mt-0.5" />
-                        <p>
-                          Our LLM security analyzer suggests rotating access secrets on DB integrations and restricting client-side token caches.
-                        </p>
+                        <div className="space-y-1">
+                          {(analysis.recommendations?.immediate ?? []).slice(0, 2).map((rec: string, i: number) => (
+                            <p key={i}>{rec}</p>
+                          ))}
+                          {!(analysis.recommendations?.immediate?.length) && (
+                            <p>Run a security analysis to generate AI recommendations.</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -864,26 +889,30 @@ export function SecurityCenterPage() {
                   <div className="lg:col-span-1 space-y-3">
                     <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider block">Risk Finding registry</span>
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                      {RISK_FINDINGS.map((finding) => (
-                        <div key={finding.title} className="p-3 bg-neutral-900 rounded-lg border border-neutral-850 space-y-1.5">
-                          <div className="flex justify-between items-center">
-                            <span className="font-heading font-bold text-xs text-white truncate max-w-[170px]">{finding.title}</span>
-                            <Badge variant="outline" className={cn(
-                              "text-[8.5px] font-mono font-black uppercase tracking-wider px-1",
-                              finding.level === "Critical" && "bg-danger-500/10 text-danger-400 border-danger-500/20",
-                              finding.level === "High" && "bg-orange-500/10 text-orange-400 border-orange-500/20",
-                              finding.level === "Medium" && "bg-warning-500/10 text-warning-400 border-warning-500/20",
-                              finding.level === "Low" && "bg-primary-500/10 text-primary-400 border-primary-500/20"
-                            )}>
-                              {finding.level}
-                            </Badge>
+                      {(analysis.riskFindings ?? []).length > 0 ? (
+                        (analysis.riskFindings ?? []).map((finding: any) => (
+                          <div key={finding.title} className="p-3 bg-neutral-900 rounded-lg border border-neutral-850 space-y-1.5">
+                            <div className="flex justify-between items-center">
+                              <span className="font-heading font-bold text-xs text-white truncate max-w-[170px]">{finding.title}</span>
+                              <Badge variant="outline" className={cn(
+                                "text-[8.5px] font-mono font-black uppercase tracking-wider px-1",
+                                finding.level === "Critical" && "bg-danger-500/10 text-danger-400 border-danger-500/20",
+                                finding.level === "High" && "bg-orange-500/10 text-orange-400 border-orange-500/20",
+                                finding.level === "Medium" && "bg-warning-500/10 text-warning-400 border-warning-500/20",
+                                finding.level === "Low" && "bg-primary-500/10 text-primary-400 border-primary-500/20"
+                              )}>
+                                {finding.level}
+                              </Badge>
+                            </div>
+                            <div className="text-[10px] text-neutral-500 flex justify-between">
+                              <span>Asset: {finding.component}</span>
+                              <span className="font-bold text-primary-300 font-mono">{finding.priority}</span>
+                            </div>
                           </div>
-                          <div className="text-[10px] text-neutral-500 flex justify-between">
-                            <span>Asset: {finding.component}</span>
-                            <span className="font-bold text-primary-300 font-mono">{finding.priority}</span>
-                          </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        <p className="text-xs text-neutral-600 italic p-2">Run security analysis to populate risk findings.</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -948,40 +977,47 @@ export function SecurityCenterPage() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-                  {COMPLIANCE_ITEMS.map((c) => (
-                    <div key={c.standard} className="p-4 bg-neutral-900/60 rounded-xl border border-neutral-850 space-y-3">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-heading font-black text-sm text-white">{c.standard}</span>
-                          <span className="text-[10px] text-neutral-500 font-mono">Scope: {c.scope}</span>
+                  {(analysis.complianceItems ?? []).length > 0 ? (
+                    (analysis.complianceItems ?? []).map((c: any) => (
+                      <div key={c.standard} className="p-4 bg-neutral-900/60 rounded-xl border border-neutral-850 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-heading font-black text-sm text-white">{c.standard}</span>
+                            <span className="text-[10px] text-neutral-500 font-mono">Scope: {c.scope}</span>
+                          </div>
+                          <Badge variant="outline" className={cn(
+                            "text-[9px] font-bold font-mono tracking-wider uppercase",
+                            c.status === "Pass" && "bg-success-500/10 text-success-400 border-success-500/20",
+                            c.status === "Warning" && "bg-warning-500/10 text-warning-400 border-warning-500/20",
+                            c.status === "Fail" && "bg-danger-500/10 text-danger-400 border-danger-500/20"
+                          )}>
+                            {c.status}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className={cn(
-                          "text-[9px] font-bold font-mono tracking-wider uppercase",
-                          c.status === "Pass" && "bg-success-500/10 text-success-400 border-success-500/20",
-                          c.status === "Warning" && "bg-warning-500/10 text-warning-400 border-warning-500/20"
-                        )}>
-                          {c.status}
-                        </Badge>
-                      </div>
 
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between text-neutral-450 font-mono text-[10px]">
-                          <span>Standard compliance index</span>
-                          <span>{c.progress}%</span>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between text-neutral-450 font-mono text-[10px]">
+                            <span>Standard compliance index</span>
+                            <span>{c.progress}%</span>
+                          </div>
+                          <div className="w-full bg-neutral-950 h-1.5 rounded-full overflow-hidden">
+                            <div className={cn("h-full", c.status === "Pass" ? "bg-emerald-500" : c.status === "Fail" ? "bg-danger-500" : "bg-warning-500")} style={{ width: `${c.progress}%` }} />
+                          </div>
                         </div>
-                        <div className="w-full bg-neutral-950 h-1.5 rounded-full overflow-hidden">
-                          <div className={cn("h-full", c.status === "Pass" ? "bg-emerald-500" : "bg-warning-500")} style={{ width: `${c.progress}%` }} />
-                        </div>
-                      </div>
 
-                      <div className="text-[11.5px] text-neutral-450 bg-neutral-950 p-2.5 rounded border border-neutral-850 leading-relaxed flex items-start gap-1.5">
-                        <Info className="h-3.5 w-3.5 text-primary-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-neutral-300">Action items:</span> {c.recs}
+                        <div className="text-[11.5px] text-neutral-450 bg-neutral-950 p-2.5 rounded border border-neutral-850 leading-relaxed flex items-start gap-1.5">
+                          <Info className="h-3.5 w-3.5 text-primary-400 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold text-neutral-300">Action items:</span> {c.recs}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10">
+                      <p className="text-sm text-neutral-600 italic">Run a security analysis to generate compliance assessment.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}

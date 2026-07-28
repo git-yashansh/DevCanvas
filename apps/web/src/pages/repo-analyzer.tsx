@@ -415,7 +415,7 @@ const CODE_QUALITY_ISSUES = [
 ];
 
 const COMPLIANCE_SECURITY_ITEMS = [
-  { title: "Circular Dependency Detected", details: "src/hooks/useAuth.ts ➔ src/api/apiClient.ts ➔ src/hooks/useAuth.ts", type: "Circular dependency" },
+  { title: "Circular Dependency Detected", details: "src/hooks/useAuth.ts âž” src/api/apiClient.ts âž” src/hooks/useAuth.ts", type: "Circular dependency" },
   { title: "Unused imports inside Router.tsx", details: "import { AlertCircle } from 'lucide-react' is unused", type: "Dead imports" },
   { title: "Duplicate mapping utility functions", details: "formatDate() exists inside both helpers.ts and format.ts", type: "Redundancy" },
   { title: "Unprotected database credentials", details: "SSL fallback allowed without strict environment variables requirements", type: "Security Risk" }
@@ -463,12 +463,13 @@ export function RepoAnalyzerPage() {
         .select("description")
         .eq("id", projectId)
         .maybeSingle();
-      if (!error && data?.description && !repoUrl) {
-        setRepoUrl("https://github.com/example-user/project-repo");
-      }
+      // data.description is available here for future use
+      if (error) console.warn("Failed to load project repo:", error);
     }
     loadProjectRepo();
   }, [projectId]);
+
+
 
   // Understand walkthrough timing loop
   useEffect(() => {
@@ -603,12 +604,10 @@ export function RepoAnalyzerPage() {
     setCollapsedFolders(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Current selected file details object helper — prefers live AI data over static sample
+  // Current selected file details object helper â€” uses live AI repoFiles data only
   const activeFile = useMemo(() => {
     if (!selectedFileId) return null;
-    if (repoFiles[selectedFileId]) return repoFiles[selectedFileId];
-    if (REPO_EXPLORER_FILES[selectedFileId]) return REPO_EXPLORER_FILES[selectedFileId];
-    return null;
+    return repoFiles[selectedFileId] ?? null;
   }, [selectedFileId, repoFiles]);
 
   // Current active step id during replay simulation
@@ -794,7 +793,7 @@ export function RepoAnalyzerPage() {
                     className="flex items-center gap-1 h-8 text-[11px]"
                   >
                     <Play className="h-3.5 w-3.5" />
-                    🧠 Understand Repository
+                    ðŸ§  Understand Repository
                   </Button>
                 )}
 
@@ -837,208 +836,77 @@ export function RepoAnalyzerPage() {
                 </div>
 
                 <div className="space-y-1 text-xs select-none">
-                  {/* Folder: src */}
-                  <div
-                    onClick={() => toggleFolder("src")}
-                    className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-neutral-900 cursor-pointer text-neutral-300 font-bold"
-                  >
-                    {collapsedFolders["src"] ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                    <span>src/</span>
-                  </div>
-
-                  {!collapsedFolders["src"] && (
-                    <div className="pl-4 space-y-1 border-l border-neutral-850 ml-3">
-                      {/* App.tsx */}
-                      <div
-                        onClick={() => setSelectedFileId("src-app")}
-                        onMouseEnter={() => setHoveredFileId("src-app")}
-                        onMouseLeave={() => setHoveredFileId(null)}
-                        className={cn(
-                          "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
-                          selectedFileId === "src-app" && "bg-primary-500/10 text-white border border-primary-500/20",
-                          replayActiveId === "src-app" && "bg-warning-500/10 text-warning-400 border border-warning-500/20",
-                          selectedFileId !== "src-app" && replayActiveId !== "src-app" && "hover:bg-neutral-900/60 text-neutral-400"
-                        )}
-                      >
-                        <span className="flex items-center gap-1.5"><FileCode className="h-3.5 w-3.5 text-indigo-400" /> App.tsx</span>
-                        <Badge variant="outline" className="text-[8px] scale-90 border-neutral-800 text-neutral-500 uppercase">LOC: 48</Badge>
-                      </div>
-
-                      {/* Router.tsx */}
-                      <div
-                        onClick={() => setSelectedFileId("src-router")}
-                        onMouseEnter={() => setHoveredFileId("src-router")}
-                        onMouseLeave={() => setHoveredFileId(null)}
-                        className={cn(
-                          "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
-                          selectedFileId === "src-router" && "bg-primary-500/10 text-white border border-primary-500/20",
-                          replayActiveId === "src-router" && "bg-warning-500/10 text-warning-400 border border-warning-500/20",
-                          selectedFileId !== "src-router" && replayActiveId !== "src-router" && "hover:bg-neutral-900/60 text-neutral-400"
-                        )}
-                      >
-                        <span className="flex items-center gap-1.5"><FileCode className="h-3.5 w-3.5 text-indigo-400" /> Router.tsx</span>
-                        <Badge variant="outline" className="text-[8px] scale-90 border-neutral-800 text-neutral-500 uppercase">LOC: 84</Badge>
-                      </div>
-
-                      {/* Folder: components */}
-                      <div
-                        onClick={() => toggleFolder("src-components")}
-                        className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-neutral-900 cursor-pointer text-neutral-300 font-semibold"
-                      >
-                        {collapsedFolders["src-components"] ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        <span>components/</span>
-                      </div>
-
-                      {!collapsedFolders["src-components"] && (
-                        <div className="pl-4 border-l border-neutral-850 ml-3">
-                          <div
-                            onClick={() => setSelectedFileId("src-dashboard-comp")}
-                            onMouseEnter={() => setHoveredFileId("src-dashboard-comp")}
-                            onMouseLeave={() => setHoveredFileId(null)}
-                            className={cn(
-                              "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
-                              selectedFileId === "src-dashboard-comp" && "bg-primary-500/10 text-white border border-primary-500/20",
-                              replayActiveId === "src-dashboard-comp" && "bg-warning-500/10 text-warning-400 border border-warning-500/20",
-                              selectedFileId !== "src-dashboard-comp" && replayActiveId !== "src-dashboard-comp" && "hover:bg-neutral-900/60 text-neutral-400"
-                            )}
-                          >
-                            <span className="flex items-center gap-1.5"><FileCode className="h-3.5 w-3.5 text-primary-400" /> Dashboard.tsx</span>
-                            <Badge variant="outline" className="text-[8px] scale-90 border-danger-500/20 text-danger-400 uppercase">Complex</Badge>
-                          </div>
+                  {Object.keys(repoFiles).length > 0 ? (
+                    // Dynamic tree: group files by folder layer, render folders then files
+                    (() => {
+                      const folders = Object.values(repoFiles).filter(f => f.type === "folder");
+                      const rootFiles = Object.values(repoFiles).filter(f => f.type === "file" && !Object.values(repoFiles).some(folder => folder.children?.includes(f.id)));
+                      const renderFile = (file: RepoFile) => (
+                        <div
+                          key={file.id}
+                          onClick={() => setSelectedFileId(file.id)}
+                          onMouseEnter={() => setHoveredFileId(file.id)}
+                          onMouseLeave={() => setHoveredFileId(null)}
+                          className={cn(
+                            "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
+                            selectedFileId === file.id && "bg-primary-500/10 text-white border border-primary-500/20",
+                            selectedFileId !== file.id && "hover:bg-neutral-900/60 text-neutral-400"
+                          )}
+                        >
+                          <span className="flex items-center gap-1.5 truncate">
+                            <FileCode className={cn("h-3.5 w-3.5 shrink-0",
+                              file.complexity === "High" || file.complexity === "Critical" ? "text-danger-400" :
+                              file.complexity === "Medium" ? "text-warning-400" : "text-indigo-400"
+                            )} />
+                            <span className="truncate">{file.name}</span>
+                          </span>
+                          <Badge variant="outline" className={cn(
+                            "text-[8px] scale-90 border-neutral-800 text-neutral-500 uppercase shrink-0",
+                            file.complexity === "High" && "border-danger-500/20 text-danger-400",
+                            file.complexity === "Critical" && "border-danger-500/20 text-danger-400"
+                          )}>
+                            {file.loc > 0 ? `LOC: ${file.loc}` : file.complexity}
+                          </Badge>
                         </div>
-                      )}
+                      );
 
-                      {/* Folder: hooks */}
-                      <div
-                        onClick={() => toggleFolder("src-hooks")}
-                        className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-neutral-900 cursor-pointer text-neutral-300 font-semibold"
-                      >
-                        {collapsedFolders["src-hooks"] ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        <span>hooks/</span>
-                      </div>
-
-                      {!collapsedFolders["src-hooks"] && (
-                        <div className="pl-4 border-l border-neutral-850 ml-3 space-y-1">
-                          <div
-                            onClick={() => setSelectedFileId("src-auth-hook")}
-                            onMouseEnter={() => setHoveredFileId("src-auth-hook")}
-                            onMouseLeave={() => setHoveredFileId(null)}
-                            className={cn(
-                              "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
-                              selectedFileId === "src-auth-hook" && "bg-primary-500/10 text-white border border-primary-500/20",
-                              replayActiveId === "src-auth-hook" && "bg-warning-500/10 text-warning-400 border border-warning-500/20",
-                              selectedFileId !== "src-auth-hook" && replayActiveId !== "src-auth-hook" && "hover:bg-neutral-900/60 text-neutral-400"
-                            )}
-                          >
-                            <span className="flex items-center gap-1.5"><FileCode className="h-3.5 w-3.5 text-emerald-400" /> useAuth.ts</span>
-                            <Badge variant="outline" className="text-[8px] scale-90 border-neutral-800 text-neutral-500 uppercase">LOC: 72</Badge>
-                          </div>
-                          <div
-                            onClick={() => setSelectedFileId("src-fetch-hook")}
-                            onMouseEnter={() => setHoveredFileId("src-fetch-hook")}
-                            onMouseLeave={() => setHoveredFileId(null)}
-                            className={cn(
-                              "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
-                              selectedFileId === "src-fetch-hook" && "bg-primary-500/10 text-white border border-primary-500/20",
-                              replayActiveId === "src-fetch-hook" && "bg-warning-500/10 text-warning-400 border border-warning-500/20",
-                              selectedFileId !== "src-fetch-hook" && replayActiveId !== "src-fetch-hook" && "hover:bg-neutral-900/60 text-neutral-400"
-                            )}
-                          >
-                            <span className="flex items-center gap-1.5"><FileCode className="h-3.5 w-3.5 text-emerald-400" /> useFetch.ts</span>
-                            <Badge variant="outline" className="text-[8px] scale-90 border-neutral-800 text-neutral-500 uppercase">LOC: 45</Badge>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Folder: services */}
-                      <div
-                        onClick={() => toggleFolder("src-services")}
-                        className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-neutral-900 cursor-pointer text-neutral-300 font-semibold"
-                      >
-                        {collapsedFolders["src-services"] ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        <span>services/</span>
-                      </div>
-
-                      {!collapsedFolders["src-services"] && (
-                        <div className="pl-4 border-l border-neutral-850 ml-3">
-                          <div
-                            onClick={() => setSelectedFileId("src-user-service")}
-                            onMouseEnter={() => setHoveredFileId("src-user-service")}
-                            onMouseLeave={() => setHoveredFileId(null)}
-                            className={cn(
-                              "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
-                              selectedFileId === "src-user-service" && "bg-primary-500/10 text-white border border-primary-500/20",
-                              replayActiveId === "src-user-service" && "bg-warning-500/10 text-warning-400 border border-warning-500/20",
-                              selectedFileId !== "src-user-service" && replayActiveId !== "src-user-service" && "hover:bg-neutral-900/60 text-neutral-400"
-                            )}
-                          >
-                            <span className="flex items-center gap-1.5"><FileCode className="h-3.5 w-3.5 text-orange-400" /> userService.ts</span>
-                            <Badge variant="outline" className="text-[8px] scale-90 border-neutral-800 text-neutral-500 uppercase">LOC: 130</Badge>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Folder: api */}
-                      <div
-                        onClick={() => toggleFolder("src-api")}
-                        className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-neutral-900 cursor-pointer text-neutral-300 font-semibold"
-                      >
-                        {collapsedFolders["src-api"] ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        <span>api/</span>
-                      </div>
-
-                      {!collapsedFolders["src-api"] && (
-                        <div className="pl-4 border-l border-neutral-850 ml-3">
-                          <div
-                            onClick={() => setSelectedFileId("src-api-client")}
-                            onMouseEnter={() => setHoveredFileId("src-api-client")}
-                            onMouseLeave={() => setHoveredFileId(null)}
-                            className={cn(
-                              "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
-                              selectedFileId === "src-api-client" && "bg-primary-500/10 text-white border border-primary-500/20",
-                              replayActiveId === "src-api-client" && "bg-warning-500/10 text-warning-400 border border-warning-500/20",
-                              selectedFileId !== "src-api-client" && replayActiveId !== "src-api-client" && "hover:bg-neutral-900/60 text-neutral-400"
-                            )}
-                          >
-                            <span className="flex items-center gap-1.5"><FileCode className="h-3.5 w-3.5 text-secondary-400" /> apiClient.ts</span>
-                            <Badge variant="outline" className="text-[8px] scale-90 border-neutral-800 text-neutral-500 uppercase">LOC: 95</Badge>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Folder: database */}
-                      <div
-                        onClick={() => toggleFolder("src-db")}
-                        className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-neutral-900 cursor-pointer text-neutral-300 font-semibold"
-                      >
-                        {collapsedFolders["src-db"] ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        <span>database/</span>
-                      </div>
-
-                      {!collapsedFolders["src-db"] && (
-                        <div className="pl-4 border-l border-neutral-850 ml-3">
-                          <div
-                            onClick={() => setSelectedFileId("src-db-layer")}
-                            onMouseEnter={() => setHoveredFileId("src-db-layer")}
-                            onMouseLeave={() => setHoveredFileId(null)}
-                            className={cn(
-                              "flex items-center justify-between py-1 px-2 rounded cursor-pointer transition-colors",
-                              selectedFileId === "src-db-layer" && "bg-primary-500/10 text-white border border-primary-500/20",
-                              replayActiveId === "src-db-layer" && "bg-warning-500/10 text-warning-400 border border-warning-500/20",
-                              selectedFileId !== "src-db-layer" && replayActiveId !== "src-db-layer" && "hover:bg-neutral-900/60 text-neutral-400"
-                            )}
-                          >
-                            <span className="flex items-center gap-1.5"><FileCode className="h-3.5 w-3.5 text-accent-400" /> dbClient.ts</span>
-                            <Badge variant="outline" className="text-[8px] scale-90 border-neutral-800 text-neutral-500 uppercase">LOC: 110</Badge>
-                          </div>
-                        </div>
-                      )}
+                      return (
+                        <>
+                          {folders.map(folder => (
+                            <div key={folder.id}>
+                              <div
+                                onClick={() => toggleFolder(folder.id)}
+                                className="flex items-center gap-1.5 py-1 px-1.5 rounded hover:bg-neutral-900 cursor-pointer text-neutral-300 font-semibold"
+                              >
+                                {collapsedFolders[folder.id] ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                                <span>{folder.name}/</span>
+                              </div>
+                              {!collapsedFolders[folder.id] && (
+                                <div className="pl-4 space-y-1 border-l border-neutral-850 ml-3">
+                                  {(folder.children ?? []).map(childId => {
+                                    const child = repoFiles[childId];
+                                    return child ? renderFile(child) : null;
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          {rootFiles.map(renderFile)}
+                        </>
+                      );
+                    })()
+                  ) : (
+                    <div className="py-8 text-center space-y-2">
+                      <FolderTree className="h-8 w-8 text-neutral-700 mx-auto" />
+                      <p className="text-xs text-neutral-600">Analyze a repository to explore its file structure.</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Right Side: Dependency Explorer Canvas */}
+
+
               <div className="lg:col-span-8 relative overflow-hidden bg-neutral-950 p-4">
                 <div className="absolute left-4 top-4 z-10 text-left">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-300">Codebase Modules Dependency graph</h4>
@@ -1178,7 +1046,7 @@ export function RepoAnalyzerPage() {
                 </p>
                 {report.framework && (
                   <div className="p-3 bg-neutral-900 rounded-lg border border-neutral-850 text-[11px] leading-relaxed text-neutral-400">
-                    <span className="font-bold text-neutral-300">Framework / Primary Language:</span> {report.framework} · {report.primaryLanguage} · ~{report.totalFiles?.toLocaleString() ?? "N/A"} files · ~{report.totalLoc?.toLocaleString() ?? "N/A"} LOC
+                    <span className="font-bold text-neutral-300">Framework / Primary Language:</span> {report.framework} Â· {report.primaryLanguage} Â· ~{report.totalFiles?.toLocaleString() ?? "N/A"} files Â· ~{report.totalLoc?.toLocaleString() ?? "N/A"} LOC
                   </div>
                 )}
               </div>
@@ -1189,15 +1057,15 @@ export function RepoAnalyzerPage() {
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-3.5 bg-neutral-900/60 border border-neutral-850 rounded-lg">
                     <span className="text-neutral-500 text-[10px] uppercase font-bold block">Total Files</span>
-                    <span className="text-sm font-bold text-white mt-1 block">{report.totalFiles?.toLocaleString() ?? "—"}</span>
+                    <span className="text-sm font-bold text-white mt-1 block">{report.totalFiles?.toLocaleString() ?? "â€”"}</span>
                   </div>
                   <div className="p-3.5 bg-neutral-900/60 border border-neutral-850 rounded-lg">
                     <span className="text-neutral-500 text-[10px] uppercase font-bold block">Lines of Code</span>
-                    <span className="text-sm font-bold text-white mt-1 block">{report.totalLoc?.toLocaleString() ?? "—"}</span>
+                    <span className="text-sm font-bold text-white mt-1 block">{report.totalLoc?.toLocaleString() ?? "â€”"}</span>
                   </div>
                   <div className="p-3.5 bg-neutral-900/60 border border-neutral-850 rounded-lg">
                     <span className="text-neutral-500 text-[10px] uppercase font-bold block">Primary Language</span>
-                    <span className="text-[11px] font-bold text-white mt-1 block truncate">{report.primaryLanguage ?? "—"}</span>
+                    <span className="text-[11px] font-bold text-white mt-1 block truncate">{report.primaryLanguage ?? "â€”"}</span>
                   </div>
                   <div className="p-3.5 bg-neutral-900/60 border border-neutral-850 rounded-lg">
                     <span className="text-neutral-500 text-[10px] uppercase font-bold block">Complexity</span>
@@ -1205,7 +1073,7 @@ export function RepoAnalyzerPage() {
                       report.complexity === "Low" ? "text-emerald-400" :
                       report.complexity === "Medium" ? "text-warning-400" :
                       "text-danger-400"
-                    )}>{report.complexity ?? "—"}</span>
+                    )}>{report.complexity ?? "â€”"}</span>
                   </div>
                 </div>
               </div>
@@ -1217,15 +1085,19 @@ export function RepoAnalyzerPage() {
               <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-6 text-left space-y-4">
                 <h3 className="font-heading text-xs font-bold uppercase tracking-wider text-neutral-300">Dependencies Integrity Audit</h3>
                 <div className="space-y-2">
-                  {(report.circularDeps?.length > 0 ? report.circularDeps : COMPLIANCE_SECURITY_ITEMS).map((item: any, idx: number) => (
-                    <div key={idx} className="p-3 bg-neutral-900/70 border border-neutral-850 rounded-lg space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-xs text-white">{item.title}</span>
-                        <Badge variant="outline" className="text-[8px] border-warning-500/20 text-warning-400 bg-warning-500/5">{item.type}</Badge>
+                  {(report.circularDeps?.length > 0 ? report.circularDeps : []).length > 0 ? (
+                    report.circularDeps.map((item: any, idx: number) => (
+                      <div key={idx} className="p-3 bg-neutral-900/70 border border-neutral-850 rounded-lg space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-xs text-white">{item.title}</span>
+                          <Badge variant="outline" className="text-[8px] border-warning-500/20 text-warning-400 bg-warning-500/5">{item.type}</Badge>
+                        </div>
+                        <p className="text-[11px] text-neutral-450 font-mono leading-relaxed">{item.details}</p>
                       </div>
-                      <p className="text-[11px] text-neutral-450 font-mono leading-relaxed">{item.details}</p>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-xs text-neutral-600 italic py-2">No circular dependencies detected, or analyze a repository to check.</p>
+                  )}
                 </div>
               </div>
 
@@ -1233,26 +1105,30 @@ export function RepoAnalyzerPage() {
               <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-6 text-left space-y-4">
                 <h3 className="font-heading text-xs font-bold uppercase tracking-wider text-neutral-300">Refactoring &amp; Code Quality Registry</h3>
                 <div className="space-y-2">
-                  {(report.codeSmells?.length > 0 ? report.codeSmells : CODE_QUALITY_ISSUES).map((item: any, idx: number) => (
-                    <div key={idx} className="p-3.5 bg-neutral-900/70 border border-neutral-850 rounded-lg space-y-1.5">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-xs text-neutral-200 truncate max-w-[220px]">{item.file}</span>
-                        <Badge variant="outline" className={cn(
-                          "text-[9px] font-bold uppercase",
-                          (item.severity === "High" || item.severity === "Critical") && "bg-danger-500/10 border-danger-500/20 text-danger-400",
-                          item.severity === "Medium" && "bg-warning-500/10 border-warning-500/20 text-warning-400",
-                          item.severity === "Low" && "bg-primary-500/10 border-primary-500/20 text-primary-400"
-                        )}>{item.severity} Smell</Badge>
+                  {(report.codeSmells?.length > 0 ? report.codeSmells : []).length > 0 ? (
+                    report.codeSmells.map((item: any, idx: number) => (
+                      <div key={idx} className="p-3.5 bg-neutral-900/70 border border-neutral-850 rounded-lg space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-xs text-neutral-200 truncate max-w-[220px]">{item.file}</span>
+                          <Badge variant="outline" className={cn(
+                            "text-[9px] font-bold uppercase",
+                            (item.severity === "High" || item.severity === "Critical") && "bg-danger-500/10 border-danger-500/20 text-danger-400",
+                            item.severity === "Medium" && "bg-warning-500/10 border-warning-500/20 text-warning-400",
+                            item.severity === "Low" && "bg-primary-500/10 border-primary-500/20 text-primary-400"
+                          )}>{item.severity} Smell</Badge>
+                        </div>
+                        <div className="text-[11px] text-neutral-400 flex justify-between gap-2">
+                          <span>Smell: {item.smell}</span>
+                          <span className="text-[10px] text-neutral-500 italic shrink-0">{item.impact}</span>
+                        </div>
+                        <div className="text-[11px] text-primary-300 bg-neutral-950 p-2 rounded leading-normal">
+                          Remediation: {item.recommendation}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-neutral-400 flex justify-between gap-2">
-                        <span>Smell: {item.smell}</span>
-                        <span className="text-[10px] text-neutral-500 italic shrink-0">{item.impact}</span>
-                      </div>
-                      <div className="text-[11px] text-primary-300 bg-neutral-950 p-2 rounded leading-normal">
-                        Remediation: {item.recommendation}
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-xs text-neutral-600 italic py-2">Analyze a repository to detect code quality issues.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1314,8 +1190,8 @@ export function RepoAnalyzerPage() {
                     <div className="grid grid-cols-2 gap-3 text-[11px]">
                       <div><span className="text-neutral-500">Owner:</span> <span className="text-neutral-300">{report.githubMeta.owner}</span></div>
                       <div><span className="text-neutral-500">Repo:</span> <span className="text-neutral-300">{report.githubMeta.repo}</span></div>
-                      <div><span className="text-neutral-500">Stars:</span> <span className="text-neutral-300">{report.githubMeta.stars?.toLocaleString() ?? "—"}</span></div>
-                      <div><span className="text-neutral-500">Forks:</span> <span className="text-neutral-300">{report.githubMeta.forks?.toLocaleString() ?? "—"}</span></div>
+                      <div><span className="text-neutral-500">Stars:</span> <span className="text-neutral-300">{report.githubMeta.stars?.toLocaleString() ?? "â€”"}</span></div>
+                      <div><span className="text-neutral-500">Forks:</span> <span className="text-neutral-300">{report.githubMeta.forks?.toLocaleString() ?? "â€”"}</span></div>
                       {report.githubMeta.topics?.length > 0 && (
                         <div className="col-span-2"><span className="text-neutral-500">Topics:</span> <span className="text-neutral-300">{report.githubMeta.topics.join(", ")}</span></div>
                       )}

@@ -186,18 +186,19 @@ export function DeploymentGeneratorPage() {
                       <span>Code Commit (git push main)</span>
                     </div>
                     <div className="pl-4 border-l border-neutral-700 py-1 text-left">
-                      <div className="text-amber-400">├── Trigger: GitHub Actions runner</div>
-                      <div className="text-neutral-400">├── Check: ESLint, tests pass</div>
-                      <div className="text-emerald-400">└── Action: Docker container compile &amp; push</div>
+                      <div className="text-amber-400">├── Trigger: CI/CD runner (from pipeline)</div>
+                      <div className="text-neutral-400">├── Check: Lint, tests, build verification</div>
+                      <div className="text-emerald-400">└── Action: Docker container build &amp; push</div>
                     </div>
                     <div className="flex items-center gap-2 text-indigo-300 mt-2">
                       <Server className="h-4 w-4 shrink-0" />
                       <span>Release Orchestrator</span>
                     </div>
-                    <div className="pl-4 border-l border-neutral-700 py-1 text-left">
-                      <div className="text-emerald-400">├── Frontend target: Vercel CDN cloud</div>
-                      <div className="text-emerald-400">└── Backend target: Railway app nodes</div>
-                    </div>
+                    {report.summary && (
+                      <div className="pl-4 border-l border-neutral-700 py-1 text-left text-neutral-400">
+                        <div className="text-emerald-400 line-clamp-3">{report.summary}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               }
@@ -225,23 +226,9 @@ export function DeploymentGeneratorPage() {
                   icon: Rocket
                 }
               ]}
-              cost={[
-                { category: "Vercel Professional Ingress & Edge CDN bandwidth", monthly: 20.00 },
-                { category: "Railway Container Runtime Engine resources", monthly: 10.00 },
-                { category: "GitHub Actions Pipeline Execution Minutes", monthly: 0.00 }
-              ]}
-              recommendations={[
-                "Utilize continuous integration staging environments to run schema dry-runs before final production release.",
-                "Enforce Docker Alpine image bases to minimize payload size."
-              ]}
-              security={[
-                {
-                  title: "Production Environment Secrets Leak",
-                  severity: "critical",
-                  description: "Credentials loaded via standard plaintext Docker arguments risk container metadata logs leak.",
-                  solution: "Enforce secrets injection via platform level encrypted environment bindings."
-                }
-              ]}
+              cost={report.cost ?? []}
+              recommendations={report.recommendations ?? []}
+              security={report.security ?? []}
               onRefresh={handleGenerate}
             />
           </motion.div>

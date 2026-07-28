@@ -9,7 +9,14 @@ The JSON MUST follow this exact schema:
   "summary": string (2-3 sentence overview of the deployment strategy),
   "dockerfile": string (a fully complete, valid Dockerfile including standard ports and security practices),
   "pipeline": string (a valid GitHub Actions YAML CI/CD workflow spec),
-  "checklist": string[] (pre-flight checks and rollback strategies)
+  "checklist": string[] (pre-flight checks and rollback strategies),
+  "cost": [
+    { "category": string, "monthly": number }
+  ],
+  "recommendations": string[],
+  "security": [
+    { "title": string, "severity": "critical" | "high" | "medium" | "low", "description": string, "solution": string }
+  ]
 }
 
 Return ONLY valid JSON. No markdown fences, no explanations outside JSON.`;

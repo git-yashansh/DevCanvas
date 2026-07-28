@@ -21,6 +21,33 @@ The JSON MUST follow this exact schema:
       "references": string[]
     }
   ],
+  "categoryScores": [
+    {
+      "name": string (e.g. "Authentication", "Authorization", "Encryption"),
+      "score": number (0-100),
+      "status": "Secure" | "Needs Improvement" | "Critical"
+    }
+  ],
+  "riskFindings": [
+    {
+      "title": string,
+      "level": "Critical" | "High" | "Medium" | "Low",
+      "likelihood": "Likely" | "Possible" | "Unlikely",
+      "impact": "Severe" | "Major" | "Moderate" | "Minor",
+      "priority": "P0" | "P1" | "P2" | "P3",
+      "component": string,
+      "status": "Open" | "Mitigated"
+    }
+  ],
+  "complianceItems": [
+    {
+      "standard": string (e.g. "OWASP Top 10", "SOC 2 Type II", "GDPR"),
+      "status": "Pass" | "Warning" | "Fail",
+      "progress": number (0-100),
+      "scope": string,
+      "recs": string
+    }
+  ],
   "owaspCoverage": [
     {
       "id": string (e.g. "A01"),
