@@ -33,74 +33,74 @@ export function AIQueueProvider({ children }: { children: React.ReactNode }) {
 
   const processQueue = async () => {
     if (isProcessingRef.current || queueRef.current.length === 0) return;
-
+    
     isProcessingRef.current = true;
 
-    try {
-      while (queueRef.current.length > 0) {
-        const task = queueRef.current.shift();
-        if (!task) break;
+    while (queueRef.current.length > 0) {
+      const task = queueRef.current.shift();
+      if (!task) break;
 
-        if (task.signal.aborted) {
-          updateStatus(task.key, "cancelled" as any);
-          task.reject(new Error("Request cancelled by timeout or user."));
-          delete activePromisesRef.current[task.key];
-          continue;
-        }
-
-        updateStatus(task.key, "running");
-
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const token = sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
-          if (!token) throw new Error("Supabase API key / authentication token required.");
-
-          // Wrapper for single fetch execution with internal signal
-          const fetchPromise = fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${task.endpoint}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-                apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-              },
-              body: JSON.stringify({ prompt: task.prompt, ...task.bodyData }),
-              signal: task.signal,
-            }
-          );
-
-          const res = await fetchPromise;
-
-          if (res.ok) {
-            const data = await res.json();
-            updateStatus(task.key, "success");
-            task.resolve(data);
-          } else {
-            const errText = await res.text();
-            let statusLabel: AIStatus = "error";
-            if (res.status === 429) statusLabel = "ratelimited";
-            else if (res.status === 503 || res.status === 504) statusLabel = "retrying";
-
-            updateStatus(task.key, statusLabel);
-            throw new Error(`AI Request Failed (${res.status}): ${errText}`);
-          }
-        } catch (err: any) {
-          if (err.name === "AbortError") {
-            updateStatus(task.key, "timeout");
-            task.reject(new Error("Request timed out after 3 minutes. Please try again."));
-          } else {
-            updateStatus(task.key, "error");
-            task.reject(err);
-          }
-        } finally {
-          // Clear from active promises cache so it can be re-run if needed later
-          delete activePromisesRef.current[task.key];
-        }
+      if (task.signal.aborted) {
+        updateStatus(task.key, "cancelled" as any);
+        task.reject(new Error("Request cancelled by timeout or user."));
+        delete activePromisesRef.current[task.key];
+        continue;
       }
-    } finally {
-      isProcessingRef.current = false;
+
+      updateStatus(task.key, "running");
+
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (!token) throw new Error("Authentication required for AI generation.");
+
+        // Wrapper for single fetch execution with internal timeout
+        const fetchPromise = fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${task.endpoint}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+              apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ prompt: task.prompt, ...task.bodyData }),
+            signal: task.signal,
+          }
+        );
+
+        const res = await fetchPromise;
+
+        if (res.ok) {
+          const data = await res.json();
+          updateStatus(task.key, "success");
+          task.resolve(data);
+        } else {
+          const errText = await res.text();
+          let statusLabel: AIStatus = "error";
+          if (res.status === 429) statusLabel = "ratelimited";
+          else if (res.status === 503 || res.status === 504) statusLabel = "retrying";
+          
+          updateStatus(task.key, statusLabel);
+          throw new Error(`AI Request Failed (${res.status}): ${errText}`);
+        }
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          updateStatus(task.key, "timeout");
+        } else {
+          updateStatus(task.key, "error");
+        }
+        task.reject(err);
+      } finally {
+        // Clear from active promises cache so it can be re-run if needed later
+        delete activePromisesRef.current[task.key];
+        
+        // Wait 2 seconds between sequential tasks to avoid rapid burst rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
     }
+
+    isProcessingRef.current = false;
   };
 
   const enqueue = useCallback(
@@ -112,9 +112,9 @@ export function AIQueueProvider({ children }: { children: React.ReactNode }) {
         return activePromisesRef.current[key] as Promise<T>;
       }
 
-      // 2. Timeout Protection: Extended 180 seconds (3 mins) for complex AI generations
+      // 2. Timeout Protection: Abort hanging requests after 45 seconds
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 180000);
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
 
       const promise = new Promise<T>((resolve, reject) => {
         const cleanupResolve = (data: T) => {

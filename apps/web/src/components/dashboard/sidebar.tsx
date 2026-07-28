@@ -79,7 +79,7 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-// ── Nav Item Component (Rich, Full Text & Icon Proportioning) ───
+// ── Nav Item Component (Inspired by Screenshot Rail Layout) ───
 function NavItemRow({
   item,
   collapsed,
@@ -102,26 +102,26 @@ function NavItemRow({
           ? "flex-col gap-1 py-2 px-1 w-16 justify-center text-center"
           : "gap-3 px-3.5 py-2.5 w-full",
         isActive
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)] font-bold"
-          : "text-neutral-300 hover:text-white hover:bg-neutral-900/80 font-semibold"
+          ? "bg-[#00e699]/10 text-[#00e699] border border-[#00e699]/25 shadow-[0_0_12px_rgba(0,230,153,0.15)] font-bold"
+          : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900/60 font-medium"
       )}
     >
       {/* Icon */}
       <Icon
         className={cn(
           "shrink-0 transition-colors duration-200",
-          collapsed ? "h-5 w-5" : "h-4.5 w-4.5",
-          isActive ? "text-emerald-400" : "text-neutral-400 group-hover:text-neutral-200"
+          collapsed ? "h-5 w-5" : "h-4 w-4",
+          isActive ? "text-[#00e699]" : "text-neutral-400 group-hover:text-neutral-200"
         )}
       />
 
-      {/* Label (Full text readability when expanded) */}
+      {/* Label */}
       <span
         className={cn(
-          "transition-colors duration-200",
+          "transition-colors duration-200 truncate",
           collapsed
-            ? "text-[10px] font-semibold tracking-tight leading-none text-center w-full mt-0.5 truncate"
-            : "flex-1 text-sm font-semibold tracking-normal text-left"
+            ? "text-[10px] font-semibold tracking-tight leading-none text-center w-full mt-0.5"
+            : "flex-1 text-xs tracking-tight"
         )}
       >
         {collapsed ? item.short : item.label}
@@ -129,7 +129,7 @@ function NavItemRow({
 
       {/* Badge in expanded view */}
       {!collapsed && item.badge && (
-        <span className="rounded-full border border-emerald-500/40 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-extrabold text-emerald-400 leading-none shrink-0">
+        <span className="rounded-full border border-[#00e699]/30 bg-[#00e699]/10 px-2 py-0.5 text-[9px] font-bold text-[#00e699] leading-none">
           {item.badge.text}
         </span>
       )}
@@ -144,6 +144,7 @@ export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const location = useLocation();
   const { data: projects } = useProjects();
+  const { user, profile } = useAuth();
 
   const projectCount = projects?.length ?? 0;
   const usagePct = Math.min(100, (projectCount / MAX_PROJECTS) * 100);
@@ -155,118 +156,166 @@ export function Sidebar() {
     [location.pathname]
   );
 
+  const userInitial = profile?.full_name?.[0] || user?.email?.[0] || "Y";
+
   return (
     <aside
       style={{
-        width: sidebarCollapsed ? 82 : 256,
+        width: sidebarCollapsed ? 82 : 260,
         backgroundColor: "#0B0C0E",
-        borderRight: "1px solid rgba(255, 255, 255, 0.08)",
+        borderRight: "1px solid rgba(255, 255, 255, 0.06)",
       }}
-      className="relative z-30 hidden shrink-0 transition-[width] duration-300 ease-in-out md:flex md:flex-col text-neutral-200 h-screen select-none overflow-hidden"
+      className="relative z-30 hidden shrink-0 transition-[width] duration-300 ease-in-out md:flex md:flex-col text-neutral-200"
     >
-      {/* ── 1. Top Header Row ── */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-850/70 shrink-0">
-        <button
-          onClick={toggleSidebar}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900/90 text-neutral-300 transition-all duration-200 hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
-          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-label="Toggle sidebar navigation"
+      {/* ── 1. Top Section: Hamburger Menu + Avatar Ring (Matching Screenshot) ── */}
+      <div className="flex flex-col items-center py-4 border-b border-neutral-850/60 px-3 space-y-4">
+        {/* Top Header Row with Circular Hamburger Button */}
+        <div
+          className={cn(
+            "w-full flex items-center transition-all duration-300",
+            sidebarCollapsed ? "justify-center" : "justify-between"
+          )}
         >
-          <Menu className="h-4.5 w-4.5" />
-        </button>
-        {!sidebarCollapsed && (
-          <span className="text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 pr-2">
-            Navigation
-          </span>
-        )}
-      </div>
+          {/* Circular Hamburger Button (Screenshot Style) */}
+          <button
+            onClick={toggleSidebar}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900/80 text-neutral-300 transition-all duration-200 hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label="Toggle sidebar navigation"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
 
-      {/* ── 2. Navigation Rail (Full Rich Text Filling) ── */}
-      <nav className="flex-1 overflow-hidden px-3 py-3.5 flex flex-col justify-between space-y-4">
-        <div className="space-y-3.5">
-          {/* Main Nav Section */}
-          <div className="space-y-1 flex flex-col items-center">
-            {!sidebarCollapsed && (
-              <p className="w-full text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
-                Main
-              </p>
-            )}
-
-            {mainNav.map((item) => (
-              <NavItemRow
-                key={item.id}
-                item={item}
-                collapsed={sidebarCollapsed}
-                isActive={isActive(item)}
-              />
-            ))}
-          </div>
-
-          {/* Divider */}
-          <div className="w-full px-1 py-0.5">
-            <div className="border-t border-neutral-850/80" />
-          </div>
-
-          {/* Generators / Tools Nav Section */}
-          <div className="space-y-1 flex flex-col items-center">
-            {!sidebarCollapsed && (
-              <p className="w-full text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
-                Generators
-              </p>
-            )}
-
-            {toolsNav.map((item) => (
-              <NavItemRow
-                key={item.id}
-                item={item}
-                collapsed={sidebarCollapsed}
-                isActive={isActive(item)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* ── 3. Bottom Section: Help & Settings + Free Plan Card ── */}
-        <div className="shrink-0 pt-3 border-t border-neutral-850/80 space-y-2.5">
-          <div className="space-y-1 flex flex-col items-center">
-            {!sidebarCollapsed && (
-              <p className="w-full text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
-                Preferences
-              </p>
-            )}
-
-            {bottomNav.map((item) => (
-              <NavItemRow
-                key={item.id}
-                item={item}
-                collapsed={sidebarCollapsed}
-                isActive={isActive(item)}
-              />
-            ))}
-          </div>
-
-          {/* Free Plan Card (Expanded View - Full Rich Visuals) */}
           {!sidebarCollapsed && (
-            <div className="shrink-0 rounded-xl border border-neutral-800 bg-[#121319] p-3 space-y-2 mt-1 shadow-sm">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-white flex items-center gap-1.5 text-xs">
-                  <Zap className="h-3.5 w-3.5 text-emerald-400" /> Free Plan
-                </span>
-                <span className="text-[11px] text-neutral-400 font-mono font-semibold">
-                  {projectCount}/{MAX_PROJECTS}
-                </span>
-              </div>
-
-              <div className="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                  style={{ width: `${usagePct}%` }}
-                />
-              </div>
-            </div>
+            <Link to="/app" className="flex items-center gap-2">
+              <span className="font-heading text-sm font-extrabold tracking-tight text-white">
+                DevCanvas
+              </span>
+              <span className="text-[10px] font-bold uppercase text-[#00e699] bg-[#00e699]/10 px-1.5 py-0.5 rounded border border-[#00e699]/20">
+                Pro
+              </span>
+            </Link>
           )}
         </div>
+
+        {/* User Profile Avatar with Rainbow/Gradient Ring Border (Screenshot Style) */}
+        <Link
+          to="/app/settings"
+          className="group relative flex flex-col items-center cursor-pointer transition-transform duration-200 hover:scale-105"
+        >
+          <div className="relative p-[2px] rounded-full bg-gradient-to-tr from-amber-400 via-emerald-400 to-cyan-400 shadow-md">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt="User Avatar"
+                className="h-10 w-10 rounded-full object-cover border-2 border-[#0B0C0E]"
+              />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white uppercase border-2 border-[#0B0C0E]">
+                {userInitial}
+              </div>
+            )}
+            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-[#00e699] border-2 border-[#0B0C0E]" />
+          </div>
+
+          {!sidebarCollapsed && (
+            <div className="mt-2 text-center truncate max-w-[180px]">
+              <span className="block text-xs font-bold text-white truncate">
+                {profile?.full_name || user?.email?.split("@")[0] || "Developer"}
+              </span>
+              <span className="block text-[10px] text-neutral-500 truncate">
+                {user?.email || "yash@devcanvas.ai"}
+              </span>
+            </div>
+          )}
+        </Link>
+      </div>
+
+      {/* ── 2. Scrollable Navigation Rail ────────────────────────────── */}
+      <nav className="sidebar-scroll flex-1 overflow-y-auto overflow-x-hidden px-2 py-4 space-y-4">
+        {/* Main Nav Items */}
+        <div className="space-y-1 flex flex-col items-center">
+          {mainNav.map((item) => (
+            <NavItemRow
+              key={item.id}
+              item={item}
+              collapsed={sidebarCollapsed}
+              isActive={isActive(item)}
+            />
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div className="w-full px-2">
+          <div className="border-t border-neutral-850" />
+        </div>
+
+        {/* Generators / Tools Nav Items */}
+        <div className="space-y-1 flex flex-col items-center">
+          {!sidebarCollapsed && (
+            <p className="w-full text-[9.5px] font-bold uppercase tracking-wider text-neutral-500 px-3 mb-1">
+              Generators
+            </p>
+          )}
+
+          {toolsNav.map((item) => (
+            <NavItemRow
+              key={item.id}
+              item={item}
+              collapsed={sidebarCollapsed}
+              isActive={isActive(item)}
+            />
+          ))}
+        </div>
+
+        {/* Quick Action in Expanded View */}
+        {!sidebarCollapsed && (
+          <div className="pt-2">
+            <Link
+              to="/app/projects?new=1"
+              className="flex items-center justify-center gap-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 py-2.5 px-3 text-xs font-bold text-white transition-all"
+            >
+              <Plus className="h-4 w-4 text-[#00e699]" />
+              <span>New Project</span>
+            </Link>
+          </div>
+        )}
       </nav>
+
+      {/* ── 3. Bottom Pinned Section (Settings & Profile) ────────────── */}
+      <div className="shrink-0 border-t border-neutral-850/60 p-2 space-y-2">
+        <div className="flex flex-col items-center space-y-1">
+          {bottomNav.map((item) => (
+            <NavItemRow
+              key={item.id}
+              item={item}
+              collapsed={sidebarCollapsed}
+              isActive={isActive(item)}
+            />
+          ))}
+        </div>
+
+        {/* Free Plan Card (Expanded View) */}
+        {!sidebarCollapsed && (
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-3 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-white flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-[#00e699]" /> Free Plan
+              </span>
+              <span className="text-[10px] text-neutral-400 font-mono">
+                {projectCount}/{MAX_PROJECTS}
+              </span>
+            </div>
+
+            <div className="h-1.5 w-full bg-neutral-950 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-[#00e699] rounded-full transition-all duration-500"
+                style={{ width: `${usagePct}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

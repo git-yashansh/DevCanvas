@@ -45,22 +45,22 @@ export function PageHeader({ title, description, actions, className }: PageHeade
       <div>
         <h1
           ref={wordsRef}
-          className="font-heading text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight leading-tight"
+          className="font-heading text-3xl sm:text-4xl font-semibold tracking-tight leading-tight"
         >
           {words.map((word, i) => (
             <span
               key={i}
-              className="hero-word inline-block mr-2 text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-100 to-neutral-300"
+              className="hero-word inline-block mr-2 text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-100 to-purple-200"
             >
               {word}
             </span>
           ))}
         </h1>
         {description ? (
-          <p className="mt-2 text-base font-normal text-neutral-300 leading-relaxed">{description}</p>
+          <p className="mt-1.5 text-sm font-medium text-white/40">{description}</p>
         ) : null}
       </div>
-      {actions ? <div className="flex items-center gap-2.5">{actions}</div> : null}
+      {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
     </div>
   );
 }

@@ -60,12 +60,12 @@ export function AILoader({ isFinished, onComplete }: AILoaderProps) {
   }, [isFinished, onComplete]);
 
   return (
-    <div className="flex flex-col items-center justify-center py-10 px-4 bg-[#050608] border border-white/10 rounded-2xl shadow-2xl my-4">
-      {/* Dynamic Futuristic Glass Flame AI Orb */}
-      <AIOrb scale={isFinished ? 0.85 : 1} />
+    <div className="flex flex-col items-center justify-center py-12">
+      {/* Dynamic Morphing AI Orb */}
+      <AIOrb scale={isFinished ? 0.8 : 1} />
 
       {/* Progress Timeline List */}
-      <div className="mt-8 w-full max-w-sm space-y-3.5 px-4 text-left">
+      <div className="mt-12 w-full max-w-sm space-y-3.5 px-6">
         {TIMELINE_STEPS.map((step, idx) => {
           const isDone = completedSteps.includes(idx) || (isFinished && idx < TIMELINE_STEPS.length - 1);
           const isActive = idx === currentStep && !isFinished;
@@ -83,19 +83,19 @@ export function AILoader({ isFinished, onComplete }: AILoaderProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="flex items-center gap-3 text-sm"
+              className="flex items-center gap-3.5 text-sm"
             >
               <div className="flex h-5 w-5 shrink-0 items-center justify-center">
                 {isDone ? (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/25 border border-emerald-500/40 text-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]"
+                    className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/25 border border-emerald-500/35 text-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]"
                   >
                     <Check className="h-2.5 w-2.5 stroke-[3px]" />
                   </motion.span>
                 ) : isActive ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-400 shadow-[0_0_8px_rgba(99,102,241,0.4)]" />
                 ) : (
                   <span className="h-1.5 w-1.5 rounded-full bg-neutral-700" />
                 )}
@@ -106,7 +106,7 @@ export function AILoader({ isFinished, onComplete }: AILoaderProps) {
                   isDone
                     ? "text-neutral-400 font-medium"
                     : isActive
-                    ? "text-sky-300 font-bold animate-pulse"
+                    ? "text-primary-300 font-semibold animate-pulse"
                     : "text-neutral-600"
                 }`}
               >

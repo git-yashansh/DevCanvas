@@ -95,7 +95,7 @@ export function DocumentationGeneratorPage() {
   };
 
   return (
-    <div className="w-full px-5 py-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
         title="Documentation Generator"
         description="Describe your application structure to generate high-fidelity developer onboarding docs, API specifications, and README assets."
@@ -106,28 +106,27 @@ export function DocumentationGeneratorPage() {
           <div className="glass-strong rounded-2xl p-6">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
-                <span className="text-base font-bold text-white">Describe Project Scope</span>
+                <Sparkles className="h-4 w-4 text-primary-400" />
+                <span className="text-sm font-medium text-neutral-200">Describe Project Scope</span>
               </div>
               <textarea
                 value={projectPrompt}
                 onChange={(e) => setProjectPrompt(e.target.value)}
                 placeholder="A collaborative Kanban board featuring custom auth, real-time sync via websockets, and automated billing hooks..."
                 rows={3}
-                className="w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none font-sans"
+                className="w-full rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none font-sans"
                 disabled={generating}
               />
               <div className="flex justify-end mt-1 gap-2 items-center">
                 {saving && (
-                  <span className="text-xs text-neutral-400 flex items-center gap-1 font-medium">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" /> Saving to workspace...
+                  <span className="text-xs text-neutral-500 flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Saving to workspace...
                   </span>
                 )}
                 <Button
                   variant="gradient"
                   onClick={handleGenerate}
                   disabled={!projectPrompt.trim() || generating}
-                  className="shrink-0 text-base font-semibold h-11 px-6"
                 >
                   {generating ? "Generating..." : "Generate Documentation"}
                 </Button>

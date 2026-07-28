@@ -110,7 +110,7 @@ export async function callGemini(options: GeminiRequestOptions): Promise<GeminiR
 
   const requestId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 11);
   const model = AI_CONFIG.model;
-
+  
   let attempt = 0;
   const maxRetries = 4; // Up to 5 total attempts
   let lastError: AIServiceError | Error | null = null;
@@ -169,10 +169,10 @@ export async function callGemini(options: GeminiRequestOptions): Promise<GeminiR
       const isTransient = response.status === 429 || response.status === 503 || response.status === 504;
       if (isTransient && attempt <= maxRetries) {
         // Use explicit retryAfter if provided by API, otherwise fallback to exponential backoff
-        const delayMs = apiError.retryAfterSeconds
-          ? (apiError.retryAfterSeconds * 1000)
+        const delayMs = apiError.retryAfterSeconds 
+          ? (apiError.retryAfterSeconds * 1000) 
           : (Math.pow(2, attempt) * 1000 + Math.random() * 1000); // Exponential backoff with jitter
-
+          
         console.log(`[AI Backoff] ID: ${requestId} | Waiting ${delayMs}ms before next retry...`);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
         continue;

@@ -10,7 +10,7 @@ export function ProjectsPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full px-5 py-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
         title="Projects"
         description="All your DevCanvas projects in one place."
@@ -22,7 +22,7 @@ export function ProjectsPage() {
         }
       />
 
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => <ProjectCardSkeleton key={i} />)
         ) : projects && projects.length > 0 ? (
