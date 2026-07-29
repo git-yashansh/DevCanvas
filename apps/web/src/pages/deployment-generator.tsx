@@ -103,41 +103,37 @@ export function DeploymentGeneratorPage() {
         description="Describe your application stack to generate Docker configurations, GitHub actions scripts, and production server checklists."
       />
 
-      <div className="mt-8">
-        <div className="gradient-border rounded-2xl">
-          <div className="glass-strong rounded-2xl p-6">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
-                <span className="text-base font-bold text-white">Deployment Targets Details</span>
-              </div>
-              <textarea
-                value={deploymentPrompt}
-                onChange={(e) => setDeploymentPrompt(e.target.value)}
-                placeholder="A modern Single Page Application (SPA) web frontend to Vercel, Node/Express api endpoints to Railway, and postgres container..."
-                rows={3}
-                className="w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none font-sans"
-                disabled={generating}
-              />
-              <div className="flex justify-end mt-1 gap-2 items-center">
-                {saving && (
-                  <span className="text-xs text-neutral-400 flex items-center gap-1 font-medium">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" /> Saving to workspace...
-                  </span>
-                )}
-                <Button
-                  variant="gradient"
-                  onClick={handleGenerate}
-                  disabled={!deploymentPrompt.trim() || generating}
-                  className="shrink-0 text-base font-semibold h-11 px-6"
-                >
-                  {generating ? "Generating..." : "Generate Deployment Plan"}
-                </Button>
-              </div>
+        <div className="bg-gradient-to-b from-[#0a142c] via-[#121319] to-[#121319] border border-blue-900/35 rounded-2xl p-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+              <span className="text-base font-bold text-white">Deployment Targets Details</span>
+            </div>
+            <textarea
+              value={deploymentPrompt}
+              onChange={(e) => setDeploymentPrompt(e.target.value)}
+              placeholder="A modern Single Page Application (SPA) web frontend to Vercel, Node/Express api endpoints to Railway, and postgres container..."
+              rows={3}
+              className="w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 resize-none font-sans"
+              disabled={generating}
+            />
+            <div className="flex justify-end mt-1 gap-2 items-center">
+              {saving && (
+                <span className="text-xs text-neutral-400 flex items-center gap-1 font-medium">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-400" /> Saving to workspace...
+                </span>
+              )}
+              <Button
+                variant="gradient"
+                onClick={handleGenerate}
+                disabled={!deploymentPrompt.trim() || generating}
+                className="shrink-0 text-base font-semibold h-11 px-6"
+              >
+                {generating ? "Generating..." : "Generate Deployment Plan"}
+              </Button>
             </div>
           </div>
         </div>
-      </div>
 
       {error && (
         <div className="mt-6 flex items-center gap-2 rounded-lg border border-danger-500/30 bg-danger-500/10 px-4 py-3 text-sm text-danger-300">
@@ -147,7 +143,7 @@ export function DeploymentGeneratorPage() {
 
       <AnimatePresence mode="wait">
         {generating && !finishedLoading ? (
-          <div className="mt-8 rounded-xl border border-border bg-surface py-12">
+          <div className="mt-8 py-12 bg-transparent border-none">
             <AILoader isFinished={false} />
           </div>
         ) : report ? (

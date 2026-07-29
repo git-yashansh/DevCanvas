@@ -18,6 +18,8 @@ import { useProjects } from "@/lib/queries/projects";
 import { useRecentActivity } from "@/lib/queries/activity";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@utils/cn";
+import { AIOrb } from "@/components/dashboard/AIOrb";
+
 
 /** Calculates engineering score (0-100%) from completed artifact columns */
 function calcEngineeringScore(project: any): number {
@@ -212,13 +214,13 @@ export function DashboardHomePage() {
   }, [projectsData, defaultProjects]);
 
   return (
-    <div className="min-h-screen bg-[#07080A] text-white font-sans antialiased p-6 lg:p-10 space-y-7 text-left">
+    <div className="min-h-screen bg-transparent text-white font-sans antialiased p-6 lg:p-10 space-y-7 text-left">
       
       {/* ── TOP GREETING ROW (Same Big Size as Architecture Generator) ── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-medium text-white tracking-tight leading-tight">
-            {greeting}, <span className="font-heading italic text-emerald-400">{userName}</span> <span className="text-neutral-400 font-normal font-sans text-xl sm:text-2xl lg:text-3xl">— here's your workspace</span>
+            <span className="font-heading">{greeting},</span> <span className="font-heading italic bg-gradient-to-r from-orange-300 to-emerald-400 bg-clip-text text-transparent">{userName}</span> <span className="text-neutral-400 font-normal font-heading text-xl sm:text-2xl lg:text-3xl">— here's your workspace</span>
           </h1>
         </div>
       </div>
@@ -232,8 +234,8 @@ export function DashboardHomePage() {
           className="bg-[#121319] border border-white/10 rounded-xl p-5 flex flex-col justify-between hover:border-emerald-500/50 hover:bg-[#151722] cursor-pointer transition-all group"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[13px] font-semibold text-neutral-300 uppercase tracking-wider group-hover:text-white transition-colors">
-              Total projects
+            <span className="font-heading text-[17px] font-medium text-white tracking-wide group-hover:text-emerald-400 transition-colors">
+              Total Projects
             </span>
             <span className="bg-[#181920] text-neutral-300 border border-white/10 text-xs font-medium px-2.5 py-0.5 rounded-full">
               {activeProjectsCount} active
@@ -251,8 +253,8 @@ export function DashboardHomePage() {
           className="bg-[#121319] border border-white/10 rounded-xl p-5 flex flex-col justify-between hover:border-indigo-500/50 hover:bg-[#151722] cursor-pointer transition-all group"
         >
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[13px] font-semibold text-neutral-300 uppercase tracking-wider group-hover:text-white transition-colors">
-              AI generations
+            <span className="font-heading text-[17px] font-medium text-white tracking-wide group-hover:text-indigo-400 transition-colors">
+              AI Generations
             </span>
             <span className="bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> +40%
@@ -270,8 +272,8 @@ export function DashboardHomePage() {
           className="bg-[#121319] border border-white/10 rounded-xl p-5 flex flex-col justify-between hover:border-teal-500/50 hover:bg-[#151722] cursor-pointer transition-all group"
         >
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[13px] font-semibold text-neutral-300 uppercase tracking-wider group-hover:text-white transition-colors">
-              Security rating
+            <span className="font-heading text-[17px] font-medium text-white tracking-wide group-hover:text-teal-400 transition-colors">
+              Security Rating
             </span>
             <span className="bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 text-xs font-medium px-2.5 py-0.5 rounded-full">
               0 critical
@@ -287,8 +289,8 @@ export function DashboardHomePage() {
           className="bg-[#121319] border border-white/10 rounded-xl p-5 flex flex-col justify-between hover:border-cyan-500/50 hover:bg-[#151722] cursor-pointer transition-all group"
         >
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[13px] font-semibold text-neutral-300 uppercase tracking-wider group-hover:text-white transition-colors">
-              Active blueprints
+            <span className="font-heading text-[17px] font-medium text-white tracking-wide group-hover:text-cyan-400 transition-colors">
+              Active Blueprints
             </span>
             <span className="bg-[#181920] text-neutral-300 border border-white/10 text-xs font-medium px-2.5 py-0.5 rounded-full">
               {pipelineStats.pct}% complete
@@ -306,13 +308,13 @@ export function DashboardHomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
         {/* DevAI Intelligence Hub Card */}
-        <div className="lg:col-span-2 bg-[#121319] border border-white/10 rounded-xl p-5 lg:p-6 flex flex-col justify-between space-y-4 hover:border-white/20 transition-all">
-          
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-2 glowing-border-container">
+          <div className="glowing-border-content p-5 lg:p-6 flex flex-col justify-between space-y-4">
+            
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-emerald-400" />
-              <span className="text-[13px] font-bold text-white uppercase tracking-wider">
-                DevAI intelligence hub
+              <span className="font-heading text-[18px] font-bold text-white tracking-wide">
+                DevAI Intelligence Hub
               </span>
             </div>
           </div>
@@ -323,7 +325,7 @@ export function DashboardHomePage() {
               e.preventDefault();
               handleAskDevAI();
             }}
-            className="flex flex-col gap-2.5 bg-[#181920] border border-white/10 rounded-xl p-4 focus-within:border-emerald-500/60 transition-all"
+            className="flex flex-col gap-2.5 bg-black border border-white/10 rounded-xl p-4 focus-within:border-emerald-500/60 transition-all"
           >
             <div className="flex items-start gap-2.5">
               <Sparkles className="h-5 w-5 text-emerald-400 shrink-0 mt-1" />
@@ -346,17 +348,10 @@ export function DashboardHomePage() {
               <button
                 type="submit"
                 disabled={isAiLoading || !aiQuestion.trim()}
-                className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-extrabold text-sm px-5 py-2 rounded-xl transition-all flex items-center gap-1.5 shrink-0"
+                className="bg-black hover:bg-neutral-900 disabled:opacity-50 text-white border border-white/20 hover:border-white/40 font-heading font-bold text-[15px] px-5 py-2 rounded-xl transition-all flex items-center gap-3 shrink-0 h-12 shadow-[0_0_15px_rgba(255,255,255,0.08)] hover:shadow-[0_0_24px_rgba(255,255,255,0.18)]"
               >
-                {isAiLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Thinking...
-                  </>
-                ) : (
-                  <>
-                    Ask AI <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                <span className="text-white tracking-wide font-extrabold">{isAiLoading ? "Thinking..." : "Ask AI"}</span>
+                <AIOrb size={68} className="w-16 h-6 bg-transparent border-none opacity-90" renderScale={1.5} />
               </button>
             </div>
           </form>
@@ -399,13 +394,14 @@ export function DashboardHomePage() {
             </div>
           )}
 
+          </div>
         </div>
 
         {/* Pipeline Status Card (+1pt) */}
-        <div className="bg-[#121319] border border-white/10 rounded-xl p-5 lg:p-6 flex flex-col justify-between space-y-5 hover:border-white/20 transition-all">
+        <div className="bg-gradient-to-b from-[#0a142c] via-[#121319] to-[#121319] border border-blue-900/35 rounded-xl p-5 lg:p-6 flex flex-col justify-between space-y-5 hover:border-blue-800/40 hover:shadow-[0_0_20px_rgba(30,58,138,0.15)] transition-all duration-300">
           <div className="flex items-center justify-between">
-            <span className="text-[13px] font-bold text-white uppercase tracking-wider">
-              Pipeline status
+            <span className="font-heading text-[17px] font-medium text-white tracking-wide">
+              Pipeline Status
             </span>
             <span className="text-xs text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-mono">
               Real profile data
@@ -477,7 +473,7 @@ export function DashboardHomePage() {
         <div className="lg:col-span-2 bg-[#121319] border border-white/10 rounded-xl p-5 lg:p-6 space-y-4 hover:border-white/20 transition-all">
           
           <div className="flex items-center justify-between">
-            <span className="text-[13px] font-bold text-white uppercase tracking-wider">Recent projects</span>
+            <span className="font-heading text-[17px] font-medium text-white tracking-wide">Recent Projects</span>
             <button
               onClick={() => navigate("/app/projects")}
               className="text-xs text-emerald-400 hover:underline flex items-center gap-1 font-medium"
@@ -591,7 +587,7 @@ export function DashboardHomePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-emerald-400" />
-              <span className="text-[13px] font-bold text-white uppercase tracking-wider">Quick generators</span>
+              <span className="font-heading text-[17px] font-medium text-white tracking-wide">Quick Generators</span>
             </div>
             <span className="bg-[#181920] text-neutral-300 border border-white/10 text-xs font-medium px-2.5 py-0.5 rounded-full">
               Instant AI

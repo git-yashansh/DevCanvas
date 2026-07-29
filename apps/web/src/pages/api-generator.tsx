@@ -799,144 +799,140 @@ export function ApiGeneratorPage() {
       />
 
       {/* Description / Prompt Box */}
-      <div className="mt-8">
-        <div className="gradient-border rounded-2xl">
-          <div className="glass-strong rounded-2xl p-6 text-left">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
-                <span className="text-base font-bold text-white">
-                  Describe your API
-                </span>
-              </div>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    handleGenerate();
-                  }
-                }}
-                rows={3}
-                placeholder="Design a scalable e-commerce API with authentication, payments, product catalog, orders, inventory, and webhook support..."
-                className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
-                disabled={generating}
-              />
+        <div className="bg-gradient-to-b from-[#0a142c] via-[#121319] to-[#121319] border border-blue-900/35 rounded-2xl p-6 text-left">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+              <span className="text-base font-bold text-white">
+                Describe your API
+              </span>
+            </div>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleGenerate();
+                }
+              }}
+              rows={3}
+              placeholder="Design a scalable e-commerce API with authentication, payments, product catalog, orders, inventory, and webhook support..."
+              className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
+              disabled={generating}
+            />
 
-              {/* Dynamic Feature Badges inside prompt area */}
-              {detectedFeatures.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-neutral-800 mt-1">
-                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider mt-0.5 mr-1 shrink-0 font-mono">Detected Features:</span>
-                  {detectedFeatures.map(feat => (
-                    <Badge key={feat} variant="outline" className="text-xs bg-neutral-900 text-neutral-200 border-neutral-800 font-semibold font-mono">
-                      {feat}
-                    </Badge>
-                  ))}
-                </div>
+            {/* Dynamic Feature Badges inside prompt area */}
+            {detectedFeatures.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-neutral-800 mt-1">
+                <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider mt-0.5 mr-1 shrink-0 font-mono">Detected Features:</span>
+                {detectedFeatures.map(feat => (
+                  <Badge key={feat} variant="outline" className="text-xs bg-neutral-900 text-neutral-200 border-neutral-800 font-semibold font-mono">
+                    {feat}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Prompt Suggestion Chips (Horizontal scroll filter-like layout) */}
+            <div className="flex items-center gap-2 text-xs py-1">
+              <span className="text-xs uppercase font-bold tracking-wider text-neutral-400 shrink-0 font-mono">Quick Additions:</span>
+              <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-none flex-nowrap scroll-smooth">
+                {[
+                  "REST API", "GraphQL", "Microservices", "Authentication", "Payments",
+                  "JWT", "OAuth", "Webhooks", "Notifications", "Analytics",
+                  "Inventory", "Blog CMS", "Chat Application", "Healthcare", "Banking", "Social Media"
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => {
+                      if (prompt.includes(chip)) return;
+                      setPrompt(prev => prev ? `${prev.trim()}, ${chip.toLowerCase()}` : `Design a custom ${chip.toLowerCase()} backend`);
+                    }}
+                    className="px-3 py-1 rounded-lg border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 hover:text-white text-neutral-300 text-xs transition-colors font-mono shrink-0 font-medium"
+                  >
+                    + {chip}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Action bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-neutral-850">
+            <div className="flex items-center gap-3.5 flex-wrap">
+              {/* Templates Button trigger */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTemplatesOpen(true)}
+                className="flex items-center gap-1.5 border-neutral-850 hover:bg-neutral-900 text-xs py-1.5 px-3 rounded-lg h-9 text-neutral-300 hover:text-white font-medium"
+              >
+                <Layers className="h-4 w-4 text-neutral-400" />
+                API Templates
+              </Button>
+
+              {prompt && (
+                <button
+                  onClick={() => setPrompt("")}
+                  className="text-xs text-neutral-400 hover:text-white font-medium font-sans"
+                >
+                  Clear Prompt
+                </button>
               )}
 
-              {/* Prompt Suggestion Chips (Horizontal scroll filter-like layout) */}
-              <div className="flex items-center gap-2 text-xs py-1">
-                <span className="text-xs uppercase font-bold tracking-wider text-neutral-400 shrink-0 font-mono">Quick Additions:</span>
-                <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-none flex-nowrap scroll-smooth">
-                  {[
-                    "REST API", "GraphQL", "Microservices", "Authentication", "Payments",
-                    "JWT", "OAuth", "Webhooks", "Notifications", "Analytics",
-                    "Inventory", "Blog CMS", "Chat Application", "Healthcare", "Banking", "Social Media"
-                  ].map((chip) => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => {
-                        if (prompt.includes(chip)) return;
-                        setPrompt(prev => prev ? `${prev.trim()}, ${chip.toLowerCase()}` : `Design a custom ${chip.toLowerCase()} backend`);
-                      }}
-                      className="px-3 py-1 rounded-lg border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 hover:text-white text-neutral-300 text-xs transition-colors font-mono shrink-0 font-medium"
-                    >
-                      + {chip}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <span className="text-xs text-neutral-400 font-mono">
+                {prompt.length} characters
+              </span>
+
+              {promptComplexity && (
+                <Badge variant="outline" className={cn(
+                  "text-xs font-bold font-mono tracking-wider px-2 py-0.5 rounded uppercase border-neutral-800 text-neutral-300 bg-neutral-900"
+                )}>
+                  {promptComplexity} Complexity
+                </Badge>
+              )}
             </div>
 
-            {/* Bottom Action bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-neutral-850">
-              <div className="flex items-center gap-3.5 flex-wrap">
-                {/* Templates Button trigger */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setTemplatesOpen(true)}
-                  className="flex items-center gap-1.5 border-neutral-850 hover:bg-neutral-900 text-xs py-1.5 px-3 rounded-lg h-9 text-neutral-300 hover:text-white font-medium"
-                >
-                  <Layers className="h-4 w-4 text-neutral-400" />
-                  API Templates
-                </Button>
-
-                {prompt && (
-                  <button
-                    onClick={() => setPrompt("")}
-                    className="text-xs text-neutral-400 hover:text-white font-medium font-sans"
-                  >
-                    Clear Prompt
-                  </button>
-                )}
-
-                <span className="text-xs text-neutral-400 font-mono">
-                  {prompt.length} characters
-                </span>
-
-                {promptComplexity && (
-                  <Badge variant="outline" className={cn(
-                    "text-xs font-bold font-mono tracking-wider px-2 py-0.5 rounded uppercase border-neutral-800 text-neutral-300 bg-neutral-900"
-                  )}>
-                    {promptComplexity} Complexity
-                  </Badge>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-neutral-400 font-mono hidden sm:inline">
-                  Ctrl + Enter
-                </span>
-                <Button
-                  variant="gradient"
-                  onClick={() => handleGenerate()}
-                  disabled={!prompt.trim() || generating}
-                  className="shrink-0 text-base font-semibold h-11 px-6"
-                >
-                  {generating ? "Generating..." : "Generate API"}
-                </Button>
-              </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-neutral-400 font-mono hidden sm:inline">
+                Ctrl + Enter
+              </span>
+              <Button
+                variant="gradient"
+                onClick={() => handleGenerate()}
+                disabled={!prompt.trim() || generating}
+                className="shrink-0 text-base font-semibold h-11 px-6"
+              >
+                {generating ? "Generating..." : "Generate API"}
+              </Button>
             </div>
-
-            {!spec && !generating ? (
-              <div className="mt-6">
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
-                  Try an example
-                </p>
-                <div className="flex flex-wrap gap-2.5">
-                  {[
-                    "Design a scalable e-commerce API with authentication and payments",
-                    "A real-time chat service API with presence and history",
-                    "A medical portal backend API with scheduling and records",
-                    "A project board system API with workspaces and teams",
-                  ].map((example) => (
-                    <button
-                      key={example}
-                      onClick={() => handleGenerate(example)}
-                      className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
-                    >
-                      {example}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </div>
+
+          {!spec && !generating ? (
+            <div className="mt-6">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
+                Try an example
+              </p>
+              <div className="flex flex-wrap gap-2.5">
+                {[
+                  "Design a scalable e-commerce API with authentication and payments",
+                  "A real-time chat service API with presence and history",
+                  "A medical portal backend API with scheduling and records",
+                  "A project board system API with workspaces and teams",
+                ].map((example) => (
+                  <button
+                    key={example}
+                    onClick={() => handleGenerate(example)}
+                    className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
-      </div>
 
       {error ? (
         <div className="mt-6 flex items-center gap-2 rounded-lg border border-danger-500/30 bg-danger-500/10 px-4 py-3 text-sm text-danger-300">
@@ -946,7 +942,7 @@ export function ApiGeneratorPage() {
 
       <AnimatePresence mode="wait">
         {generating && !finishedLoading ? (
-          <div className="mt-8 rounded-xl border border-border bg-surface py-12">
+          <div className="mt-8 py-12 bg-transparent border-none">
             <AILoader isFinished={false} />
           </div>
         ) : spec ? (

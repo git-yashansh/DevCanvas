@@ -67,7 +67,7 @@ function Tooltip({ label, children }: { label: string; children: React.ReactNode
         className={cn(
           "pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50",
           "whitespace-nowrap rounded-lg border border-neutral-800 bg-[#121216] px-2.5 py-1.5",
-          "text-xs font-semibold text-white shadow-2xl",
+          "text-[13px] font-heading font-semibold text-white shadow-2xl",
           "opacity-0 scale-95 translate-x-1 group-hover/tip:opacity-100 group-hover/tip:scale-100 group-hover/tip:translate-x-0",
           "transition-all duration-150 ease-out"
         )}
@@ -120,8 +120,8 @@ function NavItemRow({
         className={cn(
           "transition-colors duration-200",
           collapsed
-            ? "text-[10px] font-semibold tracking-tight leading-none text-center w-full mt-0.5 truncate"
-            : "flex-1 text-sm font-semibold tracking-normal text-left"
+            ? "font-heading text-[11px] font-semibold tracking-tight leading-none text-center w-full mt-0.5 truncate"
+            : "flex-1 font-heading text-[15px] font-semibold tracking-normal text-left"
         )}
       >
         {collapsed ? item.short : item.label}
@@ -165,17 +165,22 @@ export function Sidebar() {
       className="relative z-30 hidden shrink-0 transition-[width] duration-300 ease-in-out md:flex md:flex-col text-neutral-200 h-screen select-none overflow-hidden"
     >
       {/* ── 1. Top Header Row ── */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-neutral-850/70 shrink-0">
+      <div
+        className={cn(
+          "flex items-center shrink-0 h-16 border-b border-white/[0.08]",
+          sidebarCollapsed ? "justify-center px-0" : "justify-between px-4"
+        )}
+      >
         <button
           onClick={toggleSidebar}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900/90 text-neutral-300 transition-all duration-200 hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900/90 text-neutral-300 transition-all duration-200 hover:border-neutral-700 hover:bg-neutral-800 hover:text-white cursor-pointer"
           title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label="Toggle sidebar navigation"
         >
           <Menu className="h-4.5 w-4.5" />
         </button>
         {!sidebarCollapsed && (
-          <span className="text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 pr-2">
+          <span className="font-heading text-[12px] font-extrabold uppercase tracking-widest text-neutral-400 pr-2">
             Navigation
           </span>
         )}
@@ -187,7 +192,7 @@ export function Sidebar() {
           {/* Main Nav Section */}
           <div className="space-y-1 flex flex-col items-center">
             {!sidebarCollapsed && (
-              <p className="w-full text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
+              <p className="w-full font-heading text-[12px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
                 Main
               </p>
             )}
@@ -210,7 +215,7 @@ export function Sidebar() {
           {/* Generators / Tools Nav Section */}
           <div className="space-y-1 flex flex-col items-center">
             {!sidebarCollapsed && (
-              <p className="w-full text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
+              <p className="w-full font-heading text-[12px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
                 Generators
               </p>
             )}
@@ -230,7 +235,7 @@ export function Sidebar() {
         <div className="shrink-0 pt-3 border-t border-neutral-850/80 space-y-2.5">
           <div className="space-y-1 flex flex-col items-center">
             {!sidebarCollapsed && (
-              <p className="w-full text-[11px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
+              <p className="w-full font-heading text-[12px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
                 Preferences
               </p>
             )}
@@ -249,7 +254,7 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <div className="shrink-0 rounded-xl border border-neutral-800 bg-[#121319] p-3 space-y-2 mt-1 shadow-sm">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-white flex items-center gap-1.5 text-xs">
+                <span className="font-heading font-bold text-white flex items-center gap-1.5 text-[13px]">
                   <Zap className="h-3.5 w-3.5 text-emerald-400" /> Free Plan
                 </span>
                 <span className="text-[11px] text-neutral-400 font-mono font-semibold">

@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html, body, .overflow-y-auto, [class*="overflow-y-"] {
+  scroll-behavior: smooth;
+}
+
 @theme {
   /* Color ramps */
   --color-background: #09090B;
@@ -396,6 +400,54 @@
   }
   .sheen-btn:hover::after {
     transform: translate(300%, 0) rotate(25deg);
+  }
+
+  /* Revolving Glowing Border Animation */
+  @keyframes border-rotate {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .glowing-border-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.75rem; /* rounded-xl */
+    padding: 1.5px; /* border thickness */
+    background: transparent;
+    transition: box-shadow 0.5s ease;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+  }
+
+  .glowing-border-container:hover {
+    box-shadow: 0 0 25px rgba(249, 115, 22, 0.3);
+  }
+
+  .glowing-border-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent 30%, #f97316 42%, #10b981 55%, #06b6d4 68%, transparent 80%);
+    animation: border-rotate 4s linear infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .glowing-border-container:hover::before {
+    background: conic-gradient(from 0deg, transparent 30%, #f97316 45%, #ec4899 60%, transparent 75%);
+    animation-duration: 2.5s;
+  }
+
+  .glowing-border-content {
+    position: relative;
+    z-index: 10;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(to bottom, #0a142c, #121319, #121319);
+    border-radius: calc(0.75rem - 1.5px);
   }
 }
 

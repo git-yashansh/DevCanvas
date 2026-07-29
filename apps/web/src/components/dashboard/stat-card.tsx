@@ -148,7 +148,7 @@ export function StatCard({
 
       <div className="relative z-20 flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-neutral-450">
+          <p className="font-heading text-[17px] font-medium text-white tracking-wide">
             {label}
           </p>
           <p

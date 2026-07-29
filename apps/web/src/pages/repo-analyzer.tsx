@@ -561,49 +561,47 @@ export function RepoAnalyzerPage() {
 
       {/* ── TOP REPOSITORY LINK INPUT BOX ── */}
       <div className="mt-6">
-        <div className="gradient-border rounded-2xl">
-          <div className="glass-strong rounded-2xl p-5 sm:p-6 text-left">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
-                <span className="text-base font-bold text-white">
-                  Enter GitHub Repository Details
-                </span>
-              </div>
-              <div className="flex gap-3 flex-col sm:flex-row">
-                <input
-                  type="text"
-                  value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleAnalyze();
-                    }
-                  }}
-                  placeholder="e.g. https://github.com/facebook/react or username/repository"
-                  className="flex-grow rounded-xl border border-white/10 bg-neutral-900/90 px-4 py-3.5 text-base text-white placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
-                  disabled={generating}
-                />
-                <Button
-                  variant="gradient"
-                  onClick={handleAnalyze}
-                  disabled={!repoUrl.trim() || generating}
-                  className="shrink-0 font-semibold text-base h-11 px-6"
-                >
-                  {generating ? "Analyzing..." : "Analyze Repo"}
-                </Button>
-              </div>
-              <p className="text-sm font-medium text-neutral-400">
-                Supports public GitHub repository links. Maps source directory structure, identifies dependencies, and audits code smells.
-              </p>
+        <div className="bg-gradient-to-b from-[#0a142c] via-[#121319] to-[#121319] border border-blue-900/35 rounded-2xl p-5 sm:p-6 text-left">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+              <span className="text-base font-bold text-white">
+                Enter GitHub Repository Details
+              </span>
             </div>
+            <div className="flex gap-3 flex-col sm:flex-row">
+              <input
+                type="text"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleAnalyze();
+                  }
+                }}
+                placeholder="e.g. https://github.com/facebook/react or username/repository"
+                className="flex-grow rounded-xl border border-white/10 bg-neutral-900/90 px-4 py-3.5 text-base text-white placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
+                disabled={generating}
+              />
+              <Button
+                variant="gradient"
+                onClick={handleAnalyze}
+                disabled={!repoUrl.trim() || generating}
+                className="shrink-0 font-semibold text-base h-11 px-6"
+              >
+                {generating ? "Analyzing..." : "Analyze Repo"}
+              </Button>
+            </div>
+            <p className="text-sm font-medium text-neutral-400">
+              Supports public GitHub repository links. Maps source directory structure, identifies dependencies, and audits code smells.
+            </p>
           </div>
         </div>
       </div>
 
       <AnimatePresence mode="wait">
         {generating && !finishedLoading ? (
-          <div className="mt-8 rounded-xl border border-border bg-surface py-12">
+          <div className="mt-8 py-12 bg-transparent border-none">
             <AILoader isFinished={false} />
           </div>
         ) : report ? (

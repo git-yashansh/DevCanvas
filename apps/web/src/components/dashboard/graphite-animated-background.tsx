@@ -103,10 +103,12 @@ export function GraphiteAnimatedBackground() {
         className="absolute inset-0 z-0 opacity-80"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+            linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px)
           `,
-          backgroundSize: "40px 40px",
+          backgroundSize: "50px 50px",
+          transform: "perspective(500px) rotateX(60deg) translateY(-25%) scale(1.6)",
+          transformOrigin: "top center",
           maskImage: "radial-gradient(ellipse 80% 70% at 50% 30%, rgba(0,0,0,1) 0%, transparent 100%)",
           WebkitMaskImage: "radial-gradient(ellipse 80% 70% at 50% 30%, rgba(0,0,0,1) 0%, transparent 100%)",
         }}

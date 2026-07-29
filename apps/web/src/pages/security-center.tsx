@@ -507,69 +507,67 @@ export function SecurityCenterPage() {
 
       {/* Description / Prompt Box (Symmetric alignment with Architecture prompt wrapper) */}
       <div className="mt-8">
-        <div className="gradient-border rounded-2xl">
-          <div className="glass-strong rounded-2xl p-6 text-left">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
-                <span className="text-base font-bold text-white">
-                  Describe your application architecture
-                </span>
+        <div className="bg-gradient-to-b from-[#0a142c] via-[#121319] to-[#121319] border border-blue-900/35 rounded-2xl p-6 text-left">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+              <span className="text-base font-bold text-white">
+                Describe your application architecture
+              </span>
+            </div>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleAnalyze();
+                }
+              }}
+              rows={3}
+              placeholder="A Node.js REST API with JWT auth, PostgreSQL, file uploads on S3, and Redis caching…"
+              className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
+              disabled={analyzing}
+            />
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <p className="text-sm font-medium text-neutral-400">
+                  Press Cmd/Ctrl + Enter to trigger security audits
+                </p>
+                {promptComplexity && (
+                  <Badge variant="outline" className="text-xs font-mono border-neutral-800 text-neutral-300 bg-neutral-900 uppercase font-bold">
+                    {promptComplexity} Complexity
+                  </Badge>
+                )}
               </div>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    handleAnalyze();
-                  }
-                }}
-                rows={3}
-                placeholder="A Node.js REST API with JWT auth, PostgreSQL, file uploads on S3, and Redis caching…"
-                className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
-                disabled={analyzing}
-              />
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <p className="text-sm font-medium text-neutral-400">
-                    Press Cmd/Ctrl + Enter to trigger security audits
-                  </p>
-                  {promptComplexity && (
-                    <Badge variant="outline" className="text-xs font-mono border-neutral-800 text-neutral-300 bg-neutral-900 uppercase font-bold">
-                      {promptComplexity} Complexity
-                    </Badge>
-                  )}
-                </div>
-                <Button
-                  variant="gradient"
-                  onClick={() => handleAnalyze()}
-                  disabled={!prompt.trim() || analyzing}
-                  className="shrink-0 text-base font-semibold h-11 px-6"
-                >
-                  {analyzing ? "Analyzing..." : "Analyze security"}
-                </Button>
+              <Button
+                variant="gradient"
+                onClick={() => handleAnalyze()}
+                disabled={!prompt.trim() || analyzing}
+                className="shrink-0 text-base font-semibold h-11 px-6"
+              >
+                {analyzing ? "Analyzing..." : "Analyze security"}
+              </Button>
+            </div>
+          </div>
+
+          {!analysis && !analyzing ? (
+            <div className="mt-6">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
+                Try an example
+              </p>
+              <div className="flex flex-wrap gap-2.5">
+                {EXAMPLE_PROMPTS.map((ex) => (
+                  <button
+                    key={ex}
+                    onClick={() => handleAnalyze(ex)}
+                    className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
+                  >
+                    {ex}
+                  </button>
+                ))}
               </div>
             </div>
-
-            {!analysis && !analyzing ? (
-              <div className="mt-6">
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
-                  Try an example
-                </p>
-                <div className="flex flex-wrap gap-2.5">
-                  {EXAMPLE_PROMPTS.map((ex) => (
-                    <button
-                      key={ex}
-                      onClick={() => handleAnalyze(ex)}
-                      className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
-                    >
-                      {ex}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
 
@@ -581,7 +579,7 @@ export function SecurityCenterPage() {
 
       <AnimatePresence mode="wait">
         {analyzing && !finishedLoading ? (
-          <div className="mt-8 rounded-xl border border-border bg-surface py-12">
+          <div className="mt-8 py-12 bg-transparent border-none">
             <AILoader isFinished={false} />
           </div>
         ) : analysis ? (

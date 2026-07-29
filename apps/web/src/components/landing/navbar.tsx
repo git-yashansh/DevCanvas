@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@utils/index";
+import logoImg from "../../logo.png";
 
 const links = [
   { label: "Features", href: "#features" },
@@ -37,11 +38,21 @@ export function Navbar() {
           : "border-white/5 bg-white/3 backdrop-blur-md"
       )}>
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 shadow-lg shadow-primary-500/40">
-            <span className="font-heading text-sm font-bold text-white">D</span>
-          </div>
-          <span className="font-heading text-base font-semibold text-white">DevCanvas</span>
+        <Link to="/" className="flex items-center gap-4 group">
+          <img
+            src={logoImg}
+            alt="DevCanvas"
+            className="
+              h-12
+              md:h-[70px]
+              w-auto
+              object-contain
+              shrink-0
+              transition-transform
+              duration-300
+              group-hover:scale-105
+            "
+          />
         </Link>
 
         {/* Center nav — pill */}

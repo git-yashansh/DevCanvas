@@ -579,83 +579,81 @@ export function DatabaseDesignerPage() {
 
       {/* Description / Prompt Box */}
       <div className="mt-8">
-        <div className="gradient-border rounded-2xl">
-          <div className="glass-strong rounded-2xl p-6">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
-                  <span className="text-base font-bold text-white">
-                    Describe your data model
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-neutral-400">Dialect:</span>
-                  <div className="flex gap-1 rounded-lg border border-white/10 bg-surface-2 p-0.5">
-                    {(["postgresql", "mysql", "sqlite"] as Dialect[]).map((d) => (
-                      <button
-                        key={d}
-                        onClick={() => setDialect(d)}
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-bold transition-colors",
-                          dialect === d
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                            : "text-neutral-400 hover:text-white",
-                        )}
-                      >
-                        {d === "postgresql" ? "Postgres" : d === "mysql" ? "MySQL" : "SQLite"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+        <div className="bg-gradient-to-b from-[#0a142c] via-[#121319] to-[#121319] border border-blue-900/35 rounded-2xl p-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+                <span className="text-base font-bold text-white">
+                  Describe your data model
+                </span>
               </div>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    handleGenerate();
-                  }
-                }}
-                rows={3}
-                placeholder="A project management app with workspaces, projects, tasks, and comments…"
-                className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
-                disabled={generating}
-              />
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-medium text-neutral-400">
-                  Press Cmd/Ctrl + Enter to generate
-                </p>
-                <Button
-                  variant="gradient"
-                  onClick={() => handleGenerate()}
-                  disabled={!prompt.trim() || generating}
-                  className="shrink-0 text-base font-semibold h-11 px-6"
-                >
-                  {generating ? "Generating..." : "Generate schema"}
-                </Button>
-              </div>
-            </div>
-
-            {!schema && !generating ? (
-              <div className="mt-6">
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
-                  Try an example
-                </p>
-                <div className="flex flex-wrap gap-2.5">
-                  {EXAMPLE_PROMPTS.map((example) => (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-neutral-400">Dialect:</span>
+                <div className="flex gap-1 rounded-lg border border-white/10 bg-surface-2 p-0.5">
+                  {(["postgresql", "mysql", "sqlite"] as Dialect[]).map((d) => (
                     <button
-                      key={example}
-                      onClick={() => handleGenerate(example)}
-                      className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
+                      key={d}
+                      onClick={() => setDialect(d)}
+                      className={cn(
+                        "rounded-md px-2.5 py-1 text-xs font-bold transition-colors",
+                        dialect === d
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                          : "text-neutral-400 hover:text-white",
+                      )}
                     >
-                      {example}
+                      {d === "postgresql" ? "Postgres" : d === "mysql" ? "MySQL" : "SQLite"}
                     </button>
                   ))}
                 </div>
               </div>
-            ) : null}
+            </div>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleGenerate();
+                }
+              }}
+              rows={3}
+              placeholder="A project management app with workspaces, projects, tasks, and comments…"
+              className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
+              disabled={generating}
+            />
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm font-medium text-neutral-400">
+                Press Cmd/Ctrl + Enter to generate
+              </p>
+              <Button
+                variant="gradient"
+                onClick={() => handleGenerate()}
+                disabled={!prompt.trim() || generating}
+                className="shrink-0 text-base font-semibold h-11 px-6"
+              >
+                {generating ? "Generating..." : "Generate schema"}
+              </Button>
+            </div>
           </div>
+
+          {!schema && !generating ? (
+            <div className="mt-6">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
+                Try an example
+              </p>
+              <div className="flex flex-wrap gap-2.5">
+                {EXAMPLE_PROMPTS.map((example) => (
+                  <button
+                    key={example}
+                    onClick={() => handleGenerate(example)}
+                    className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -669,7 +667,7 @@ export function DatabaseDesignerPage() {
       {/* Main Workspace layout */}
       <AnimatePresence mode="wait">
         {generating && !finishedLoading ? (
-          <div className="mt-8 rounded-xl border border-border bg-surface py-12">
+          <div className="mt-8 py-12 bg-transparent border-none">
             <AILoader isFinished={false} />
           </div>
         ) : schema ? (
@@ -985,8 +983,8 @@ export function DatabaseDesignerPage() {
 
       {/* Floating Table Specifications modal */}
       <Dialog open={!!selectedTable} onOpenChange={(open) => { if (!open) setSelectedTable(null); }}>
-        <DialogContent className="max-w-2xl bg-neutral-900 border border-neutral-800 text-neutral-200 max-h-[85vh] overflow-y-auto">
-          <DialogHeader className="border-b border-neutral-850 pb-3 flex flex-row items-center justify-between">
+        <DialogContent className="max-w-4xl bg-[#0B0C0E]/95 backdrop-blur-xl border border-white/10 text-neutral-200 max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6 lg:p-7">
+          <DialogHeader className="border-b border-white/10 pb-3 flex flex-row items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-lg border text-primary-400 bg-primary-500/10 border-primary-500/20">
                 <Table2 className="h-5 w-5" />
@@ -1009,143 +1007,149 @@ export function DatabaseDesignerPage() {
           </DialogHeader>
 
           {selectedTable && selectedTableMetrics && (
-            <div className="mt-4 space-y-4 text-xs text-left">
-              {/* Purpose */}
-              <div className="bg-neutral-950/60 p-3.5 rounded-xl border border-neutral-850 space-y-1.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500">Table Purpose</span>
-                <p className="text-xs text-neutral-300 leading-relaxed font-sans">{selectedTableMetrics.purpose}</p>
-              </div>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 text-[13px] text-left">
+              {/* Left Column */}
+              <div className="space-y-4">
+                {/* Purpose */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-1.5">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400">Table Purpose</span>
+                  <p className="text-[13px] text-neutral-300 leading-relaxed font-sans">{selectedTableMetrics.purpose}</p>
+                </div>
 
-              {/* Table Columns detail */}
-              <div className="bg-neutral-950/40 p-4 rounded-xl border border-neutral-850 space-y-3">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">Columns Definition Schema</span>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[11px] text-neutral-400 border-collapse">
-                    <thead>
-                      <tr className="text-neutral-500 border-b border-neutral-850 font-semibold">
-                        <th className="py-1">Column</th>
-                        <th className="py-1">Data Type</th>
-                        <th className="py-1">Nullable</th>
-                        <th className="py-1">Default</th>
-                        <th className="py-1">Description</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-900/30">
-                      {selectedTable.columns.map((col, ci) => (
-                        <tr key={ci}>
-                          <td className="py-2 font-mono font-semibold text-neutral-300 flex items-center gap-1.5">
-                            {col.primaryKey && <KeyRound className="h-3 w-3 text-warning-400 shrink-0" />}
-                            {col.name}
-                          </td>
-                          <td className="py-2 font-mono text-[10.5px]">{col.type}</td>
-                          <td className="py-2 text-[10.5px]">{col.nullable ? "YES" : "NO"}</td>
-                          <td className="py-2 font-mono text-neutral-500 text-[10px]">{col.defaultValue === null ? "NULL" : col.defaultValue}</td>
-                          <td className="py-2 text-neutral-400">{col.description}</td>
+                {/* Table Columns detail */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">Columns Definition Schema</span>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[12px] text-neutral-400 border-collapse">
+                      <thead>
+                        <tr className="text-neutral-500 border-b border-neutral-850 font-semibold">
+                          <th className="py-1">Column</th>
+                          <th className="py-1">Data Type</th>
+                          <th className="py-1">Nullable</th>
+                          <th className="py-1">Default</th>
+                          <th className="py-1">Description</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-900/30">
+                        {selectedTable.columns.map((col, ci) => (
+                          <tr key={ci}>
+                            <td className="py-2 font-mono font-semibold text-neutral-300 flex items-center gap-1.5">
+                              {col.primaryKey && <KeyRound className="h-3 w-3 text-warning-400 shrink-0" />}
+                              {col.name}
+                            </td>
+                            <td className="py-2 font-mono text-[11px]">{col.type}</td>
+                            <td className="py-2 text-[11px]">{col.nullable ? "YES" : "NO"}</td>
+                            <td className="py-2 font-mono text-neutral-500 text-[11px]">{col.defaultValue === null ? "NULL" : col.defaultValue}</td>
+                            <td className="py-2 text-neutral-400 leading-normal">{col.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
 
-              {/* Connection Tree (Parent and Child Relationships) */}
-              <div className="bg-neutral-950/40 p-4 rounded-xl border border-neutral-850 space-y-3">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">Schema Connection Tree</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-neutral-500 text-[10px] block mb-1.5">Parent Tables (Referenced By)</span>
-                    {selectedTableMetrics.parents.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {selectedTableMetrics.parents.map((n, i) => (
-                          <Badge key={i} variant="outline" className="text-[9.5px] bg-neutral-900 border-neutral-800">{n}</Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-neutral-600 text-[10.5px] italic block">No active parent dependencies</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-neutral-500 text-[10px] block mb-1.5">Child Tables (References)</span>
-                    {selectedTableMetrics.children.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {selectedTableMetrics.children.map((n, i) => (
-                          <Badge key={i} variant="outline" className="text-[9.5px] bg-neutral-900 border-neutral-800">{n}</Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-neutral-600 text-[10.5px] italic block">No active children dependencies</span>
-                    )}
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-neutral-900">
-                  <span className="text-neutral-500 text-[10px] block mb-1">Foreign Key Mappings</span>
-                  {selectedTableMetrics.fkeys.length > 0 ? (
-                    <div className="space-y-1.5">
-                      {selectedTableMetrics.fkeys.map((fk, i) => (
-                        <div key={i} className="font-mono text-[10.5px] text-neutral-300 bg-neutral-900/60 p-1.5 rounded border border-neutral-850">
-                          {fk}
+              {/* Right Column */}
+              <div className="space-y-4">
+                {/* Connection Tree (Parent and Child Relationships) */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">Schema Connection Tree</span>
+                  <div className="grid grid-cols-2 gap-3 text-[13px]">
+                    <div>
+                      <span className="text-neutral-500 text-[11px] block mb-1.5">Parent Tables</span>
+                      {selectedTableMetrics.parents.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedTableMetrics.parents.map((n, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px] bg-neutral-900 border-neutral-800">{n}</Badge>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <span className="text-neutral-600 text-[11px] italic block">No parent dependencies</span>
+                      )}
                     </div>
-                  ) : (
-                    <span className="text-neutral-600 text-[10.5px] italic block">No explicit foreign key constraints declared</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Estimated Statistics */}
-              <div className="bg-neutral-950/40 p-4 rounded-xl border border-neutral-850 space-y-3">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">Table Statistics (Estimated)</span>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  {[
-                    { label: "Est. Rows", val: selectedTableMetrics.estRows },
-                    { label: "Storage Size", val: selectedTableMetrics.storageSize },
-                    { label: "Read Frequency", val: selectedTableMetrics.readFreq },
-                    { label: "Write Frequency", val: selectedTableMetrics.writeFreq },
-                    { label: "Growth Rate", val: selectedTableMetrics.growth },
-                  ].map((stat, i) => (
-                    <div key={i} className="bg-neutral-950/40 p-2 rounded-lg border border-neutral-900 text-center flex flex-col justify-between">
-                      <span className="text-neutral-500 text-[9px] block">{stat.label}</span>
-                      <span className="text-xs text-neutral-200 font-semibold mt-1 block font-mono">{stat.val}</span>
+                    <div>
+                      <span className="text-neutral-500 text-[11px] block mb-1.5">Child Tables</span>
+                      {selectedTableMetrics.children.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedTableMetrics.children.map((n, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px] bg-neutral-900 border-neutral-800">{n}</Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-neutral-600 text-[11px] italic block">No children dependencies</span>
+                      )}
                     </div>
-                  ))}
+                  </div>
+                  <div className="pt-2 border-t border-neutral-900">
+                    <span className="text-neutral-500 text-[11px] block mb-1">Foreign Key Mappings</span>
+                    {selectedTableMetrics.fkeys.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {selectedTableMetrics.fkeys.map((fk, i) => (
+                          <div key={i} className="font-mono text-[11px] text-neutral-300 bg-neutral-900/60 p-1.5 rounded border border-neutral-850">
+                            {fk}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-neutral-600 text-[11px] italic block">No foreign key constraints</span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Performance Analysis & Normalization */}
-              <div className="bg-neutral-950/40 p-4 rounded-xl border border-neutral-850 space-y-3">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">Performance &amp; Index Profile</span>
-                <div className="space-y-2.5 text-xs text-neutral-300">
-                  <div>
-                    <span className="text-neutral-500 text-[10px] block mb-0.5">Active Indexes</span>
-                    {selectedTableMetrics.indexesList.map((idx, i) => (
-                      <span key={i} className="inline-block rounded bg-neutral-900 border border-neutral-800 px-2 py-0.5 font-mono text-[10.5px] text-neutral-400 mr-1.5 mt-1">{idx}</span>
+                {/* Estimated Statistics */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">Table Statistics (Estimated)</span>
+                  <div className="grid grid-cols-5 gap-2">
+                    {[
+                      { label: "Est. Rows", val: selectedTableMetrics.estRows },
+                      { label: "Storage Size", val: selectedTableMetrics.storageSize },
+                      { label: "Read Freq", val: selectedTableMetrics.readFreq },
+                      { label: "Write Freq", val: selectedTableMetrics.writeFreq },
+                      { label: "Growth", val: selectedTableMetrics.growth },
+                    ].map((stat, i) => (
+                      <div key={i} className="bg-[#121319] p-2 rounded-lg border border-neutral-900 text-center flex flex-col justify-between">
+                        <span className="text-neutral-500 text-[10px] block">{stat.label}</span>
+                        <span className="text-[12px] text-neutral-200 font-semibold mt-1 block font-mono">{stat.val}</span>
+                      </div>
                     ))}
                   </div>
-                  <div className="pt-2 border-t border-neutral-900/60">
-                    <span className="text-neutral-500 text-[10px] block mb-0.5">Missing Index Recommendations</span>
-                    <p className="text-neutral-400 font-sans leading-relaxed flex items-center gap-1.5 text-[11px]">
-                      <Info className="h-3.5 w-3.5 text-primary-400 shrink-0" />
-                      {selectedTableMetrics.missingIndexes.join(", ")}
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-neutral-900/60">
-                    <span className="text-neutral-500 text-[10px] block mb-0.5">Expected Complex/Slow Query</span>
-                    <pre className="p-2 bg-neutral-950 border border-neutral-850 rounded font-mono text-[10.5px] text-primary-300 overflow-x-auto mt-1">{selectedTableMetrics.slowQueries}</pre>
+                </div>
+
+                {/* Performance Analysis & Normalization */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">Performance &amp; Index Profile</span>
+                  <div className="space-y-2.5 text-[13px] text-neutral-300">
+                    <div>
+                      <span className="text-neutral-500 text-[11px] block mb-0.5">Active Indexes</span>
+                      {selectedTableMetrics.indexesList.map((idx, i) => (
+                        <span key={i} className="inline-block rounded bg-neutral-900 border border-neutral-800 px-2 py-0.5 font-mono text-[11px] text-neutral-450 mr-1.5 mt-1">{idx}</span>
+                      ))}
+                    </div>
+                    <div className="pt-2 border-t border-neutral-900/60">
+                      <span className="text-neutral-500 text-[11px] block mb-0.5">Missing Index Recommendations</span>
+                      <p className="text-neutral-400 font-sans leading-relaxed flex items-center gap-1.5 text-[12px]">
+                        <Info className="h-3.5 w-3.5 text-primary-400 shrink-0" />
+                        {selectedTableMetrics.missingIndexes.join(", ")}
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-neutral-900/60">
+                      <span className="text-neutral-500 text-[11px] block mb-0.5">Expected Complex/Slow Query</span>
+                      <pre className="p-2 bg-neutral-950 border border-neutral-850 rounded font-mono text-[11px] text-primary-300 overflow-x-auto mt-1">{selectedTableMetrics.slowQueries}</pre>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* AI Recommendations */}
-              <div className="space-y-2 border-t border-neutral-850 pt-3.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">AI Database Architect Directives</span>
-                <div className="space-y-2">
-                  {selectedTableMetrics.aiRecommendations.map((rec, i) => (
-                    <div key={i} className="flex gap-2 p-2.5 rounded-lg bg-neutral-950/50 border border-neutral-850 text-xs text-neutral-300">
-                      <Sparkles className="h-4 w-4 text-primary-400 shrink-0 mt-0.5" />
-                      <p className="leading-relaxed">{rec}</p>
-                    </div>
-                  ))}
+                {/* AI Recommendations */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">AI Database Architect Directives</span>
+                  <div className="space-y-2">
+                    {selectedTableMetrics.aiRecommendations.map((rec, i) => (
+                      <div key={i} className="flex gap-2 p-2 rounded bg-neutral-950/40 border border-neutral-850 text-[12px] text-neutral-300">
+                        <Sparkles className="h-4 w-4 text-primary-400 shrink-0 mt-0.5" />
+                        <p className="leading-relaxed">{rec}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

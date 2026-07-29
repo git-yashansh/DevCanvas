@@ -55,7 +55,7 @@ function NavList({ items, onClick }: { items: NavItem[]; onClick: () => void }) 
                   "h-4 w-4 shrink-0 transition-colors",
                   isActive ? "text-[#00e699]" : "text-neutral-400"
                 )} />
-                <span className="flex-1">{item.label}</span>
+                <span className="flex-1 font-heading text-[15px]">{item.label}</span>
                 {item.badge && (
                   <span className="rounded-full bg-[#00e699]/20 border border-[#00e699]/30 px-1.5 py-0.5 text-[9px] font-bold text-[#00e699]">
                     {item.badge}
@@ -124,7 +124,7 @@ export function MobileSidebar({ onClose }: { onClose: () => void }) {
           <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 py-3">
             <NavList items={mainNav} onClick={onClose} />
             <div className="my-3 border-t border-white/[0.07]" />
-            <p className="mb-2 px-3 text-[9.5px] font-bold uppercase tracking-[0.12em] text-white/25">
+            <p className="mb-2 px-3 text-[10.5px] font-heading font-bold uppercase tracking-[0.12em] text-white/25">
               Generators
             </p>
             <NavList items={toolsNav} onClick={onClose} />
@@ -141,7 +141,7 @@ export function MobileSidebar({ onClose }: { onClose: () => void }) {
                   <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-500/20">
                     <Zap className="h-3 w-3 text-indigo-400" />
                   </span>
-                  <span className="text-[11px] font-semibold text-white/80">Free Plan</span>
+                  <span className="text-[11px] font-heading font-semibold text-white/80">Free Plan</span>
                 </div>
                 <Link
                   to="/app/settings"

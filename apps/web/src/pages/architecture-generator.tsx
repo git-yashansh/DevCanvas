@@ -667,62 +667,60 @@ export function ArchitectureGeneratorPage() {
 
       {/* Description / Prompt Box */}
       <div className="mt-8">
-        <div className="gradient-border rounded-2xl">
-          <div className="glass-strong rounded-2xl p-6">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
-                <span className="text-base font-bold text-white">
-                  Describe your application
-                </span>
-              </div>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    handleGenerate();
-                  }
-                }}
-                rows={3}
-                placeholder="A multi-tenant SaaS with billing, RBAC, and real-time collaboration…"
-                className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
-                disabled={generating}
-              />
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-medium text-neutral-400">
-                  Press Cmd/Ctrl + Enter to generate
-                </p>
-                <Button
-                  variant="gradient"
-                  onClick={() => handleGenerate()}
-                  disabled={!prompt.trim() || generating}
-                  className="shrink-0 text-base font-semibold h-11 px-6"
-                >
-                  {generating ? "Generating..." : "Generate architecture"}
-                </Button>
+        <div className="bg-gradient-to-b from-[#0a142c] via-[#121319] to-[#121319] border border-blue-900/35 rounded-2xl p-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
+              <span className="text-base font-bold text-white">
+                Describe your application
+              </span>
+            </div>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleGenerate();
+                }
+              }}
+              rows={3}
+              placeholder="A multi-tenant SaaS with billing, RBAC, and real-time collaboration…"
+              className="flex w-full rounded-xl border border-white/10 bg-surface-2 px-4 py-3.5 text-base text-white shadow-sm transition-colors placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 font-sans"
+              disabled={generating}
+            />
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm font-medium text-neutral-400">
+                Press Cmd/Ctrl + Enter to generate
+              </p>
+              <Button
+                variant="gradient"
+                onClick={() => handleGenerate()}
+                disabled={!prompt.trim() || generating}
+                className="shrink-0 text-base font-semibold h-11 px-6"
+              >
+                {generating ? "Generating..." : "Generate architecture"}
+              </Button>
+            </div>
+          </div>
+
+          {!architecture && !generating ? (
+            <div className="mt-6">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
+                Try an example
+              </p>
+              <div className="flex flex-wrap gap-2.5">
+                {EXAMPLE_PROMPTS.map((example) => (
+                  <button
+                    key={example}
+                    onClick={() => handleGenerate(example)}
+                    className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
+                  >
+                    {example}
+                  </button>
+                ))}
               </div>
             </div>
-
-            {!architecture && !generating ? (
-              <div className="mt-6">
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-neutral-400">
-                  Try an example
-                </p>
-                <div className="flex flex-wrap gap-2.5">
-                  {EXAMPLE_PROMPTS.map((example) => (
-                    <button
-                      key={example}
-                      onClick={() => handleGenerate(example)}
-                      className="rounded-xl border border-white/10 bg-surface-2 px-4 py-2.5 text-left text-sm font-medium text-neutral-200 transition-colors hover:border-white/20 hover:text-white"
-                    >
-                      {example}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
 
@@ -736,7 +734,7 @@ export function ArchitectureGeneratorPage() {
       {/* Main Workspace Panels */}
       <AnimatePresence mode="wait">
         {generating && !finishedLoading ? (
-          <div className="mt-8 rounded-xl border border-border bg-surface py-12">
+          <div className="mt-8 py-12 bg-transparent border-none">
             <AILoader isFinished={false} />
           </div>
         ) : architecture ? (
@@ -1152,8 +1150,8 @@ export function ArchitectureGeneratorPage() {
 
       {/* Service Details Specifications Modal */}
       <Dialog open={!!selectedService} onOpenChange={(open) => { if (!open) setSelectedService(null); }}>
-        <DialogContent className="max-w-2xl bg-neutral-900 border border-neutral-800 text-neutral-200 max-h-[85vh] overflow-y-auto">
-          <DialogHeader className="border-b border-neutral-850 pb-3 flex flex-row items-center justify-between">
+        <DialogContent className="max-w-4xl bg-[#0B0C0E]/95 backdrop-blur-xl border border-white/10 text-neutral-200 max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6 lg:p-7">
+          <DialogHeader className="border-b border-white/10 pb-3 flex flex-row items-center justify-between">
             <div className="flex items-center gap-2.5">
               {selectedService && (
                 <div className={cn("p-2 rounded-lg border", typeColors[selectedService.type])}>
@@ -1181,140 +1179,146 @@ export function ArchitectureGeneratorPage() {
           </DialogHeader>
 
           {selectedService && inspectorMetrics && (
-            <div className="mt-4 space-y-4 text-xs text-left">
-              {/* Purpose */}
-              <div className="bg-neutral-950/60 p-3.5 rounded-xl border border-neutral-850 space-y-1.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500">Component Purpose</span>
-                <p className="text-xs text-neutral-300 leading-relaxed font-sans">{inspectorMetrics.purpose}</p>
-              </div>
-
-              {/* Grid of Specifications */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  { label: "Est. Traffic", val: inspectorMetrics.rps, icon: Globe },
-                  { label: "P99 Latency", val: inspectorMetrics.latency, icon: Zap },
-                  { label: "CPU Usage", val: inspectorMetrics.cpu, icon: Cpu },
-                  { label: "Memory Usage", val: inspectorMetrics.memory, icon: HardDrive },
-                  { label: "Security Rating", val: inspectorMetrics.security, icon: Shield },
-                  { label: "Monthly Cost", val: `$${inspectorMetrics.cost}/mo`, icon: DollarSign },
-                ].map((item, idx) => (
-                  <div key={idx} className="bg-neutral-950/40 p-3 rounded-lg border border-neutral-850 flex flex-col justify-between">
-                    <span className="text-[10px] text-neutral-500 block">{item.label}</span>
-                    <span className="text-xs text-neutral-200 font-semibold mt-1.5 flex items-center gap-1.5">
-                      <item.icon className="h-3.5 w-3.5 text-primary-400 shrink-0" />
-                      {item.val}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Dependencies and Connections */}
-              <div className="bg-neutral-950/40 p-4 rounded-xl border border-neutral-850 space-y-3">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">Connection Topology</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <span className="text-[10px] text-neutral-500 block mb-1.5">Incoming Handlers</span>
-                    {inspectorMetrics.incoming.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {inspectorMetrics.incoming.map((n, i) => (
-                          <Badge key={i} variant="outline" className="text-[9.5px] bg-neutral-900 border-neutral-805">{n}</Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-neutral-600 text-[10.5px] italic block">No active incoming routes</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-neutral-500 block mb-1.5">Outgoing Downstreams</span>
-                    {inspectorMetrics.outgoing.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {inspectorMetrics.outgoing.map((n, i) => (
-                          <Badge key={i} variant="outline" className="text-[9.5px] bg-neutral-900 border-neutral-805">{n}</Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-neutral-600 text-[10.5px] italic block">No active downstream requests</span>
-                    )}
-                  </div>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 text-[13px] text-left">
+              {/* Left Column */}
+              <div className="space-y-4">
+                {/* Purpose */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-1.5">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400">Component Purpose</span>
+                  <p className="text-[13px] text-neutral-300 leading-relaxed font-sans">{inspectorMetrics.purpose}</p>
                 </div>
-              </div>
 
-              {/* Connected storage systems (DB, Cache, Queues) */}
-              <div className="bg-neutral-950/40 p-4 rounded-xl border border-neutral-850 space-y-3">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">Target Storage Connections</span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <span className="text-[10px] text-neutral-500 block mb-1.5">Databases</span>
-                    {inspectorMetrics.connectedDBs.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {inspectorMetrics.connectedDBs.map((n, i) => (
-                          <Badge key={i} variant="outline" className="text-[9.5px] bg-emerald-500/5 text-emerald-400 border-emerald-500/20">{n}</Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-neutral-600 text-[10.5px] italic block">No connected databases</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-neutral-500 block mb-1.5">Caches</span>
-                    {inspectorMetrics.connectedCaches.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {inspectorMetrics.connectedCaches.map((n, i) => (
-                          <Badge key={i} variant="outline" className="text-[9.5px] bg-amber-500/5 text-amber-400 border-amber-500/20">{n}</Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-neutral-600 text-[10.5px] italic block">No connected caches</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-neutral-500 block mb-1.5">Queues</span>
-                    {inspectorMetrics.connectedQueues.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {inspectorMetrics.connectedQueues.map((n, i) => (
-                          <Badge key={i} variant="outline" className="text-[9.5px] bg-cyan-500/5 text-cyan-400 border-cyan-500/20">{n}</Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-neutral-600 text-[10.5px] italic block">No connected queues</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Scaling, Bottlenecks, and Improvements */}
-              <div className="bg-neutral-950/40 p-4 rounded-xl border border-neutral-850 space-y-3">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">Engineering Optimization Strategy</span>
-                <div className="space-y-2.5 text-xs">
-                  <div>
-                    <span className="text-neutral-400 font-semibold block mb-0.5">Technology Stack Specification</span>
-                    <p className="text-neutral-300 font-mono text-[11px]">{selectedService.technology} ({selectedService.scaling} scaling)</p>
-                  </div>
-                  <div>
-                    <span className="text-neutral-400 font-semibold block mb-0.5">Scaling Suggestion</span>
-                    <p className="text-neutral-300 font-sans leading-relaxed">{inspectorMetrics.scaling}</p>
-                  </div>
-                  <div>
-                    <span className="text-neutral-400 font-semibold block mb-0.5">Potential Bottlenecks</span>
-                    <p className="text-neutral-300 font-sans leading-relaxed">{inspectorMetrics.bottlenecks}</p>
-                  </div>
-                  <div>
-                    <span className="text-neutral-400 font-semibold block mb-0.5">Future Improvements</span>
-                    <p className="text-neutral-300 font-sans leading-relaxed">{inspectorMetrics.future}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Recommendations */}
-              <div className="space-y-2 border-t border-neutral-850 pt-3.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 block">AI Architecture Directives</span>
-                <div className="space-y-2">
-                  {inspectorMetrics.recommendations.map((rec, i) => (
-                    <div key={i} className="flex gap-2 p-2.5 rounded-lg bg-neutral-950/50 border border-neutral-850 text-xs text-neutral-300">
-                      <Sparkles className="h-4 w-4 text-primary-400 shrink-0 mt-0.5" />
-                      <p className="leading-relaxed">{rec}</p>
+                {/* Grid of Specifications */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Est. Traffic", val: inspectorMetrics.rps, icon: Globe },
+                    { label: "P99 Latency", val: inspectorMetrics.latency, icon: Zap },
+                    { label: "CPU Usage", val: inspectorMetrics.cpu, icon: Cpu },
+                    { label: "Memory Usage", val: inspectorMetrics.memory, icon: HardDrive },
+                    { label: "Security Rating", val: inspectorMetrics.security, icon: Shield },
+                    { label: "Monthly Cost", val: `$${inspectorMetrics.cost}/mo`, icon: DollarSign },
+                  ].map((item, idx) => (
+                    <div key={idx} className="bg-[#121319] p-3 rounded-lg border border-white/10 flex flex-col justify-between">
+                      <span className="text-[11px] text-neutral-450 block">{item.label}</span>
+                      <span className="text-[13px] text-neutral-200 font-semibold mt-1.5 flex items-center gap-1.5">
+                        <item.icon className="h-4 w-4 text-primary-400 shrink-0" />
+                        {item.val}
+                      </span>
                     </div>
                   ))}
+                </div>
+
+                {/* Dependencies and Connections */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">Connection Topology</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-[11px] text-neutral-450 block mb-1.5">Incoming Handlers</span>
+                      {inspectorMetrics.incoming.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {inspectorMetrics.incoming.map((n, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px] bg-neutral-900 border-neutral-800">{n}</Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-neutral-500 text-[11px] italic block">No active incoming routes</span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-neutral-450 block mb-1.5">Outgoing Downstreams</span>
+                      {inspectorMetrics.outgoing.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {inspectorMetrics.outgoing.map((n, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px] bg-neutral-900 border-neutral-800">{n}</Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-neutral-500 text-[11px] italic block">No downstream requests</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-4">
+                {/* Connected storage systems (DB, Cache, Queues) */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">Target Storage Connections</span>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <span className="text-[11px] text-neutral-450 block mb-1.5">Databases</span>
+                      {inspectorMetrics.connectedDBs.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {inspectorMetrics.connectedDBs.map((n, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px] bg-emerald-500/5 text-emerald-400 border-emerald-500/20">{n}</Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-neutral-500 text-[11px] italic block">No databases</span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-neutral-450 block mb-1.5">Caches</span>
+                      {inspectorMetrics.connectedCaches.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {inspectorMetrics.connectedCaches.map((n, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px] bg-amber-500/5 text-amber-400 border-amber-500/20">{n}</Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-neutral-500 text-[11px] italic block">No caches</span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-neutral-450 block mb-1.5">Queues</span>
+                      {inspectorMetrics.connectedQueues.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {inspectorMetrics.connectedQueues.map((n, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px] bg-cyan-500/5 text-cyan-400 border-cyan-500/20">{n}</Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-neutral-500 text-[11px] italic block">No queues</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scaling, Bottlenecks, and Improvements */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">Engineering Optimization Strategy</span>
+                  <div className="space-y-2.5 text-[13px]">
+                    <div>
+                      <span className="text-neutral-400 font-semibold block mb-0.5">Technology Stack Specification</span>
+                      <p className="text-neutral-300 font-mono text-[12px]">{selectedService.technology} ({selectedService.scaling} scaling)</p>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 font-semibold block mb-0.5">Scaling Suggestion</span>
+                      <p className="text-neutral-300 font-sans leading-relaxed">{inspectorMetrics.scaling}</p>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 font-semibold block mb-0.5">Potential Bottlenecks</span>
+                      <p className="text-neutral-300 font-sans leading-relaxed">{inspectorMetrics.bottlenecks}</p>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 font-semibold block mb-0.5">Future Improvements</span>
+                      <p className="text-neutral-300 font-sans leading-relaxed">{inspectorMetrics.future}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Recommendations */}
+                <div className="bg-[#121319] p-4 rounded-xl border border-white/10 space-y-3">
+                  <span className="text-[11px] uppercase font-bold tracking-wider text-neutral-400 block">AI Architecture Directives</span>
+                  <div className="space-y-2">
+                    {inspectorMetrics.recommendations.map((rec, i) => (
+                      <div key={i} className="flex gap-2 p-2 rounded bg-neutral-950/40 border border-neutral-850 text-neutral-300 text-[12px]">
+                        <Sparkles className="h-4 w-4 text-primary-400 shrink-0 mt-0.5" />
+                        <p className="leading-relaxed">{rec}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

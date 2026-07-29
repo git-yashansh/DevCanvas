@@ -5,17 +5,8 @@ import { AIOrb } from "./AIOrb";
 
 const TIMELINE_STEPS = [
   "Understanding requirements...",
+  "Analyzing components...",
   "Generating content...",
-  "Validating structures...",
-  "Creating interactive diagrams...",
-  "Estimating infrastructure costs...",
-  "Analyzing potential security risks...",
-  "Designing system architecture...",
-  "Designing database models...",
-  "Generating OpenAPI specs...",
-  "Generating README & documentation...",
-  "Preparing deployment scripts...",
-  "Performing final schema validation...",
   "Done."
 ];
 
@@ -48,24 +39,24 @@ export function AILoader({ isFinished, onComplete }: AILoaderProps) {
       // Normal slow progress simulation
       const timer = setInterval(() => {
         setCurrentStep((prev) => {
-          if (prev < TIMELINE_STEPS.length - 3) {
+          if (prev < TIMELINE_STEPS.length - 2) {
             setCompletedSteps((prevCompleted) => [...prevCompleted, prev]);
             return prev + 1;
           }
           return prev;
         });
-      }, 1200);
+      }, 1500);
       return () => clearInterval(timer);
     }
   }, [isFinished, onComplete]);
 
   return (
-    <div className="flex flex-col items-center justify-center py-10 px-4 bg-[#050608] border border-white/10 rounded-2xl shadow-2xl my-4">
-      {/* Dynamic Futuristic Glass Flame AI Orb */}
-      <AIOrb scale={isFinished ? 0.85 : 1} />
+    <div className="flex flex-col items-center justify-center py-10 px-4 bg-transparent my-4">
+      {/* Dynamic Futuristic Glass Flame AI Orb (Scaled Up) */}
+      <AIOrb size={500} scale={1.0} />
 
       {/* Progress Timeline List */}
-      <div className="mt-8 w-full max-w-sm space-y-3.5 px-4 text-left">
+      <div className="mt-10 w-full max-w-sm space-y-3.5 px-4 text-left">
         {TIMELINE_STEPS.map((step, idx) => {
           const isDone = completedSteps.includes(idx) || (isFinished && idx < TIMELINE_STEPS.length - 1);
           const isActive = idx === currentStep && !isFinished;
