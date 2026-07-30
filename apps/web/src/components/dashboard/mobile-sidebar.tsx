@@ -1,10 +1,22 @@
 import { NavLink, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, ArrowUpRight } from "lucide-react";
 import {
-  LayoutDashboard, FolderKanban, MessageSquare,
-  Boxes, Database, Code2, ShieldCheck,
-  GitBranch, FileText, Rocket, Settings, type LucideIcon,
+  Home,
+  LayoutDashboard,
+  FolderKanban,
+  MessageSquare,
+  Boxes,
+  Database,
+  Code2,
+  ShieldCheck,
+  GitBranch,
+  FileText,
+  Rocket,
+  Settings,
+  X,
+  Zap,
+  ArrowUpRight,
+  type LucideIcon,
 } from "lucide-react";
 import { useProjects } from "@/lib/queries/projects";
 import { cn } from "@utils/index";
@@ -12,9 +24,9 @@ import { cn } from "@utils/index";
 interface NavItem { label: string; href: string; icon: LucideIcon; badge?: string }
 
 const mainNav: NavItem[] = [
-  { label: "Dashboard",  href: "/app",           icon: LayoutDashboard },
-  { label: "Projects",   href: "/app/projects",  icon: FolderKanban },
-  { label: "AI Chat",    href: "/app/chat",       icon: MessageSquare, badge: "New" },
+  { label: "Home",       href: "/app",           icon: Home },
+  { label: "Workspace",  href: "/app/workspace",  icon: LayoutDashboard },
+  { label: "AI Chat",    href: "/app/chat",       icon: MessageSquare },
 ];
 const toolsNav: NavItem[] = [
   { label: "Architecture",       href: "/app/architecture", icon: Boxes },
@@ -38,7 +50,7 @@ function NavList({ items, onClick }: { items: NavItem[]; onClick: () => void }) 
         <li key={item.href}>
           <NavLink
             to={item.href}
-            end={item.href === "/app"}
+            end={item.href === "/app" || item.href === "/app/workspace"}
             onClick={onClick}
             className={({ isActive }) =>
               cn(

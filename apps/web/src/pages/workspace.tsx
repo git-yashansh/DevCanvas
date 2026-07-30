@@ -43,7 +43,7 @@ function formatDate(dateStr?: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function DashboardHomePage() {
+export function WorkspacePage() {
   const { profile } = useAuth();
   const { data: projectsData } = useProjects();
   const { data: activityData } = useRecentActivity();
@@ -351,7 +351,7 @@ export function DashboardHomePage() {
                 className="bg-black hover:bg-neutral-900 disabled:opacity-50 text-white border border-white/20 hover:border-white/40 font-heading font-bold text-[15px] px-5 py-2 rounded-xl transition-all flex items-center gap-3 shrink-0 h-12 shadow-[0_0_15px_rgba(255,255,255,0.08)] hover:shadow-[0_0_24px_rgba(255,255,255,0.18)]"
               >
                 <span className="text-white tracking-wide font-extrabold">{isAiLoading ? "Thinking..." : "Ask AI"}</span>
-                <AIOrb size={68} className="w-16 h-6 bg-transparent border-none opacity-90" renderScale={1.5} />
+                <AIOrb size={64} className="bg-transparent border-none opacity-90 shrink-0 pointer-events-none" renderScale={1.5} />
               </button>
             </div>
           </form>
@@ -552,9 +552,9 @@ export function DashboardHomePage() {
                           </div>
                           <span
                             className={cn(
-                              "text-xs font-semibold",
-                              proj.score === 100 ? "text-emerald-400" : "text-amber-400"
-                            )}
+                                "text-xs font-semibold",
+                                proj.score === 100 ? "text-emerald-400" : "text-amber-400"
+                              )}
                           >
                             {proj.score}%
                           </span>

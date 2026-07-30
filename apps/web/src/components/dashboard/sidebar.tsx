@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import {
+  Home,
   LayoutDashboard,
   FolderKanban,
   MessageSquare,
@@ -36,9 +37,9 @@ interface NavItem {
 }
 
 const mainNav: NavItem[] = [
-  { id: "dashboard", label: "Home", short: "Home", href: "/app", icon: LayoutDashboard },
-  { id: "projects", label: "Projects", short: "Projects", href: "/app/projects", icon: FolderKanban },
-  { id: "chat", label: "Workspace AI", short: "AI Chat", href: "/app/chat", icon: MessageSquare, badge: { text: "New", color: "emerald" } },
+  { id: "home", label: "Home", short: "Home", href: "/app", icon: Home },
+  { id: "workspace", label: "Workspace", short: "Workspace", href: "/app/workspace", icon: LayoutDashboard },
+  { id: "chat", label: "AI Chat", short: "AI Chat", href: "/app/chat", icon: MessageSquare },
 ];
 
 const toolsNav: NavItem[] = [
@@ -94,7 +95,7 @@ function NavItemRow({
   const inner = (
     <NavLink
       to={item.href}
-      end={item.href === "/app"}
+      end={item.href === "/app" || item.href === "/app/workspace"}
       aria-label={item.label}
       className={cn(
         "group relative flex items-center transition-all duration-200 outline-none select-none rounded-xl",

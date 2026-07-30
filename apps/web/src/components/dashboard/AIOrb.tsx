@@ -275,7 +275,11 @@ export function AIOrb({
   React.useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const gl = canvas.getContext("webgl")
+    const gl = canvas.getContext("webgl", {
+      alpha: true,
+      antialias: true,
+      preserveDrawingBuffer: false,
+    })
     if (!gl) return
 
     const compile = (type: number, src: string) => {
@@ -342,7 +346,7 @@ export function AIOrb({
   return (
     <canvas
       ref={canvasRef}
-      className={cn("block bg-transparent", className)}
+      className={cn("block bg-transparent pointer-events-none select-none", className)}
       style={{
         width: size,
         height: size * aspectHeight,

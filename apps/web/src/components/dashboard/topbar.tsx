@@ -146,6 +146,8 @@ export function Topbar() {
         WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
         boxShadow: "inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
+        transform: "translateZ(0)",
+        willChange: "transform",
       }}
       className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 px-4 sm:px-6"
     >

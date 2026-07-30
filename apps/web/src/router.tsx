@@ -4,7 +4,8 @@ import { LandingPage } from "@/pages/landing";
 import { SignInPage } from "@/pages/sign-in";
 import { SignUpPage } from "@/pages/sign-up";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { DashboardHomePage } from "@/pages/dashboard-home";
+import { HomePage } from "@/pages/home";
+import { WorkspacePage } from "@/pages/workspace";
 import { ProjectsPage } from "@/pages/projects";
 import { NewProjectPage } from "@/pages/new-project";
 import { ProjectDetailPage } from "@/pages/project-detail";
@@ -46,7 +47,8 @@ export function AppRouter() {
         <Route path="/sign-up" element={<SignUpPage />} />
 
         <Route path="/app" element={<DashboardLayout />}>
-          <Route index element={<DashboardHomePage />} />
+          <Route index element={<HomePage />} />
+          <Route path="workspace" element={<WorkspacePage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="projects/new" element={<NewProjectPage />} />
           <Route path="projects/:id" element={<ProjectDetailPage />} />

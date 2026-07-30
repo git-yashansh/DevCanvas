@@ -402,21 +402,27 @@ html, body, .overflow-y-auto, [class*="overflow-y-"] {
     transform: translate(300%, 0) rotate(25deg);
   }
 
-  /* Revolving Glowing Border Animation */
-  @keyframes border-rotate {
+  /* Revolving Glowing Border Animation - Centered & Strictly Clipped */
+  @keyframes border-rotate-centered {
+    0% {
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
     100% {
-      transform: rotate(360deg);
+      transform: translate(-50%, -50%) rotate(360deg);
     }
   }
 
   .glowing-border-container {
     position: relative;
     overflow: hidden;
+    clip-path: inset(0 round 0.75rem);
+    -webkit-clip-path: inset(0 round 0.75rem);
     border-radius: 0.75rem; /* rounded-xl */
     padding: 1.5px; /* border thickness */
     background: transparent;
     transition: box-shadow 0.5s ease;
     box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+    isolation: isolate;
   }
 
   .glowing-border-container:hover {
@@ -424,16 +430,28 @@ html, body, .overflow-y-auto, [class*="overflow-y-"] {
   }
 
   .glowing-border-container::before {
-    content: '';
+    content: "";
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: conic-gradient(from 0deg, transparent 30%, #f97316 42%, #10b981 55%, #06b6d4 68%, transparent 80%);
-    animation: border-rotate 4s linear infinite;
+    top: 50%;
+    left: 50%;
+    width: 300%;
+    aspect-ratio: 1 / 1;
+    transform: translate(-50%, -50%) rotate(0deg);
+    transform-origin: center center;
+    background: conic-gradient(
+      from 0deg,
+      transparent 30%,
+      #f97316 42%,
+      #10b981 55%,
+      #06b6d4 68%,
+      transparent 80%
+    );
+
+    animation: border-rotate-centered var(--border-speed, 6s) linear infinite;
+
     z-index: 0;
     pointer-events: none;
+    will-change: transform;
   }
 
   .glowing-border-container:hover::before {
@@ -448,6 +466,7 @@ html, body, .overflow-y-auto, [class*="overflow-y-"] {
     width: 100%;
     background: linear-gradient(to bottom, #0a142c, #121319, #121319);
     border-radius: calc(0.75rem - 1.5px);
+    transform: translateZ(0);
   }
 }
 
