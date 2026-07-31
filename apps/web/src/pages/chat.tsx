@@ -630,7 +630,7 @@ export function ChatPage() {
         className="w-64 border-r border-white/[0.06] flex flex-col shrink-0"
       >
         <div className="p-4.5 border-b border-white/[0.06] flex items-center justify-between shrink-0">
-          <span className="font-heading text-xs font-semibold uppercase tracking-widest text-neutral-300">Workspace AI</span>
+          <span className="font-instrument text-[13px] font-semibold uppercase tracking-widest text-neutral-300">Workspace AI</span>
           <Button
             variant="ghost"
             size="sm"
@@ -772,7 +772,7 @@ export function ChatPage() {
         >
           {isCommonChat ? (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">General AI Assistant</span>
+              <span className="font-instrument text-[11px] uppercase font-bold tracking-widest text-indigo-400">General AI Assistant</span>
               <span className="text-neutral-600">|</span>
               <span className="text-[11px] text-neutral-400 font-medium">Ask general coding, DSA, or system design questions</span>
             </div>
