@@ -160,8 +160,11 @@ export function Sidebar() {
     <aside
       style={{
         width: sidebarCollapsed ? 82 : 256,
-        backgroundColor: "#0B0C0E",
+        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), rgba(15, 15, 18, 0.35)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
         borderRight: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05), 4px 0 24px rgba(0, 0, 0, 0.3)",
       }}
       className="relative z-30 hidden shrink-0 transition-[width] duration-300 ease-in-out md:flex md:flex-col text-neutral-200 h-screen select-none overflow-hidden"
     >

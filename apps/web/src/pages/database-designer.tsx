@@ -195,6 +195,48 @@ function toPlantUMLER(schema: DatabaseSchema): string {
   return code;
 }
 
+function normalizeSchema(raw: any): DatabaseSchema | null {
+  if (!raw || typeof raw !== "object") return null;
+  // If it's a completely empty object or lacks tables array, treat it as null (not generated yet)
+  if (!raw.tables || !Array.isArray(raw.tables) || raw.tables.length === 0) return null;
+
+  return {
+    summary: typeof raw.summary === "string" ? raw.summary : "",
+    tables: raw.tables.map((t: any) => ({
+      id: typeof t?.id === "string" ? t.id : "",
+      name: typeof t?.name === "string" ? t.name : "",
+      description: typeof t?.description === "string" ? t.description : "",
+      columns: Array.isArray(t?.columns) ? t.columns.map((c: any) => ({
+        name: typeof c?.name === "string" ? c.name : "",
+        type: typeof c?.type === "string" ? c.type : "",
+        nullable: typeof c?.nullable === "boolean" ? c.nullable : true,
+        primaryKey: typeof c?.primaryKey === "boolean" ? c.primaryKey : false,
+        unique: typeof c?.unique === "boolean" ? c.unique : false,
+        defaultValue: c?.defaultValue !== undefined ? c.defaultValue : null,
+        description: typeof c?.description === "string" ? c.description : "",
+      })) : [],
+    })),
+    relations: Array.isArray(raw.relations) ? raw.relations.map((r: any) => ({
+      from: typeof r?.from === "string" ? r.from : "",
+      to: typeof r?.to === "string" ? r.to : "",
+      fromColumn: typeof r?.fromColumn === "string" ? r.fromColumn : "",
+      toColumn: typeof r?.toColumn === "string" ? r.toColumn : "",
+      type: typeof r?.type === "string" ? r.type : "one-to-many",
+    })) : [],
+    indexes: Array.isArray(raw.indexes) ? raw.indexes.map((idx: any) => ({
+      table: typeof idx?.table === "string" ? idx.table : "",
+      columns: Array.isArray(idx?.columns) ? idx.columns.map((c: any) => String(c)) : [],
+      type: typeof idx?.type === "string" ? idx.type : "btree",
+    })) : [],
+    considerations: {
+      normalization: Array.isArray(raw.considerations?.normalization) ? raw.considerations.normalization.map((n: any) => String(n)) : [],
+      indexing: Array.isArray(raw.considerations?.indexing) ? raw.considerations.indexing.map((i: any) => String(i)) : [],
+      scaling: Array.isArray(raw.considerations?.scaling) ? raw.considerations.scaling.map((s: any) => String(s)) : [],
+    },
+    sql: typeof raw.sql === "string" ? raw.sql : "",
+  };
+}
+
 export function DatabaseDesignerPage() {
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
@@ -216,6 +258,13 @@ export function DatabaseDesignerPage() {
   const projectId = searchParams.get("projectId");
 
   useEffect(() => {
+    // Reset all workspace states on project switch/navigation to avoid pollution or crash
+    setSchema(null);
+    setPrompt("");
+    setError(null);
+    setSelectedTable(null);
+    setBreadcrumb([]);
+
     if (!projectId) return;
     async function loadProjectSchema() {
       const { data, error } = await supabase
@@ -225,9 +274,9 @@ export function DatabaseDesignerPage() {
         .maybeSingle();
       if (!error) {
         if (data?.database_schema) {
-          setSchema(data.database_schema as unknown as DatabaseSchema);
+          setSchema(normalizeSchema(data.database_schema));
         }
-        if (data?.description && !prompt) {
+        if (data?.description) {
           setPrompt(data.description);
         }
       }
@@ -253,7 +302,7 @@ export function DatabaseDesignerPage() {
       const data = await aiQueue.enqueue('generate-database-schema', input, { prompt: input, dialect: 'postgresql' });
       if (!data.schema) throw new Error("No schema returned.");
 
-      setSchema(data.schema as DatabaseSchema);
+      setSchema(normalizeSchema(data.schema));
       setFinishedLoading(true);
       setGenerating(false);
     } catch (err) {

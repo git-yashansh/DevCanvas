@@ -141,11 +141,15 @@ export function Topbar() {
     <header
       ref={topbarRef}
       style={{
-        background: "rgba(11, 12, 14, 0.95)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), rgba(15, 15, 18, 0.35)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
         borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-        boxShadow: "inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
+        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 20px rgba(0, 0, 0, 0.25)",
         transform: "translateZ(0)",
         willChange: "transform",
       }}
