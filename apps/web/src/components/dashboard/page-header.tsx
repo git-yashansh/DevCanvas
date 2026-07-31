@@ -45,7 +45,7 @@ export function PageHeader({ title, description, actions, className }: PageHeade
       <div>
         <h1
           ref={wordsRef}
-          className="font-heading text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight leading-tight"
+          className="font-heading text-3xl sm:text-4xl lg:text-5xl font-medium tracking-wide leading-tight"
         >
           {words.map((word, i) => (
             <span
