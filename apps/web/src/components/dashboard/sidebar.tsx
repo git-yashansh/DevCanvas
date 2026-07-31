@@ -103,8 +103,8 @@ function NavItemRow({
           ? "flex-col gap-1 py-2 px-1 w-16 justify-center text-center"
           : "gap-3 px-3.5 py-2.5 w-full",
         isActive
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)] font-bold"
-          : "text-neutral-300 hover:text-white hover:bg-neutral-900/80 font-semibold"
+          ? "bg-white/[0.06] text-white border border-white/[0.08] shadow-[0_0_12px_rgba(255,255,255,0.02)] font-bold"
+          : "text-neutral-400 hover:text-white hover:bg-white/[0.05] font-semibold"
       )}
     >
       {/* Icon */}
@@ -112,7 +112,7 @@ function NavItemRow({
         className={cn(
           "shrink-0 transition-colors duration-200",
           collapsed ? "h-5 w-5" : "h-4.5 w-4.5",
-          isActive ? "text-emerald-400" : "text-neutral-400 group-hover:text-neutral-200"
+          isActive ? "text-white" : "text-neutral-400 group-hover:text-neutral-200"
         )}
       />
 
@@ -160,24 +160,22 @@ export function Sidebar() {
     <aside
       style={{
         width: sidebarCollapsed ? 82 : 256,
-        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), rgba(15, 15, 18, 0.35)",
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        borderRight: "1px solid rgba(255, 255, 255, 0.08)",
-        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05), 4px 0 24px rgba(0, 0, 0, 0.3)",
+        background: "#050505",
+        borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.02), 4px 0 24px rgba(0, 0, 0, 0.3)",
       }}
       className="relative z-30 hidden shrink-0 transition-[width] duration-300 ease-in-out md:flex md:flex-col text-neutral-200 h-screen select-none overflow-hidden"
     >
       {/* ── 1. Top Header Row ── */}
       <div
         className={cn(
-          "flex items-center shrink-0 h-16 border-b border-white/[0.08]",
+          "flex items-center shrink-0 h-16 border-b border-white/[0.06]",
           sidebarCollapsed ? "justify-center px-0" : "justify-between px-4"
         )}
       >
         <button
           onClick={toggleSidebar}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900/90 text-neutral-300 transition-all duration-200 hover:border-neutral-700 hover:bg-neutral-800 hover:text-white cursor-pointer"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.06] bg-black text-neutral-300 transition-all duration-200 hover:border-white/[0.15] hover:bg-white/[0.05] hover:text-white cursor-pointer"
           title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label="Toggle sidebar navigation"
         >
@@ -213,7 +211,7 @@ export function Sidebar() {
 
           {/* Divider */}
           <div className="w-full px-1 py-0.5">
-            <div className="border-t border-neutral-850/80" />
+            <div className="border-t border-white/[0.06]" />
           </div>
 
           {/* Generators / Tools Nav Section */}
@@ -236,7 +234,7 @@ export function Sidebar() {
         </div>
 
         {/* ── 3. Bottom Section: Help & Settings + Free Plan Card ── */}
-        <div className="shrink-0 pt-3 border-t border-neutral-850/80 space-y-2.5">
+        <div className="shrink-0 pt-3 border-t border-white/[0.06] space-y-2.5">
           <div className="space-y-1 flex flex-col items-center">
             {!sidebarCollapsed && (
               <p className="w-full font-heading text-[12px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
@@ -256,7 +254,7 @@ export function Sidebar() {
 
           {/* Free Plan Card (Expanded View - Full Rich Visuals) */}
           {!sidebarCollapsed && (
-            <div className="shrink-0 rounded-xl border border-neutral-800 bg-[#121319] p-3 space-y-2 mt-1 shadow-sm">
+            <div className="shrink-0 rounded-xl border border-white/[0.06] bg-[#0A0A0A] p-3 space-y-2 mt-1 shadow-sm">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-heading font-bold text-white flex items-center gap-1.5 text-[13px]">
                   <Zap className="h-3.5 w-3.5 text-emerald-400" /> Free Plan
