@@ -432,9 +432,9 @@ html, body, .overflow-y-auto, [class*="overflow-y-"] {
   .glowing-border-container {
     position: relative;
     overflow: hidden;
-    clip-path: inset(0 round 0.75rem);
-    -webkit-clip-path: inset(0 round 0.75rem);
-    border-radius: 0.75rem; /* rounded-xl */
+    clip-path: inset(0 round 1.75rem);
+    -webkit-clip-path: inset(0 round 1.75rem);
+    border-radius: 1.75rem; /* rounded-3xl / 28px */
     padding: 1.5px; /* border thickness */
     background: transparent;
     transition: box-shadow 0.5s ease;
@@ -481,8 +481,8 @@ html, body, .overflow-y-auto, [class*="overflow-y-"] {
     z-index: 10;
     height: 100%;
     width: 100%;
-    background: linear-gradient(to bottom, #0a142c, #121319, #121319);
-    border-radius: calc(0.75rem - 1.5px);
+    background: linear-gradient(to bottom, #07080e, #000000);
+    border-radius: calc(1.75rem - 1.5px);
     transform: translateZ(0);
   }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -346,6 +346,7 @@ function RichChatMessage({ text }: { text: string }) {
 export function ChatPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const { data: projects } = useProjects();
@@ -606,6 +607,15 @@ export function ChatPage() {
       setThinkingStep("");
     }
   };
+
+  useEffect(() => {
+    const initialQuery = location.state?.initialQuery;
+    if (initialQuery) {
+      // Clear location state so the query is sent only once
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+      handleSend(initialQuery);
+    }
+  }, [location.state, location.pathname, location.search, navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

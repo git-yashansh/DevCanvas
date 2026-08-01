@@ -69,32 +69,9 @@ export function WorkspacePage() {
   // Functional Intelligence Hub Query Handler
   const handleAskDevAI = async (qText?: string) => {
     const query = (qText || aiQuestion).trim();
-    if (!query || isAiLoading) return;
-
-    if (qText) setAiQuestion(qText);
-    setIsAiLoading(true);
-    setAiAnswer(null);
-
-    // Provide immediate intelligent analysis based on query context
-    setTimeout(() => {
-      let response = "";
-      const lower = query.toLowerCase();
-
-      if (lower.includes("stacks") || lower.includes("2026") || lower.includes("saas")) {
-        response = "For modern high-performance 2026 SaaS applications, the recommended stack consists of:\n• **Frontend**: Vite + React 19 / Next.js 15 (App Router, Server Components)\n• **Backend**: Go / Rust microservices paired with Node.js Fastify API gateway\n• **Database**: PostgreSQL 16 with PGVector for AI embeddings & Supabase Row Level Security\n• **Cache/Queue**: Redis + BullMQ for real-time background job processing";
-      } else if (lower.includes("postgres") || lower.includes("dau") || lower.includes("optimize")) {
-        response = "To optimize PostgreSQL for 100k+ DAU:\n1. **Connection Pooling**: Use PgBouncer with transaction-level pooling to handle thousands of concurrent client connections.\n2. **Indexing**: Ensure all foreign key columns and filtered queries have B-tree / BRIN indices.\n3. **Partitioning**: Partition high-volume time-series tables (logs, activity) by range (month/week).\n4. **Read Replicas**: Separate analytical/reporting queries onto read-only replica instances.";
-      } else if (lower.includes("vite") || lower.includes("next.js") || lower.includes("compare")) {
-        response = "• **Vite**: Best for client-heavy SPA apps, rapid HMR feedback loops, micro-frontends, and pure dashboard interfaces.\n• **Next.js**: Best for SEO-intensive marketing web apps, server-rendered content, and integrated full-stack server functions.";
-      } else if (lower.includes("oauth") || lower.includes("jwt") || lower.includes("security")) {
-        response = "OAuth2 & JWT Security Audit Guidelines:\n✓ Store JWT access tokens strictly in HttpOnly, SameSite=Strict cookies (not localStorage).\n✓ Enforce short access token expiration (15 min) with rotation-aware Refresh Tokens.\n✓ Validate JWT signatures using RS256 algorithm keys.\n✓ Implement strict Rate Limiting per client IP on `/auth` endpoints.";
-      } else {
-        response = `DevAI System Analysis for: "${query}"\n\nBased on your workspace specifications:\n• **Architecture Impact**: System blueprints & component boundaries validated.\n• **Recommended Action**: Utilize DevCanvas Database Spec and Security Center tools to auto-generate corresponding migrations and RBAC policies.`;
-      }
-
-      setAiAnswer(response);
-      setIsAiLoading(false);
-    }, 600);
+    if (!query) return;
+    setAiQuestion("");
+    navigate("/app/chat", { state: { initialQuery: query } });
   };
 
   // Fallback default mock data if database is empty
@@ -475,91 +452,161 @@ export function WorkspacePage() {
         
         {/* DevAI Intelligence Hub Card */}
         <div className="lg:col-span-2 glowing-border-container">
-          <div className="glowing-border-content p-5 lg:p-6 flex flex-col justify-between space-y-4">
-            
-            <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-heading text-[18px] font-bold text-white tracking-wide">
-                DevAI Intelligence Hub
-              </span>
-            </div>
-          </div>
-
-          {/* AI Big Text Area Wrap (+1pt text-base) */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleAskDevAI();
+          <div 
+            className="glowing-border-content p-5 lg:p-6 flex flex-col justify-between space-y-4"
+            style={{
+              backgroundColor: "#0e131f",
+              boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.5)",
             }}
-            className="flex flex-col gap-2.5 bg-black border border-white/10 rounded-xl p-4 focus-within:border-emerald-500/60 transition-all"
           >
-            <div className="flex items-start gap-2.5">
-              <Sparkles className="h-5 w-5 text-emerald-400 shrink-0 mt-1" />
-              <textarea
-                rows={3}
-                value={aiQuestion}
-                onChange={(e) => setAiQuestion(e.target.value)}
-                placeholder="Ask DevAI any engineering query about system architecture, database optimization, OAuth2 security, or stack recommendations..."
-                className="bg-transparent border-none outline-none text-base text-white placeholder-neutral-400 w-full resize-none leading-relaxed font-sans"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAskDevAI();
-                  }
-                }}
-              />
-            </div>
-            <div className="flex items-center justify-between border-t border-white/5 pt-2.5">
-              <span className="text-sm font-medium text-neutral-400">Press Enter to submit query</span>
-              <button
-                type="submit"
-                disabled={isAiLoading || !aiQuestion.trim()}
-                className="bg-black hover:bg-neutral-900 disabled:opacity-50 text-white border border-white/20 hover:border-white/40 font-heading font-bold text-[15px] px-5 py-2 rounded-xl transition-all flex items-center gap-3 shrink-0 h-12 shadow-[0_0_15px_rgba(255,255,255,0.08)] hover:shadow-[0_0_24px_rgba(255,255,255,0.18)]"
-              >
-                <span className="text-white tracking-wide font-extrabold">{isAiLoading ? "Thinking..." : "Ask AI"}</span>
-                <AIOrb size={64} className="bg-transparent border-none opacity-90 shrink-0 pointer-events-none" renderScale={1.5} />
-              </button>
-            </div>
-          </form>
+            {/* Subtle glass reflection overlay */}
+            <div
+              className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 group-hover:opacity-75 opacity-50"
+              style={{
+                background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 80%, rgba(255,255,255,0.05) 100%)",
+                backdropFilter: "blur(2px)",
+              }}
+            />
 
-          {/* Question Pills (+1pt text-xs) */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-0.5 text-xs">
-            {[
-              { label: "Top 2026 stacks", prompt: "What are the top 2026 tech stacks for SaaS products?" },
-              { label: "PostgreSQL at 100k DAU", prompt: "How do I optimize PostgreSQL for 100k DAU?" },
-              { label: "Next.js vs Vite", prompt: "Compare Next.js vs Vite for 2026 projects" },
-              { label: "OAuth2 audit", prompt: "OAuth2 and JWT security audit checklist" },
-            ].map((p, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleAskDevAI(p.prompt)}
-                className="text-neutral-300 bg-[#181920] border border-white/10 hover:border-emerald-500/40 hover:text-white px-3 py-1 rounded-full transition-all shrink-0 whitespace-nowrap text-xs"
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+            {/* Dark background with black gradient */}
+            <div
+              className="absolute inset-0 z-0 pointer-events-none"
+              style={{
+                background: "linear-gradient(180deg, #000000 0%, #000000 70%)",
+              }}
+            />
 
-          {/* Working AI Answer Output Display (+1pt text-sm) */}
-          {(isAiLoading || aiAnswer) && (
-            <div className="p-4 bg-[#181920] border border-emerald-500/30 rounded-xl space-y-2 text-sm animate-in fade-in duration-200">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs border-b border-white/10 pb-2">
-                <Bot className="h-4 w-4" /> DevAI Response
-              </div>
-              {isAiLoading ? (
-                <div className="flex items-center gap-2 py-3 text-neutral-400">
-                  <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
-                  <span>Analyzing architecture specifications...</span>
+            {/* Noise texture overlay */}
+            <div
+              className="absolute inset-0 opacity-20 mix-blend-overlay z-10 pointer-events-none"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+              }}
+            />
+
+            {/* Subtle finger smudge texture for realism */}
+            <div
+              className="absolute inset-0 opacity-[0.06] mix-blend-soft-light z-11 pointer-events-none"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='smudge'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeGaussianBlur stdDeviation='10'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23smudge)'/%3E%3C/svg%3E")`,
+                backdropFilter: "blur(1px)",
+              }}
+            />
+
+            {/* Orange/green glow effect */}
+            <div
+              className="absolute bottom-0 left-0 right-0 h-2/3 z-20 pointer-events-none transition-opacity duration-300 group-hover:opacity-90 opacity-80"
+              style={{
+                background: `
+                  radial-gradient(ellipse at bottom right, rgba(251, 146, 60, 0.45) -10%, rgba(251, 146, 60, 0) 70%),
+                  radial-gradient(ellipse at bottom left, rgba(52, 211, 153, 0.45) -10%, rgba(52, 211, 153, 0) 70%)
+                `,
+                filter: "blur(30px)",
+              }}
+            />
+
+            {/* Central orange-green glow */}
+            <div
+              className="absolute bottom-0 left-0 right-0 h-2/3 z-21 pointer-events-none transition-opacity duration-300 group-hover:opacity-85 opacity-75"
+              style={{
+                background: `
+                  radial-gradient(circle at bottom center, rgba(251, 146, 60, 0.3) -20%, rgba(52, 211, 153, 0.25) 30%, rgba(52, 211, 153, 0) 70%)
+                `,
+                filter: "blur(35px)",
+              }}
+            />
+
+            {/* Transparent Grid overlay */}
+            <div className="absolute inset-0 z-0 opacity-25 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:16px_16px]" />
+
+            {/* Large Background Icon Watermark */}
+            <Bot className="absolute bottom-[-24px] right-[-24px] z-10 opacity-[0.03] group-hover:opacity-[0.05] pointer-events-none select-none text-orange-400 w-36 h-36 transform rotate-[-5deg] group-hover:rotate-[-15deg] group-hover:scale-110 transition-all duration-300" />
+
+            {/* Content wrapper */}
+            <div className="relative z-30 flex flex-col justify-between space-y-4 h-full w-full">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-heading text-[18px] font-bold text-white tracking-wide">
+                    DevAI Intelligence Hub
+                  </span>
                 </div>
-              ) : (
-                <div className="text-neutral-200 whitespace-pre-line leading-relaxed text-sm">
-                  {aiAnswer}
+              </div>
+
+              {/* AI Big Text Area Wrap (+1pt text-base) */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAskDevAI();
+                }}
+                className="flex flex-col gap-2.5 bg-black border border-white/10 rounded-xl p-4 focus-within:border-emerald-500/60 transition-all"
+              >
+                <div className="flex items-start gap-2.5">
+                  <Sparkles className="h-5 w-5 text-emerald-400 shrink-0 mt-1" />
+                  <textarea
+                    rows={3}
+                    value={aiQuestion}
+                    onChange={(e) => setAiQuestion(e.target.value)}
+                    placeholder="Ask DevAI any engineering query about system architecture, database optimization, OAuth2 security, or stack recommendations..."
+                    className="bg-transparent border-none outline-none text-base text-white placeholder-neutral-400 w-full resize-none leading-relaxed font-sans"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleAskDevAI();
+                      }
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between border-t border-white/5 pt-2.5">
+                  <span className="text-sm font-medium text-neutral-400">Press Enter to submit query</span>
+                  <button
+                    type="submit"
+                    disabled={isAiLoading || !aiQuestion.trim()}
+                    className="bg-black hover:bg-neutral-900 disabled:opacity-50 text-white border border-white/20 hover:border-white/40 font-heading font-bold text-[15px] px-5 py-2 rounded-xl transition-all flex items-center gap-3 shrink-0 h-12 shadow-[0_0_15px_rgba(255,255,255,0.08)] hover:shadow-[0_0_24px_rgba(255,255,255,0.18)]"
+                  >
+                    <span className="text-white tracking-wide font-extrabold">{isAiLoading ? "Thinking..." : "Ask AI"}</span>
+                    <AIOrb size={64} className="bg-transparent border-none opacity-90 shrink-0 pointer-events-none" renderScale={1.5} />
+                  </button>
+                </div>
+              </form>
+
+              {/* Question Pills (+1pt text-xs) */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-0.5 text-xs">
+                {[
+                  { label: "Top 2026 stacks", prompt: "What are the top 2026 tech stacks for SaaS products?" },
+                  { label: "PostgreSQL at 100k DAU", prompt: "How do I optimize PostgreSQL for 100k DAU?" },
+                  { label: "Next.js vs Vite", prompt: "Compare Next.js vs Vite for 2026 projects" },
+                  { label: "OAuth2 audit", prompt: "OAuth2 and JWT security audit checklist" },
+                ].map((p, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleAskDevAI(p.prompt)}
+                    className="text-neutral-300 bg-[#181920] border border-white/10 hover:border-emerald-500/40 hover:text-white px-3 py-1 rounded-full transition-all shrink-0 whitespace-nowrap text-xs"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Working AI Answer Output Display (+1pt text-sm) */}
+              {(isAiLoading || aiAnswer) && (
+                <div className="p-4 bg-[#181920] border border-emerald-500/30 rounded-xl space-y-2 text-sm animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs border-b border-white/10 pb-2">
+                    <Bot className="h-4 w-4" /> DevAI Response
+                  </div>
+                  {isAiLoading ? (
+                    <div className="flex items-center gap-2 py-3 text-neutral-400">
+                      <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
+                      <span>Analyzing architecture specifications...</span>
+                    </div>
+                  ) : (
+                    <div className="text-neutral-200 whitespace-pre-line leading-relaxed text-sm">
+                      {aiAnswer}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-
           </div>
         </div>
 
