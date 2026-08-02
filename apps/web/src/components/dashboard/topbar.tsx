@@ -145,11 +145,9 @@ export function Topbar() {
         top: 0,
         left: 0,
         right: 0,
-        background: "linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), rgba(15, 15, 18, 0.35)",
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 20px rgba(0, 0, 0, 0.25)",
+        background: "#050505",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.02), 0 4px 20px rgba(0, 0, 0, 0.25)",
         transform: "translateZ(0)",
         willChange: "transform",
       }}
@@ -159,7 +157,7 @@ export function Topbar() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => setMobileSidebar(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/40 hover:bg-white/10 hover:text-white md:hidden transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/40 hover:bg-white/[0.05] hover:text-white md:hidden transition-colors"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
@@ -203,14 +201,14 @@ export function Topbar() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search projects, artifacts..."
-            className="h-10 w-72 lg:w-96 rounded-xl border border-white/10 bg-black pl-9 pr-3 text-sm text-white placeholder:text-white/40 outline-none transition-all duration-300 focus:w-[420px] focus:border-emerald-500/50 focus:bg-[#070709] focus:ring-2 focus:ring-emerald-500/20 font-heading"
+            className="h-10 w-72 lg:w-96 rounded-xl border border-white/[0.06] bg-[#0A0A0A] pl-9 pr-3 text-sm text-white placeholder:text-white/40 outline-none transition-all duration-300 focus:w-[420px] focus:border-white/20 focus:bg-black focus:ring-2 focus:ring-white/[0.03] font-heading"
           />
         </div>
 
         {/* 2. New Project CTA Button */}
         <button
           onClick={() => navigate("/app/projects?new=1")}
-          className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2 text-xs font-heading font-bold text-white hover:border-white/20 hover:bg-white/[0.08] active:scale-95 transition-all cursor-pointer shrink-0"
+          className="flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 text-xs font-heading font-bold text-white hover:border-white/15 hover:bg-white/[0.05] active:scale-95 transition-all cursor-pointer shrink-0"
         >
           <Plus className="h-3.5 w-3.5" />
           <span className="hidden sm:inline font-heading">New project</span>
@@ -221,7 +219,7 @@ export function Topbar() {
           <button
             ref={bellRef}
             onClick={handleBellClick}
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/60 transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-white/60 transition-colors hover:border-white/15 hover:bg-white/[0.05] hover:text-white"
             title="Notifications"
             aria-label="Notifications"
           >
@@ -238,9 +236,9 @@ export function Topbar() {
           {showNotifications && (
             <div
               ref={notifDropdownRef}
-              className="absolute right-0 mt-2 w-80 rounded-2xl border border-neutral-800 bg-[#121319] p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+              className="absolute right-0 mt-2 w-80 rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
                 <div className="flex items-center gap-2">
                   <Bell className="h-4 w-4 text-emerald-400" />
                   <span className="text-xs font-heading font-bold text-white uppercase tracking-wider">
@@ -275,7 +273,7 @@ export function Topbar() {
                     }}
                     className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
                       n.read
-                        ? "border-neutral-850 bg-neutral-900/40 text-neutral-400"
+                        ? "border-white/[0.06] bg-white/[0.02] text-neutral-400"
                         : "border-emerald-500/20 bg-emerald-950/20 text-white font-medium"
                     }`}
                   >
@@ -296,7 +294,7 @@ export function Topbar() {
           <div
             ref={profileTriggerRef as any}
             onClick={() => setShowProfileMenu((prev) => !prev)}
-            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-1.5 pr-2.5 hover:border-white/20 hover:bg-white/[0.07] transition-all cursor-pointer select-none group"
+            className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-1.5 pr-2.5 hover:border-white/15 hover:bg-white/[0.05] transition-all cursor-pointer select-none group"
             title="User Profile"
           >
             <div className="relative p-[1.5px] rounded-full bg-gradient-to-tr from-amber-400 via-emerald-400 to-cyan-400 shrink-0">
@@ -328,14 +326,14 @@ export function Topbar() {
           {showProfileMenu && (
             <div
               ref={profileDropdownRef}
-              className="absolute right-0 mt-2 w-52 rounded-2xl border border-neutral-800 bg-[#121319] p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-xs text-neutral-300"
+              className="absolute right-0 mt-2 w-52 rounded-2xl border border-white/[0.06] bg-[#0A0A0A] p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-xs text-neutral-300"
             >
               <button
                 onClick={() => {
                   setShowProfileMenu(false);
                   navigate("/app/settings");
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/[0.06] hover:text-white transition-all text-left cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/[0.05] hover:text-white transition-all text-left cursor-pointer"
               >
                 <Settings className="h-4 w-4 text-neutral-400" />
                 <span>Settings</span>
@@ -346,7 +344,7 @@ export function Topbar() {
                   setShowProfileMenu(false);
                   navigate("/app/support");
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/[0.06] hover:text-white transition-all text-left cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/[0.05] hover:text-white transition-all text-left cursor-pointer"
               >
                 <LifeBuoy className="h-4 w-4 text-neutral-400" />
                 <span>Support & Help</span>
@@ -365,7 +363,7 @@ export function Topbar() {
                 </button>
               )}
 
-              <div className="h-[1px] bg-neutral-800 my-1" />
+              <div className="h-[1px] bg-white/[0.06] my-1" />
 
               <button
                 onClick={() => {

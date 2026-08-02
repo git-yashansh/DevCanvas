@@ -97,14 +97,101 @@ export function DeploymentGeneratorPage() {
   };
 
   return (
-    <div className="w-full px-5 py-6 lg:px-8">
+    <div className="relative w-full px-5 py-6 lg:px-8 overflow-hidden min-h-screen">
+      {/* Page-level white tilted grid background */}
+      <div 
+        className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0"
+        style={{ transform: "rotate(-12deg) scale(2.2)", transformOrigin: "center center" }}
+      />
       <PageHeader
         title="Deployment Architect &amp; Generator"
         description="Describe your application stack to generate Docker configurations, GitHub actions scripts, and production server checklists."
       />
 
-        <div className="bg-gradient-to-b from-[#0a142c] via-[#121319] to-[#121319] border border-blue-900/35 rounded-2xl p-6">
-          <div className="flex flex-col gap-3">
+      <div className="mt-8">
+        <div 
+          className="relative rounded-[28px] overflow-hidden border border-white/[0.04] p-6 transition-all duration-300 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.5)] group hover:border-white/10 text-left"
+          style={{
+            backgroundColor: "#0e131f",
+            boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          {/* Subtle glass reflection overlay */}
+          <div
+            className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 group-hover:opacity-75 opacity-50"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 80%, rgba(255,255,255,0.05) 100%)",
+              backdropFilter: "blur(2px)",
+            }}
+          />
+
+          {/* Dark background with black gradient */}
+          <div
+            className="absolute inset-0 z-0 pointer-events-none"
+            style={{
+              background: "linear-gradient(180deg, #000000 0%, #000000 70%)",
+            }}
+          />
+
+          {/* Noise texture overlay */}
+          <div
+            className="absolute inset-0 opacity-20 mix-blend-overlay z-10 pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+            }}
+          />
+
+          {/* Subtle finger smudge texture for realism */}
+          <div
+            className="absolute inset-0 opacity-[0.06] mix-blend-soft-light z-11 pointer-events-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='smudge'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeGaussianBlur stdDeviation='10'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23smudge)'/%3E%3C/svg%3E")`,
+              backdropFilter: "blur(1px)",
+            }}
+          />
+
+          {/* Emerald/sky/cyan glow effect */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-2/3 z-20 pointer-events-none transition-opacity duration-300 group-hover:opacity-90 opacity-80"
+            style={{
+              background: `
+                radial-gradient(ellipse at bottom right, rgba(16, 185, 129, 0.45) -10%, rgba(16, 185, 129, 0) 70%),
+                radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.45) -10%, rgba(56, 189, 248, 0) 70%)
+              `,
+              filter: "blur(30px)",
+            }}
+          />
+
+          {/* Central cyan glow */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-2/3 z-21 pointer-events-none transition-opacity duration-300 group-hover:opacity-85 opacity-75"
+            style={{
+              background: `
+                radial-gradient(circle at bottom center, rgba(6, 182, 212, 0.3) -20%, rgba(56, 189, 248, 0.25) 30%, rgba(56, 189, 248, 0) 70%)
+              `,
+              filter: "blur(35px)",
+            }}
+          />
+
+          {/* Tilted Grid background overlay */}
+          <div 
+            className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none z-0"
+            style={{ transform: "rotate(-12deg) scale(1.6)", transformOrigin: "center center" }}
+          />
+
+          {/* Large Background Icon Watermark */}
+          <Rocket className="absolute bottom-[-24px] right-[-24px] z-10 opacity-[0.03] group-hover:opacity-[0.05] pointer-events-none select-none text-emerald-400 w-36 h-36 transform rotate-[-5deg] group-hover:rotate-[-15deg] group-hover:scale-110 transition-all duration-300" />
+
+          {/* Bottom border line */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-[2px] z-25 transition-opacity duration-300 group-hover:opacity-100 opacity-90"
+            style={{
+              background: "linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0.05) 100%)",
+            }}
+          />
+
+          {/* Content wrapper */}
+          <div className="relative z-30 flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4.5 w-4.5 text-emerald-400" />
               <span className="text-base font-bold text-white">Deployment Targets Details</span>
@@ -134,6 +221,7 @@ export function DeploymentGeneratorPage() {
             </div>
           </div>
         </div>
+      </div>
 
       {error && (
         <div className="mt-6 flex items-center gap-2 rounded-lg border border-danger-500/30 bg-danger-500/10 px-4 py-3 text-sm text-danger-300">
@@ -209,6 +297,39 @@ export function DeploymentGeneratorPage() {
               security={report.security ?? []}
               onRefresh={handleGenerate}
             />
+          </motion.div>
+        ) : !generating ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 text-left space-y-6"
+          >
+            <div className="bg-neutral-900/30 border border-neutral-800/80 rounded-2xl p-8 flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-4">
+              <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Rocket className="h-10 w-10 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-sans font-bold text-white tracking-normal">Describe your application stack to generate Docker configurations and GitHub actions</h3>
+                <p className="text-xs text-neutral-400 max-w-md leading-relaxed">Provide your runtime target, environmental keys, or server requirements above to generate production dockerfiles, pipeline scripts, and release checklists.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: "Container Orchestration", desc: "Build optimized multi-stage build Dockerfiles and docker-compose orchestration environments.", icon: Server },
+                { title: "CI/CD Pipeline Automation", desc: "Generate GitHub Actions workflows verifying automated unit testing and container image tagging.", icon: PlayCircle },
+                { title: "Infrastructure-as-Code", desc: "Draft Terraform manifests mapping out client security groups and application subnets.", icon: Layers },
+                { title: "Pre-Flight Rollbacks", desc: "Formulate automated health-checks, SSL bindings, and emergency container tag rollbacks.", icon: Rocket }
+              ].map((f, idx) => (
+                <div key={idx} className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-5 space-y-3">
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-850 text-emerald-400 w-fit">
+                    <f.icon className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xs font-sans font-extrabold text-neutral-200 uppercase tracking-widest leading-normal">{f.title}</h4>
+                  <p className="text-xs text-neutral-400 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
           </motion.div>
         ) : null}
       </AnimatePresence>

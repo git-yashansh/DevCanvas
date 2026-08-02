@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -346,6 +346,7 @@ function RichChatMessage({ text }: { text: string }) {
 export function ChatPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const { data: projects } = useProjects();
@@ -607,6 +608,15 @@ export function ChatPage() {
     }
   };
 
+  useEffect(() => {
+    const initialQuery = location.state?.initialQuery;
+    if (initialQuery) {
+      // Clear location state so the query is sent only once
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+      handleSend(initialQuery);
+    }
+  }, [location.state, location.pathname, location.search, navigate]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -630,7 +640,7 @@ export function ChatPage() {
         className="w-64 border-r border-white/[0.06] flex flex-col shrink-0"
       >
         <div className="p-4.5 border-b border-white/[0.06] flex items-center justify-between shrink-0">
-          <span className="font-heading text-xs font-semibold uppercase tracking-widest text-neutral-300">Workspace AI</span>
+          <span className="font-instrument text-[13px] font-semibold uppercase tracking-widest text-neutral-300">Workspace AI</span>
           <Button
             variant="ghost"
             size="sm"
@@ -772,7 +782,7 @@ export function ChatPage() {
         >
           {isCommonChat ? (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-indigo-400">General AI Assistant</span>
+              <span className="font-instrument text-[11px] uppercase font-bold tracking-widest text-indigo-400">General AI Assistant</span>
               <span className="text-neutral-600">|</span>
               <span className="text-[11px] text-neutral-400 font-medium">Ask general coding, DSA, or system design questions</span>
             </div>
