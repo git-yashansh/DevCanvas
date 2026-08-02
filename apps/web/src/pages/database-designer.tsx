@@ -1115,6 +1115,39 @@ export function DatabaseDesignerPage() {
               </section>
             </div>
           </motion.div>
+        ) : !generating ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 text-left space-y-6"
+          >
+            <div className="bg-neutral-900/30 border border-neutral-800/80 rounded-2xl p-8 flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-4">
+              <div className="p-4 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <Database className="h-10 w-10 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-sans font-bold text-white tracking-normal">Describe your database model to generate schema</h3>
+                <p className="text-xs text-neutral-400 max-w-md leading-relaxed">Provide your entities or data relationships above to auto-generate normalized tables, relational ER diagrams, composite indexes, and SQL migration files.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: "Relational Tables Layout", desc: "Design normalized database tables with strict type columns, primary keys, and auto-increment sequences.", icon: Table2 },
+                { title: "Security & Access Audits", desc: "Formulate Supabase RLS policies and role-based permissions to enforce row-level boundary security.", icon: KeyRound },
+                { title: "Foreign Key Linkages", desc: "Link composite indexes and parent relational mappings with CASCADE deletion logic rules.", icon: Link2 },
+                { title: "Performance Tuning", desc: "Generate explicit indexes, vacuum optimization strategies, and query performance profiles.", icon: Database }
+              ].map((f, idx) => (
+                <div key={idx} className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-5 space-y-3">
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-850 text-purple-400 w-fit">
+                    <f.icon className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xs font-sans font-extrabold text-neutral-200 uppercase tracking-widest leading-normal">{f.title}</h4>
+                  <p className="text-xs text-neutral-400 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         ) : null}
       </AnimatePresence>
 

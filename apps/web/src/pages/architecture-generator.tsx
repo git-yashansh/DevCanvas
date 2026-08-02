@@ -1128,6 +1128,39 @@ export function ArchitectureGeneratorPage() {
               </section>
             </div>
           </motion.div>
+        ) : !generating ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 text-left space-y-6"
+          >
+            <div className="bg-neutral-900/30 border border-neutral-800/80 rounded-2xl p-8 flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-4">
+              <div className="p-4 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Layers className="h-10 w-10 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-sans font-bold text-white tracking-normal">Describe your application to generate system architecture</h3>
+                <p className="text-xs text-neutral-400 max-w-md leading-relaxed">Provide stack details or business requirements above to automatically draft system topologies, service maps, databases, and cost estimates.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: "Interactive System Layouts", desc: "Draft high-fidelity infrastructure blueprints including API gateways, container clusters, and cloud grids.", icon: Layers },
+                { title: "Data Flow Mapping", desc: "Trace transaction workflows and database synchronization streams through all component microservices.", icon: Cpu },
+                { title: "Security & Risk Analysis", desc: "Scan infrastructure topology for security bottlenecks, ingress rules gaps, and point-of-failure risks.", icon: Shield },
+                { title: "Operational Cost Estimations", desc: "Generate real-time cost breakdown forecasts based on target cloud environments and scaling demands.", icon: DollarSign }
+              ].map((f, idx) => (
+                <div key={idx} className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-5 space-y-3">
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-850 text-cyan-400 w-fit">
+                    <f.icon className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xs font-sans font-extrabold text-neutral-200 uppercase tracking-widest leading-normal">{f.title}</h4>
+                  <p className="text-xs text-neutral-400 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         ) : null}
       </AnimatePresence>
 

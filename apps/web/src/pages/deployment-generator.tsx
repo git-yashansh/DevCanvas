@@ -298,6 +298,39 @@ export function DeploymentGeneratorPage() {
               onRefresh={handleGenerate}
             />
           </motion.div>
+        ) : !generating ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 text-left space-y-6"
+          >
+            <div className="bg-neutral-900/30 border border-neutral-800/80 rounded-2xl p-8 flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-4">
+              <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Rocket className="h-10 w-10 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-sans font-bold text-white tracking-normal">Describe your application stack to generate Docker configurations and GitHub actions</h3>
+                <p className="text-xs text-neutral-400 max-w-md leading-relaxed">Provide your runtime target, environmental keys, or server requirements above to generate production dockerfiles, pipeline scripts, and release checklists.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: "Container Orchestration", desc: "Build optimized multi-stage build Dockerfiles and docker-compose orchestration environments.", icon: Server },
+                { title: "CI/CD Pipeline Automation", desc: "Generate GitHub Actions workflows verifying automated unit testing and container image tagging.", icon: PlayCircle },
+                { title: "Infrastructure-as-Code", desc: "Draft Terraform manifests mapping out client security groups and application subnets.", icon: Layers },
+                { title: "Pre-Flight Rollbacks", desc: "Formulate automated health-checks, SSL bindings, and emergency container tag rollbacks.", icon: Rocket }
+              ].map((f, idx) => (
+                <div key={idx} className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-5 space-y-3">
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-850 text-emerald-400 w-fit">
+                    <f.icon className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xs font-sans font-extrabold text-neutral-200 uppercase tracking-widest leading-normal">{f.title}</h4>
+                  <p className="text-xs text-neutral-400 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         ) : null}
       </AnimatePresence>
     </div>

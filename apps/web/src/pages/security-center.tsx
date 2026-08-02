@@ -1138,6 +1138,39 @@ export function SecurityCenterPage() {
               </div>
             )}
           </motion.div>
+        ) : !analyzing ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 text-left space-y-6"
+          >
+            <div className="bg-neutral-900/30 border border-neutral-800/80 rounded-2xl p-8 flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-4">
+              <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <ShieldCheck className="h-10 w-10 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-sans font-bold text-white tracking-normal">Describe your stack to audit security specifications</h3>
+                <p className="text-xs text-neutral-400 max-w-md leading-relaxed">Provide your application topology, configurations, or protocols above to generate OWASP threat maps, compliance reviews, and firewall policies.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: "OWASP Threat Mapping", desc: "Identify top vulnerability profiles including SQL injections, cross-site scripts, and data leakage risks.", icon: ShieldCheck },
+                { title: "Network Boundary Audits", desc: "Scan container clusters, gateway firewall settings, and virtual network boundaries.", icon: Globe },
+                { title: "Identity & RBAC Policies", desc: "Audit authentication protocols, secret key rotation scopes, and role permissions.", icon: Shield },
+                { title: "Database Row-level Isolation", desc: "Review database connection constraints and Row-Level Security parameters.", icon: Database }
+              ].map((f, idx) => (
+                <div key={idx} className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-5 space-y-3">
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-850 text-emerald-400 w-fit">
+                    <f.icon className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xs font-sans font-extrabold text-neutral-200 uppercase tracking-widest leading-normal">{f.title}</h4>
+                  <p className="text-xs text-neutral-400 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         ) : null}
       </AnimatePresence>
 

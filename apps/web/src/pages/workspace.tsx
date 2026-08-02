@@ -450,10 +450,9 @@ export function WorkspacePage() {
       {/* ── ROW 1: DevAI Intelligence Hub (2/3) + Real Pipeline Status (1/3) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* DevAI Intelligence Hub Card */}
-        <div className="lg:col-span-2 glowing-border-container">
+        <div className="lg:col-span-2 glowing-border-container flex">
           <div 
-            className="glowing-border-content p-5 lg:p-6 flex flex-col justify-between space-y-4"
+            className="glowing-border-content p-5 lg:p-6 flex flex-col justify-between space-y-4 w-full"
             style={{
               backgroundColor: "#0e131f",
               boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.5)",
@@ -472,7 +471,7 @@ export function WorkspacePage() {
             <div
               className="absolute inset-0 z-0 pointer-events-none"
               style={{
-                background: "linear-gradient(180deg, #000000 0%, #000000 70%)",
+                background: "linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%)",
               }}
             />
 
@@ -493,31 +492,31 @@ export function WorkspacePage() {
               }}
             />
 
-            {/* Orange/green glow effect */}
+            {/* Blue/light orange glow effect */}
             <div
-              className="absolute bottom-0 left-0 right-0 h-2/3 z-20 pointer-events-none transition-opacity duration-300 group-hover:opacity-90 opacity-80"
+              className="absolute bottom-0 left-0 right-0 h-2/3 z-20 pointer-events-none transition-opacity duration-300 group-hover:opacity-100 opacity-95"
               style={{
                 background: `
-                  radial-gradient(ellipse at bottom right, rgba(251, 146, 60, 0.45) -10%, rgba(251, 146, 60, 0) 70%),
-                  radial-gradient(ellipse at bottom left, rgba(52, 211, 153, 0.45) -10%, rgba(52, 211, 153, 0) 70%)
+                  radial-gradient(ellipse at bottom right, rgba(251, 146, 60, 0.75) -10%, rgba(251, 146, 60, 0) 70%),
+                  radial-gradient(ellipse at bottom left, rgba(59, 130, 246, 0.75) -10%, rgba(59, 130, 246, 0) 70%)
                 `,
                 filter: "blur(30px)",
               }}
             />
 
-            {/* Central orange-green glow */}
+            {/* Central blue/light-orange glow */}
             <div
-              className="absolute bottom-0 left-0 right-0 h-2/3 z-21 pointer-events-none transition-opacity duration-300 group-hover:opacity-85 opacity-75"
+              className="absolute bottom-0 left-0 right-0 h-2/3 z-21 pointer-events-none transition-opacity duration-300 group-hover:opacity-95 opacity-90"
               style={{
                 background: `
-                  radial-gradient(circle at bottom center, rgba(251, 146, 60, 0.3) -20%, rgba(52, 211, 153, 0.25) 30%, rgba(52, 211, 153, 0) 70%)
+                  radial-gradient(circle at bottom center, rgba(59, 130, 246, 0.5) -20%, rgba(251, 146, 60, 0.45) 30%, rgba(251, 146, 60, 0) 70%)
                 `,
                 filter: "blur(35px)",
               }}
             />
 
             {/* Transparent Grid overlay */}
-            <div className="absolute inset-0 z-0 opacity-25 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:16px_16px]" />
+            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none bg-[linear-gradient(to_right,rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:16px_16px]" />
 
             {/* Large Background Icon Watermark */}
             <Bot className="absolute bottom-[-24px] right-[-24px] z-10 opacity-[0.03] group-hover:opacity-[0.05] pointer-events-none select-none text-orange-400 w-36 h-36 transform rotate-[-5deg] group-hover:rotate-[-15deg] group-hover:scale-110 transition-all duration-300" />

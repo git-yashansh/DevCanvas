@@ -1496,39 +1496,35 @@ export function ApiGeneratorPage() {
           </motion.div>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-8"
+            className="mt-8 text-left space-y-6"
           >
-            <div className="rounded-xl border border-dashed border-neutral-800 bg-neutral-900/10 p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
-              <div className="p-4 rounded-full bg-primary-500/10 text-primary-400 mb-4 animate-pulse">
-                <Code2 className="h-10 w-10" />
+            <div className="bg-neutral-900/30 border border-neutral-800/80 rounded-2xl p-8 flex flex-col items-center justify-center text-center max-w-3xl mx-auto space-y-4">
+              <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Code2 className="h-10 w-10 animate-pulse" />
               </div>
-              <h3 className="font-heading font-bold text-neutral-100 text-sm">Start by describing your API</h3>
-              <p className="text-xs text-neutral-500 max-w-sm mt-2 leading-relaxed text-center">
-                Use the AI command center above to outline your database collections, gateway middleware, and auth targets to generate a workspace.
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center mt-6 max-w-lg">
-                {[
-                  "Build a SaaS REST API",
-                  "Create a banking backend",
-                  "Generate a GraphQL API"
-                ].map((s, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      let pr = "";
-                      if (idx === 0) pr = "Design a multi-tenant SaaS REST API with organization subscriptions, client profiles, and payment webhooks.";
-                      else if (idx === 1) pr = "Build a banking API featuring secure ledger transactions, multi-currency wallets, and compliance logs.";
-                      else pr = "Generate a GraphQL API with post categories, comments, tag references, and user authentication.";
-                      setPrompt(pr);
-                    }}
-                    className="px-3 py-1.5 rounded-lg border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-850 hover:text-white text-neutral-450 text-xs transition-colors"
-                  >
-                    {s}
-                  </button>
-                ))}
+              <div className="space-y-1">
+                <h3 className="text-xl font-sans font-bold text-white tracking-normal">Describe your API to generate REST specification</h3>
+                <p className="text-xs text-neutral-400 max-w-md leading-relaxed">Provide your endpoint definitions, controller layers, or security specs above to auto-generate Swagger specs, routers, schemas, and mockup routes.</p>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: "REST Route Blueprinting", desc: "Design clean HTTP endpoint actions with automated resource URI mapping.", icon: Server },
+                { title: "JSON Schema Verification", desc: "Validate input payloads and model serialization mappings with automated data validation.", icon: Code2 },
+                { title: "JWT & Gateway Security", desc: "Map security scopes, API key validations, and cors configuration middlewares.", icon: Shield },
+                { title: "High-Performance Workflows", desc: "Trace routing execution loops, rate limits limits, and response speed profiles.", icon: Zap }
+              ].map((f, idx) => (
+                <div key={idx} className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-5 space-y-3">
+                  <div className="p-2.5 rounded-lg bg-neutral-900 border border-neutral-850 text-emerald-400 w-fit">
+                    <f.icon className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-xs font-sans font-extrabold text-neutral-200 uppercase tracking-widest leading-normal">{f.title}</h4>
+                  <p className="text-xs text-neutral-400 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
             </div>
           </motion.div>
         )}
