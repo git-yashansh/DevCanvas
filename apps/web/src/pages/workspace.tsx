@@ -795,8 +795,8 @@ export function WorkspacePage() {
             </div>
 
             {/* Project Table (+1pt text sizes) */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="overflow-x-auto w-full scrollbar-thin">
+              <table className="w-full text-left border-collapse text-xs min-w-[600px]">
                 <thead>
                   <tr className="text-xs font-semibold text-neutral-400 uppercase tracking-wider border-b border-white/10">
                     <th className="pb-2.5">Project</th>

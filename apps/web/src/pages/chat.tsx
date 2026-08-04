@@ -637,7 +637,7 @@ export function ChatPage() {
           backdropFilter: "blur(20px) saturate(180%)",
           WebkitBackdropFilter: "blur(20px) saturate(180%)",
         }}
-        className="w-64 border-r border-white/[0.06] flex flex-col shrink-0"
+        className="hidden lg:flex w-56 xl:w-64 border-r border-white/[0.06] flex-col shrink-0"
       >
         <div className="p-4.5 border-b border-white/[0.06] flex items-center justify-between shrink-0">
           <span className="font-instrument text-[13px] font-semibold uppercase tracking-widest text-neutral-300">Workspace AI</span>
@@ -778,13 +778,13 @@ export function ChatPage() {
             backdropFilter: "blur(20px) saturate(180%)",
             WebkitBackdropFilter: "blur(20px) saturate(180%)",
           }}
-          className="h-14 border-b border-white/[0.06] px-5 flex items-center justify-between shrink-0 z-10"
+          className="h-14 border-b border-white/[0.06] px-3 sm:px-5 flex items-center justify-between shrink-0 z-10 overflow-hidden"
         >
           {isCommonChat ? (
-            <div className="flex items-center gap-2">
-              <span className="font-instrument text-[11px] uppercase font-bold tracking-widest text-indigo-400">General AI Assistant</span>
-              <span className="text-neutral-600">|</span>
-              <span className="text-[11px] text-neutral-400 font-medium">Ask general coding, DSA, or system design questions</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-instrument text-[11px] uppercase font-bold tracking-widest text-indigo-400 shrink-0">General AI Assistant</span>
+              <span className="text-neutral-600 hidden sm:inline">|</span>
+              <span className="text-[11px] text-neutral-400 font-medium hidden sm:inline truncate">Ask general coding, DSA, or system design questions</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full sidebar-scroll pt-1">
@@ -845,7 +845,7 @@ export function ChatPage() {
               </motion.div>
 
               {/* Suggestions Grid */}
-              <div className="grid grid-cols-2 gap-3.5 w-full max-w-2xl pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full max-w-2xl pt-2">
                 {(isCommonChat ? GENERAL_SUGGESTIONS : SUGGESTIONS).map((s, idx) => {
                   const icons = [Sliders, Boxes, ShieldCheck, Terminal];
                   const Icon = icons[idx % icons.length];
@@ -1080,7 +1080,7 @@ export function ChatPage() {
           backdropFilter: "blur(20px) saturate(180%)",
           WebkitBackdropFilter: "blur(20px) saturate(180%)",
         }}
-        className="w-72 border-l border-white/[0.06] p-4.5 space-y-5 shrink-0 flex flex-col overflow-y-auto sidebar-scroll text-left"
+        className="hidden xl:flex xl:w-64 2xl:w-72 border-l border-white/[0.06] p-4 xl:p-4.5 space-y-5 shrink-0 flex-col overflow-y-auto sidebar-scroll text-left"
       >
         {project ? (
           <>

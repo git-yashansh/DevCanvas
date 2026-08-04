@@ -3,6 +3,7 @@ import { Network, Sparkles, Filter, Layers, Database, Code2, ShieldCheck, Rocket
 import { Badge } from "@ui/index";
 import type { Project } from "@types-pkg/index";
 import { cn } from "@utils/index";
+import { Graph } from "@/lib/algorithms";
 
 interface GraphNode {
   id: string;
@@ -90,15 +91,25 @@ export function ProjectKnowledgeGraphTab({ project }: { project: Project }) {
     return nodes.find((n) => n.id === selectedNodeId) || null;
   }, [selectedNodeId, nodes]);
 
+  // Construct a formal Graph structure of the nodes
+  const graph = useMemo(() => {
+    const g = new Graph<GraphNode>();
+    nodes.forEach((n) => g.addNode(n.id, n));
+    nodes.forEach((n) => {
+      n.relatedIds.forEach((relId) => {
+        g.addEdge(n.id, relId);
+        // Ensure bidirectional linkage for visualization purposes
+        g.addEdge(relId, n.id);
+      });
+    });
+    return g;
+  }, [nodes]);
+
   const highlightedNodeIds = useMemo(() => {
     if (!activeNode) return new Set<string>();
-    const set = new Set<string>([activeNode.id, ...activeNode.relatedIds]);
-    // Bidirectional links
-    nodes.forEach((n) => {
-      if (n.relatedIds.includes(activeNode.id)) set.add(n.id);
-    });
-    return set;
-  }, [activeNode, nodes]);
+    // Call custom Graph DFS traversal method to fetch connected components
+    return graph.dfs(activeNode.id);
+  }, [activeNode, graph]);
 
   const categoryColors = {
     service: { bg: "bg-indigo-500/10", border: "border-indigo-500/30", text: "text-indigo-400", activeBg: "bg-indigo-500/20" },

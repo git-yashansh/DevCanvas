@@ -1,5 +1,9 @@
 import { createContext, useContext, useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { LRUCache } from "@/lib/algorithms";
+
+// Instantiate Least Recently Used Cache with capacity 20
+const aiResponseCache = new LRUCache<string, any>(20);
 
 export type AIStatus = "idle" | "queued" | "running" | "retrying" | "ratelimited" | "success" | "error" | "timeout";
 
@@ -75,6 +79,11 @@ export function AIQueueProvider({ children }: { children: React.ReactNode }) {
           if (res.ok) {
             const data = await res.json();
             updateStatus(task.key, "success");
+            
+            // Put successfully completed data into LRU Cache
+            const cacheKey = `${task.endpoint}:${task.prompt}`;
+            aiResponseCache.put(cacheKey, data);
+            
             task.resolve(data);
           } else {
             const errText = await res.text();
@@ -107,12 +116,19 @@ export function AIQueueProvider({ children }: { children: React.ReactNode }) {
     <T = any,>(endpoint: string, prompt: string, bodyData?: any, dedupeKey?: string): Promise<T> => {
       const key = dedupeKey || `${endpoint}-${prompt.slice(0, 30)}`;
 
-      // 1. Deduplication: Return existing active promise if exactly identical request is flying
+      // 1. LRU Cache Lookup: Skip network/AI request entirely if identical prompt exists in cache
+      const cacheKey = `${endpoint}:${prompt}`;
+      const cached = aiResponseCache.get(cacheKey);
+      if (cached !== null) {
+        return Promise.resolve(cached as T);
+      }
+
+      // 2. Deduplication: Return existing active promise if exactly identical request is flying
       if (activePromisesRef.current[key] !== undefined) {
         return activePromisesRef.current[key] as Promise<T>;
       }
 
-      // 2. Timeout Protection: Extended 180 seconds (3 mins) for complex AI generations
+      // 3. Timeout Protection: Extended 180 seconds (3 mins) for complex AI generations
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 180000);
 

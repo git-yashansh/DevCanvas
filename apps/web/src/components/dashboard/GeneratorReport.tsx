@@ -364,8 +364,8 @@ ${security
           <h3 className="font-heading text-xs font-extrabold uppercase tracking-widest text-neutral-400">
             Cost Estimation
           </h3>
-          <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-            <table className="w-full text-left text-sm border-collapse">
+          <div className="overflow-x-auto w-full scrollbar-thin">
+            <table className="w-full text-left text-sm border-collapse min-w-[600px]">
               <thead>
                 <tr className="border-b border-white/10 bg-white/5 text-neutral-200 font-semibold">
                   <th className="px-5 py-3.5">Infrastructure Category</th>

@@ -27,6 +27,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useAIQueue } from "@/lib/ai-queue-context";
 import { cn } from "@utils/cn";
+import { Graph } from "@/lib/algorithms";
 
 // ── Streamlined 4-Step Wizard Config ────────────────────────
 interface StepDef {
@@ -127,24 +128,47 @@ export function NewProjectPage() {
     const updates: Record<string, any> = {};
     const input = promptText.trim() || `${projectName}: ${shortDesc} (${category})`;
 
-    setGeneratingStepLabel("Queuing AI artifacts...");
+    setGeneratingStepLabel("Initializing dependency graph...");
     
-    await Promise.all(
-      GENERATE_STEPS.map(async (step) => {
-        try {
-          const data = await aiQueue.enqueue(
-            step.endpoint,
-            input,
-            step.bodyFn(input)
-          );
-          
-          const value = step.responseFn(data);
-          if (value) updates[step.field] = value;
-        } catch (err) {
-          console.warn(`Step ${step.label} generation failed silently:`, err);
-        }
-      })
-    );
+    // Construct a Directed Acyclic Graph representing generator dependencies
+    const g = new Graph<typeof GENERATE_STEPS[0]>();
+    GENE_STEPS_LOOP: GENERATE_STEPS.forEach((step) => g.addNode(step.key, step));
+
+    // Define generator dependencies: Architecture -> Database -> API -> Security -> Documentation -> Deployment
+    g.addEdge("architecture", "database");
+    g.addEdge("database", "api");
+    g.addEdge("api", "security");
+    g.addEdge("security", "documentation");
+    g.addEdge("documentation", "deployment");
+
+    // Perform Topological Sort to schedule generator tasks in correct sequence
+    let sortedOrder: string[];
+    try {
+      sortedOrder = g.topologicalSort();
+    } catch (e: any) {
+      setServerError(`Generator dependency error: ${e.message}`);
+      throw e;
+    }
+
+    // Execute generators sequentially following dependency rules
+    for (const stepKey of sortedOrder) {
+      const step = GENERATE_STEPS.find((s) => s.key === stepKey);
+      if (!step) continue;
+
+      setGeneratingStepLabel(`Generating ${step.label}...`);
+      try {
+        const data = await aiQueue.enqueue(
+          step.endpoint,
+          input,
+          step.bodyFn(input)
+        );
+        
+        const value = step.responseFn(data);
+        if (value) updates[step.field] = value;
+      } catch (err) {
+        console.warn(`Step ${step.label} generation failed:`, err);
+      }
+    }
 
     if (Object.keys(updates).length > 0) {
       setGeneratingStepLabel("Saving all generated AI artifacts...");

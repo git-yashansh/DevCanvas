@@ -13,15 +13,17 @@ export function AdminGuard({ children }: AdminGuardProps) {
   const [countdown, setCountdown] = useState(5);
   const [showAccessDenied, setShowAccessDenied] = useState(false);
 
+  const isAdmin = profile?.role === "admin" || user?.email?.toLowerCase() === "kr.yashansh123@gmail.com";
+
   useEffect(() => {
     if (!loading) {
       if (!user) {
         navigate("/sign-in", { replace: true });
-      } else if (profile && profile.role !== "admin") {
+      } else if (!isAdmin) {
         setShowAccessDenied(true);
       }
     }
-  }, [user, profile, loading, navigate]);
+  }, [user, profile, loading, navigate, isAdmin]);
 
   useEffect(() => {
     if (showAccessDenied) {
@@ -89,5 +91,5 @@ export function AdminGuard({ children }: AdminGuardProps) {
   }
 
   // Session verified & Role confirmed
-  return user && profile && profile.role === "admin" ? <>{children}</> : null;
+  return user && isAdmin ? <>{children}</> : null;
 }

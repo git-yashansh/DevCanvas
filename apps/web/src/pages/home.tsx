@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import LineWaves from "@/components/ui/LineWaves";
 import {
   Sparkles,
   Plus,
@@ -130,6 +131,7 @@ export const DevCanvasFeatureCard = React.memo(({
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      
     >
       {/* Background Soft Glow */}
       <motion.div
@@ -645,24 +647,8 @@ const AI_TOOLS_DATA = [
     features: ["Secret leakage alert", "CVE dependency audit", "OWASP standard check"],
     theme: GRADIENT_THEMES.emerald
   },
-  {
-    title: "Bug Finder",
-    desc: "Identify structural flaws, null references, and deadlocks through advanced pattern modeling.",
-    icon: Bug,
-    badge: "Debugger",
-    status: "Beta",
-    features: ["Static route tracking", "Uncaught exception check", "Memory leak alert"],
-    theme: GRADIENT_THEMES.orange
-  },
-  {
-    title: "API Tester",
-    desc: "Simulate service responses, validate OpenAPI specifications, and map endpoint routing.",
-    icon: TestTube,
-    badge: "Testing",
-    status: "Active",
-    features: ["OpenAPI mock server", "Response schema check", "Latency benchmarks"],
-    theme: GRADIENT_THEMES.cyan
-  },
+  
+  
   {
     title: "Documentation",
     desc: "Instantly create detailed readmes, API reference endpoints, and code blocks explanations.",
@@ -1014,6 +1000,49 @@ export function HomePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // --- Dynamic Typing Placeholder Effect ---
+  const placeholderSentences = [
+    "A multi-tenant SaaS platform with custom subscription plans...",
+    "A subscription-based AI SaaS platform to generate audio tracks...",
+    "A wealth management fintech platform with real-time ledger...",
+    "A modern digital marketplace with product catalog search and cart...",
+    "An enterprise CRM with pipeline deal boards and lead scoring..."
+  ];
+  const [currentPlaceholder, setCurrentPlaceholder] = useState("");
+  const [sentenceIdx, setSentenceIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    let timer: any;
+    const currentSentence = placeholderSentences[sentenceIdx];
+
+    if (!isDeleting && charIdx < currentSentence.length) {
+      // Type next character
+      timer = setTimeout(() => {
+        setCurrentPlaceholder(currentSentence.substring(0, charIdx + 1));
+        setCharIdx((prev) => prev + 1);
+      }, 50); // typing speed
+    } else if (isDeleting && charIdx > 0) {
+      // Delete last character
+      timer = setTimeout(() => {
+        setCurrentPlaceholder(currentSentence.substring(0, charIdx - 1));
+        setCharIdx((prev) => prev - 1);
+      }, 25); // deleting speed
+    } else if (!isDeleting && charIdx === currentSentence.length) {
+      // Pause at full sentence before deleting
+      timer = setTimeout(() => {
+        setIsDeleting(true);
+      }, 2000); // pause duration at end
+    } else if (isDeleting && charIdx === 0) {
+      // Done deleting, go to next sentence
+      setIsDeleting(false);
+      setSentenceIdx((prev) => (prev + 1) % placeholderSentences.length);
+    }
+
+    return () => clearTimeout(timer);
+  }, [charIdx, isDeleting, sentenceIdx]);
+
   const updatePromptText = (val: string) => {
     setPromptText(val);
     setTimeout(() => {
@@ -1105,7 +1134,7 @@ export function HomePage() {
       {/* ── 3. Main Center Content with AI Search Bar (Shifted up with wider text) ── */}
       <div className="relative z-20 min-h-screen flex flex-col items-center justify-center px-6 text-center pt-8 pb-12 max-w-6xl mx-auto space-y-8 -mt-10">
         {/* Main Heading */}
-        <div className="space-y-3 max-w-5xl">
+        <div className="space-y-2 max-w-8xl">
           <h1 className="font-instrument italic text-white text-4xl sm:text-6xl md:text-7xl lg:text-[92px] leading-[0.95] tracking-wide text-glow select-none">
             Describe what you want to build?
           </h1>
@@ -1127,7 +1156,7 @@ export function HomePage() {
                 ref={textareaRef}
                 value={promptText}
                 onChange={(e) => updatePromptText(e.target.value)}
-                placeholder="Describe what you want to build..."
+                placeholder={currentPlaceholder || ""}
                 rows={2}
                 className="w-full bg-transparent border-none outline-none text-[18px] font-normal text-white placeholder-white/40 resize-none min-h-[60px] max-h-[250px] font-sans leading-relaxed focus:ring-0 focus:outline-none"
                 onKeyDown={(e) => {
@@ -1209,32 +1238,52 @@ export function HomePage() {
       <div className="relative z-10 w-full space-y-32 pt-20">
         
         {/* SECTION 1: AI GENERATORS */}
-        <section className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-instrument italic font-semibold text-white mb-4 text-glow">
-              Ready to Explore Features Of DevCanvas AI Platform ?
-            </h2>
-            <p className="text-white/60 max-w-2xl mx-auto text-lg">
-              Purpose-built AI models trained to generate production-ready code, beautiful UI, and scalable architecture.
-            </p>
+        <section className="relative max-w-6xl mx-auto px-8 py-16 rounded-[32px] overflow-hidden border border-white/[0.05] bg-neutral-950/40 backdrop-blur-md">
+          {/* Background LineWaves overlay */}
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+            <LineWaves
+              speed={0.2}
+              innerLineCount={28}
+              outerLineCount={32}
+              warpIntensity={0.8}
+              rotation={-35}
+              edgeFadeWidth={0.1}
+              colorCycleSpeed={0.5}
+              brightness={0.15}
+              color1="#3b82f6"
+              color2="#8b5cf6"
+              color3="#ffffff"
+              enableMouseInteraction={true}
+              mouseInfluence={1.5}
+            />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {[
-              { title: "AI App Builder", desc: "End-to-end full stack web apps", icon: MonitorSmartphone },
-              { title: "UI Generator", desc: "React & Tailwind components", icon: LayoutTemplate },
-              { title: "Database Generator", desc: "Postgres schemas & migrations", icon: Database },
-              { title: "API Generator", desc: "REST & GraphQL endpoints", icon: Code2 },
-              { title: "Architecture", desc: "System design & cloud infra", icon: Network },
-            ].map((item, i) => (
-              <GradientCard
-                key={i}
-                title={item.title}
-                desc={item.desc}
-                icon={item.icon}
-                actionText="Quick Launch"
-  
-              />
-            ))}
+          
+          <div className="relative z-10">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-instrument italic font-semibold text-white mb-4 text-glow">
+                Ready to Explore Features Of DevCanvas AI Platform ?
+              </h2>
+              <p className="text-white/60 max-w-2xl mx-auto text-lg">
+                Purpose-built AI models trained to generate production-ready code, beautiful UI, and scalable architecture.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[
+                { title: "AI App Builder", desc: "End-to-end full stack web apps", icon: MonitorSmartphone },
+                { title: "UI Generator", desc: "React & Tailwind components", icon: LayoutTemplate },
+                { title: "Database Generator", desc: "Postgres schemas & migrations", icon: Database },
+                { title: "API Generator", desc: "REST & GraphQL endpoints", icon: Code2 },
+                { title: "Architecture", desc: "System design & cloud infra", icon: Network },
+              ].map((item, i) => (
+                <GradientCard
+                  key={i}
+                  title={item.title}
+                  desc={item.desc}
+                  icon={item.icon}
+                  actionText="Quick Launch"
+                />
+              ))}
+            </div>
           </div>
         </section>
 
@@ -1291,10 +1340,24 @@ export function HomePage() {
         {/* SECTION 4: FINAL CTA */}
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 w-full pb-16">
           <section className="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-b from-[#090b10] via-[#07090c] to-[#050505] border border-white/10 p-8 md:p-16 flex flex-col lg:flex-row items-center justify-between gap-12 shadow-[0_0_80px_-20px_rgba(59,130,246,0.15)]">
-            {/* Animated Glow Backdrops */}
-            <div className="absolute top-0 left-1/4 w-[350px] h-[350px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute bottom-0 right-1/4 w-[350px] h-[350px] bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute top-[30%] left-[45%] w-[250px] h-[250px] bg-orange-500/5 rounded-full blur-[80px] pointer-events-none" />
+            {/* Background LineWaves overlay */}
+            <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+              <LineWaves
+                speed={0.25}
+                innerLineCount={30}
+                outerLineCount={34}
+                warpIntensity={0.9}
+                rotation={-40}
+                edgeFadeWidth={0.0}
+                colorCycleSpeed={0.8}
+                brightness={0.2}
+                color1="#3b82f6"
+                color2="#06b6d4"
+                color3="#ffffff"
+                enableMouseInteraction={true}
+                mouseInfluence={1.8}
+              />
+            </div>
             
             {/* Dev Grid background overlay */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />

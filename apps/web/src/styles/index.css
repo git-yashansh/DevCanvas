@@ -168,6 +168,7 @@ html, body, .overflow-y-auto, [class*="overflow-y-"] {
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    font-size: 90%;
   }
 
   body {
