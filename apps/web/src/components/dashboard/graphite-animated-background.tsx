@@ -91,6 +91,25 @@ export function GraphiteAnimatedBackground() {
         }}
       />
 
+      {/* Sidebar area ambient glow to catch the glass blur */}
+      <div
+        className="absolute top-1/4 -left-[150px] h-[600px] w-[600px] rounded-full pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 70%)",
+          filter: "blur(60px)",
+          transform: "translateZ(0)",
+          willChange: "transform",
+        }}
+      />
+
+      {/* Topbar area ambient glow to catch the glass blur */}
+      <div
+        className="absolute top-0 left-0 w-full h-[150px] pointer-events-none"
+        style={{
+          background: "linear-gradient(to bottom, rgba(255, 255, 255, 0.015), transparent)",
+        }}
+      />
+
       <div
         className="absolute inset-0"
         style={{

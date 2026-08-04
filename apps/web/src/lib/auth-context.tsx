@@ -127,8 +127,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       async signIn(email, password) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        return { error: error ? translateError(error.message) : null };
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return { error: translateError(error.message) };
+        if (data.session?.user) {
+          const profile = await loadProfile(data.session.user.id);
+          setState({
+            session: data.session,
+            user: data.session.user,
+            profile,
+            loading: false,
+            error: null,
+          });
+        }
+        return { error: null };
       },
       async signUp(email, password, fullName) {
         const { data, error } = await supabase.auth.signUp({
@@ -144,6 +155,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: data.user.id,
             email,
             full_name: fullName,
+          });
+          const profile = await loadProfile(data.user.id);
+          setState({
+            session: data.session,
+            user: data.user,
+            profile,
+            loading: false,
+            error: null,
           });
         }
         return { error: null, needsVerification };

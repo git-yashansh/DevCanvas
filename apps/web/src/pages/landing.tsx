@@ -6,20 +6,26 @@ import { Testimonials } from "@/components/landing/testimonials";
 import { Pricing } from "@/components/landing/pricing";
 import { FAQ } from "@/components/landing/faq";
 import { Footer } from "@/components/landing/footer";
+import { LandingBackground } from "@/components/landing/landing-background";
 
 export function LandingPage() {
   return (
-    <div className="relative min-h-screen bg-background">
-      <Navbar />
-      <main>
-        <Hero />
-        <Features />
-        <HowItWorks />
-        <Testimonials />
-        <Pricing />
-        <FAQ />
-      </main>
-      <Footer />
+    <div className="relative min-h-screen">
+      <div className="fixed inset-0 z-0">
+        <LandingBackground />
+      </div>
+      <div className="relative z-10">
+        <Navbar />
+        <main>
+          <Hero />
+          <Features />
+          <HowItWorks />
+          <Testimonials />
+          <Pricing />
+          <FAQ />
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }

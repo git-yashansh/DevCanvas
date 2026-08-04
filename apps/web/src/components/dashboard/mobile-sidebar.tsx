@@ -56,8 +56,8 @@ function NavList({ items, onClick }: { items: NavItem[]; onClick: () => void }) 
               cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "bg-[#00e699]/10 text-[#00e699] border border-[#00e699]/25 font-bold"
-                  : "text-neutral-400 hover:bg-neutral-900/60 hover:text-neutral-200"
+                  ? "bg-white/[0.06] text-white border border-white/[0.08] font-bold"
+                  : "text-neutral-400 hover:bg-white/[0.05] hover:text-white"
               )
             }
           >
@@ -65,7 +65,7 @@ function NavList({ items, onClick }: { items: NavItem[]; onClick: () => void }) 
               <>
                 <item.icon className={cn(
                   "h-4 w-4 shrink-0 transition-colors",
-                  isActive ? "text-[#00e699]" : "text-neutral-400"
+                  isActive ? "text-white" : "text-neutral-400"
                 )} />
                 <span className="flex-1 font-heading text-[15px]">{item.label}</span>
                 {item.badge && (
@@ -108,12 +108,12 @@ export function MobileSidebar({ onClose }: { onClose: () => void }) {
           transition={{ type: "spring", stiffness: 380, damping: 38 }}
           className="absolute left-0 top-0 flex h-full w-72 flex-col overflow-hidden"
           style={{
-            background: "rgba(10,10,14,0.97)",
-            borderRight: "1px solid rgba(255,255,255,0.08)",
+            background: "#050505",
+            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
           }}
         >
           {/* Header */}
-          <div className="flex h-14 items-center justify-between border-b border-white/[0.07] px-4">
+          <div className="flex h-14 items-center justify-between border-b border-white/[0.06] px-4">
             <Link to="/app" onClick={onClose} className="flex items-center gap-2.5 group">
               <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-600 shadow-md shadow-indigo-500/20 transition-transform group-hover:scale-105">
                 <span className="font-heading text-xs font-bold text-white">D</span>
@@ -125,7 +125,7 @@ export function MobileSidebar({ onClose }: { onClose: () => void }) {
             </Link>
             <button
               onClick={onClose}
-              className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.07] text-white/30 hover:border-white/15 hover:text-white/80 transition-all"
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.06] text-white/30 hover:border-white/15 hover:text-white/80 transition-all"
               aria-label="Close menu"
             >
               <X className="h-3.5 w-3.5" />
@@ -135,7 +135,7 @@ export function MobileSidebar({ onClose }: { onClose: () => void }) {
           {/* Nav */}
           <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 py-3">
             <NavList items={mainNav} onClick={onClose} />
-            <div className="my-3 border-t border-white/[0.07]" />
+            <div className="my-3 border-t border-white/[0.06]" />
             <p className="mb-2 px-3 text-[10.5px] font-heading font-bold uppercase tracking-[0.12em] text-white/25">
               Generators
             </p>
@@ -143,11 +143,11 @@ export function MobileSidebar({ onClose }: { onClose: () => void }) {
           </nav>
 
           {/* Bottom */}
-          <div className="shrink-0 border-t border-white/[0.07] px-3 py-3 space-y-3">
+          <div className="shrink-0 border-t border-white/[0.06] px-3 py-3 space-y-3">
             <NavList items={bottomNav} onClick={onClose} />
 
             {/* Plan card */}
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5">
+            <div className="rounded-xl border border-white/[0.06] bg-[#0A0A0A] p-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-500/20">
