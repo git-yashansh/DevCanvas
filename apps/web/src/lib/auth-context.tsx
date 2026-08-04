@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(userId: string) {
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, email, full_name, avatar_url, role, created_at, updated_at")
+      .select("id, email, full_name, avatar_url, role, status, last_seen, created_at, updated_at")
       .eq("id", userId)
       .maybeSingle();
 
@@ -122,6 +122,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  // Online User Tracking: Heartbeat last_seen timestamp update every 2 minutes
+  useEffect(() => {
+    if (!state.user?.id) return;
+    const updateHeartbeat = async () => {
+      try {
+        await supabase
+          .from("profiles")
+          .update({ last_seen: new Date().toISOString() })
+          .eq("id", state.user!.id);
+      } catch (err) {
+        console.warn("Heartbeat update error:", err);
+      }
+    };
+    updateHeartbeat();
+    const interval = setInterval(updateHeartbeat, 120000);
+    return () => clearInterval(interval);
+  }, [state.user?.id]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

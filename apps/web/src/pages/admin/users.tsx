@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import {
   Search,
   Download,
-  UserX,
-  UserCheck,
   Trash2,
   Activity,
   ChevronLeft,
   ChevronRight,
   Loader2,
   FolderGit2,
+  Ticket,
+  Cpu,
 } from "lucide-react";
 import { Badge } from "@ui/index";
 import { cn } from "@utils/index";
@@ -20,13 +20,22 @@ import { useAuth } from "@/lib/auth-context";
 export function AdminUsersPage() {
   const navigate = useNavigate();
   const { user: currentAdminUser } = useAuth();
-  
+
   const [profiles, setProfiles] = useState<any[]>([]);
   const [projectsCountMap, setProjectsCountMap] = useState<Record<string, number>>({});
+  const [ticketsCountMap, setTicketsCountMap] = useState<Record<string, number>>({});
+  const [aiUsageCountMap, setAiUsageCountMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  
+
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"created_at" | "full_name" | "last_seen">("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   async function loadData() {
     setLoading(true);
@@ -35,12 +44,13 @@ export function AdminUsersPage() {
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order(sortBy, { ascending: sortOrder === "asc" });
 
-      // 2. Fetch projects to map counts in-memory
-      const { data: projectsData } = await supabase
-        .from("projects")
-        .select("owner_id");
+      // 2. Fetch projects count per user
+      const { data: projectsData } = await supabase.from("projects").select("owner_id");
+
+      // 3. Fetch support tickets count per user
+      const { data: ticketsData } = await supabase.from("support_tickets").select("user_id");
 
       if (profilesData) {
         setProfiles(profilesData);
@@ -53,6 +63,14 @@ export function AdminUsersPage() {
         });
         setProjectsCountMap(counts);
       }
+
+      if (ticketsData) {
+        const counts: Record<string, number> = {};
+        ticketsData.forEach((t) => {
+          counts[t.user_id] = (counts[t.user_id] || 0) + 1;
+        });
+        setTicketsCountMap(counts);
+      }
     } catch (err) {
       console.error("Failed to load user management details:", err);
     } finally {
@@ -62,9 +80,18 @@ export function AdminUsersPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
 
-  // Update role handler
+    // Supabase Realtime Listener for profiles
+    const channel = supabase
+      .channel("admin:users:realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => loadData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sortBy, sortOrder]);
+
   const handleUpdateRole = async (userId: string, newRole: string) => {
     try {
       const { error } = await supabase
@@ -73,13 +100,11 @@ export function AdminUsersPage() {
         .eq("id", userId);
 
       if (!error) {
-        setProfiles(profiles.map((p) => (p.id === userId ? { ...p, role: newRole } : p)));
-        
-        // Log admin audit action
+        setProfiles((prev) => prev.map((p) => (p.id === userId ? { ...p, role: newRole } : p)));
         if (currentAdminUser) {
           await supabase.from("audit_logs").insert({
             actor_id: currentAdminUser.id,
-            action: "Updated User Role",
+            action: `Updated User Role: ${newRole.toUpperCase()}`,
             entity: `profiles (${userId})`,
             details: { new_role: newRole },
             result: "success",
@@ -91,19 +116,37 @@ export function AdminUsersPage() {
     }
   };
 
-  // Delete profile handler
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user profile? This action is irreversible.")) return;
+  const handleUpdateStatus = async (userId: string, newStatus: string) => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .delete()
+        .update({ status: newStatus })
         .eq("id", userId);
 
       if (!error) {
-        setProfiles(profiles.filter((p) => p.id !== userId));
-        
-        // Log admin audit action
+        setProfiles((prev) => prev.map((p) => (p.id === userId ? { ...p, status: newStatus } : p)));
+        if (currentAdminUser) {
+          await supabase.from("audit_logs").insert({
+            actor_id: currentAdminUser.id,
+            action: `Updated User Status: ${newStatus.toUpperCase()}`,
+            entity: `profiles (${userId})`,
+            details: { new_status: newStatus },
+            result: "success",
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("Are you sure you want to delete this user profile? This action is irreversible.")) return;
+    try {
+      const { error } = await supabase.from("profiles").delete().eq("id", userId);
+
+      if (!error) {
+        setProfiles((prev) => prev.filter((p) => p.id !== userId));
         if (currentAdminUser) {
           await supabase.from("audit_logs").insert({
             actor_id: currentAdminUser.id,
@@ -118,17 +161,39 @@ export function AdminUsersPage() {
     }
   };
 
-  // Filter logs logic
+  const handleExportCSV = () => {
+    const headers = "ID,Full Name,Email,Role,Status,Created At,Last Seen\n";
+    const rows = profiles
+      .map(
+        (u) =>
+          `"${u.id}","${u.full_name || ""}","${u.email || ""}","${u.role || "user"}","${
+            u.status || "active"
+          }","${u.created_at}","${u.last_seen || ""}"`
+      )
+      .join("\n");
+
+    const blob = new Blob([headers + rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `devcanvas_users_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  };
+
   const filteredUsers = profiles.filter((u) => {
     const matchesSearch =
       u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase());
     const matchesRole = roleFilter === "all" || u.role === roleFilter;
-    return matchesSearch && matchesRole;
+    const matchesStatus = statusFilter === "all" || (u.status || "active") === statusFilter;
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
+  const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
-    <div className="p-6 lg:p-10 space-y-8 text-left max-w-7xl mx-auto">
+    <div className="p-6 lg:p-10 space-y-8 text-left max-w-7xl mx-auto font-sans">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/[0.08] pb-5">
         <div>
@@ -136,25 +201,37 @@ export function AdminUsersPage() {
             User Operations Management
           </h1>
           <p className="text-sm text-neutral-400 mt-1">
-            Browse registered SaaS users, audit active usage parameters, adjust authorization roles, and toggle account states.
+            Browse registered users, assign RBAC permissions, audit activity parameters, and manage account statuses.
           </p>
         </div>
-        <button
-          onClick={loadData}
-          className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/[0.06] rounded-xl text-xs font-heading font-bold text-white transition-all cursor-pointer"
-        >
-          Refresh User Base
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/[0.06] rounded-xl text-xs font-heading font-bold text-white transition-all cursor-pointer"
+          >
+            <Download className="h-4 w-4 text-orange-400" />
+            Export CSV
+          </button>
+          <button
+            onClick={loadData}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 rounded-xl text-xs font-heading font-bold text-orange-400 transition-all cursor-pointer"
+          >
+            Refresh List
+          </button>
+        </div>
       </div>
 
-      {/* Filters Bar */}
+      {/* Filters & Control Bar */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-[#0B0C0E]/40 p-4 border border-white/[0.06] rounded-2xl">
         <div className="relative w-full md:w-80">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Search by name or email..."
             className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.03] pl-9 pr-3 text-xs text-white placeholder:text-neutral-500 outline-none transition-all focus:border-orange-500/50 focus:bg-white/[0.06]"
           />
@@ -165,7 +242,10 @@ export function AdminUsersPage() {
             <span className="text-neutral-400">Role:</span>
             <select
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-neutral-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500"
             >
               <option value="all">All Roles</option>
@@ -173,6 +253,36 @@ export function AdminUsersPage() {
               <option value="support">Support Operator</option>
               <option value="moderator">Moderator</option>
               <option value="user">Standard User</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-neutral-400">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-neutral-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="banned">Banned</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-neutral-400">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-neutral-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500"
+            >
+              <option value="created_at">Joined Date</option>
+              <option value="full_name">User Name</option>
+              <option value="last_seen">Last Active</option>
             </select>
           </div>
         </div>
@@ -195,16 +305,20 @@ export function AdminUsersPage() {
               <thead>
                 <tr className="border-b border-white/[0.08] text-[11px] uppercase tracking-wider text-neutral-500 font-bold bg-white/[0.01]">
                   <th className="p-4 pl-6">Profile Details</th>
-                  <th className="p-4">Owner ID</th>
+                  <th className="p-4">Account Status</th>
                   <th className="p-4">Permissions Role</th>
-                  <th className="p-4">Projects Created</th>
+                  <th className="p-4">Projects</th>
+                  <th className="p-4">Tickets</th>
                   <th className="p-4">Joined Date</th>
-                  <th className="p-4 pr-6 text-right">Operations Actions</th>
+                  <th className="p-4 pr-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04] text-[13px] text-neutral-300 font-sans">
-                {filteredUsers.map((u) => {
+              <tbody className="divide-y divide-white/[0.04] text-[13px] text-neutral-300">
+                {paginatedUsers.map((u) => {
                   const pCount = projectsCountMap[u.id] || 0;
+                  const tCount = ticketsCountMap[u.id] || 0;
+                  const currentStatus = u.status || "active";
+
                   return (
                     <tr key={u.id} className="hover:bg-white/[0.01] transition-all">
                       <td className="p-4 pl-6">
@@ -215,18 +329,38 @@ export function AdminUsersPage() {
                             </div>
                           </div>
                           <div className="leading-tight">
-                            <p className="font-semibold text-white">{u.full_name || "New User"}</p>
-                            <p className="text-[10.5px] text-neutral-500 mt-0.5">{u.email}</p>
+                            <p className="font-semibold text-white">{u.full_name || "SaaS User"}</p>
+                            <p className="text-[10.5px] text-neutral-400 font-mono mt-0.5">{u.email}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 font-mono text-[11px] text-neutral-450">{u.id}</td>
+
+                      {/* Status Switcher */}
                       <td className="p-4">
-                        {/* Interactive Role Selector */}
                         <select
-                          value={u.role}
+                          value={currentStatus}
+                          onChange={(e) => handleUpdateStatus(u.id, e.target.value)}
+                          className={cn(
+                            "rounded-lg border px-2 py-1 text-xs font-bold focus:outline-none cursor-pointer",
+                            currentStatus === "active"
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                              : currentStatus === "suspended"
+                                ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                                : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                          )}
+                        >
+                          <option value="active" className="bg-neutral-900 text-white">Active</option>
+                          <option value="suspended" className="bg-neutral-900 text-white">Suspended</option>
+                          <option value="banned" className="bg-neutral-900 text-white">Banned</option>
+                        </select>
+                      </td>
+
+                      {/* Role Selector */}
+                      <td className="p-4">
+                        <select
+                          value={u.role || "user"}
                           onChange={(e) => handleUpdateRole(u.id, e.target.value)}
-                          className="bg-neutral-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-orange-500"
+                          className="bg-neutral-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer"
                         >
                           <option value="user">User</option>
                           <option value="admin">Admin</option>
@@ -234,15 +368,25 @@ export function AdminUsersPage() {
                           <option value="moderator">Moderator</option>
                         </select>
                       </td>
+
                       <td className="p-4">
-                        <div className="flex items-center gap-1.5 font-semibold text-neutral-250">
+                        <div className="flex items-center gap-1.5 font-semibold text-neutral-300 font-mono">
                           <FolderGit2 className="h-4 w-4 text-orange-400/80" />
-                          <span className="font-mono">{pCount}</span>
+                          <span>{pCount}</span>
                         </div>
                       </td>
-                      <td className="p-4 font-mono text-[12px] text-neutral-450">
+
+                      <td className="p-4">
+                        <div className="flex items-center gap-1.5 font-semibold text-neutral-300 font-mono">
+                          <Ticket className="h-4 w-4 text-cyan-400/80" />
+                          <span>{tCount}</span>
+                        </div>
+                      </td>
+
+                      <td className="p-4 font-mono text-[12px] text-neutral-400">
                         {new Date(u.created_at).toLocaleDateString()}
                       </td>
+
                       <td className="p-4 pr-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -268,8 +412,36 @@ export function AdminUsersPage() {
             </table>
           </div>
         )}
-      </div>
 
+        {/* Pagination Bar */}
+        {!loading && filteredUsers.length > 0 && (
+          <div className="flex items-center justify-between p-4 border-t border-white/[0.08] text-xs font-mono text-neutral-400">
+            <span>
+              Showing {Math.min((currentPage - 1) * pageSize + 1, filteredUsers.length)} to{" "}
+              {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} users
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="p-1.5 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className="p-1.5 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,199 +11,309 @@ import {
   Shield,
   Activity,
   Award,
+  Bell,
+  CheckCircle,
+  AlertTriangle,
+  Loader2,
+  Trash2,
 } from "lucide-react";
-import { Badge } from "@ui/index";
+import { Badge, Button } from "@ui/index";
+import { supabase } from "@/lib/supabase";
+import { cn } from "@utils/index";
+import type { DBTicket } from "@/lib/types/tickets";
+import type { DBNotification } from "@/lib/types/notifications";
 
 export function AdminUserDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Mock user details based on ID
-  const userObj = {
-    id: id || "u1",
-    name: "Yashansh",
-    email: "kr.yashansh123@gmail.com",
-    role: "admin",
-    status: "active",
-    plan: "Enterprise",
-    projects: 12,
-    storageUsed: "4.2GB",
-    storageLimit: "50GB",
-    joined: "2026-07-20",
-    lastLogin: "3 minutes ago",
-    sessions: [
-      { ip: "192.168.1.14", device: "Chrome / Windows 11", time: "Just now (Active)" },
-      { ip: "192.168.1.14", device: "Firefox / Windows 11", time: "2 hours ago" },
-      { ip: "172.56.24.18", device: "Safari / iPhone 15", time: "1 day ago" },
-    ],
-    tokensUsed: "128,450",
-    apiCalls: "4,821",
-    tickets: [
-      { id: "tk1", subject: "Postgres schema migration failure", priority: "critical", status: "resolved", created: "2026-07-21" },
-      { id: "tk2", subject: "Vercel pipeline deployment fail", priority: "high", status: "open", created: "2026-07-24" },
-    ],
+  const [profile, setProfile] = useState<any | null>(null);
+  const [tickets, setTickets] = useState<DBTicket[]>([]);
+  const [notifications, setNotifications] = useState<DBNotification[]>([]);
+  const [projectsCount, setProjectsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchUserDetails() {
+    if (!id) return;
+    setLoading(true);
+    try {
+      // 1. Fetch Profile
+      const { data: profData, error: profErr } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (profErr) throw profErr;
+      setProfile(profData);
+
+      // 2. Fetch User Tickets
+      const { data: ticketsData } = await supabase
+        .from("support_tickets")
+        .select("*")
+        .eq("user_id", id)
+        .order("created_at", { ascending: false });
+
+      setTickets((ticketsData as DBTicket[]) || []);
+
+      // 3. Fetch Personal Notification History
+      const { data: notifData } = await supabase
+        .from("notifications")
+        .select("*")
+        .or(`user_id.eq.${id},is_broadcast.eq.true`)
+        .order("created_at", { ascending: false });
+
+      setNotifications((notifData as DBNotification[]) || []);
+
+      // 4. Fetch User Projects Count
+      const { count } = await supabase
+        .from("projects")
+        .select("*", { count: "exact", head: true })
+        .eq("owner_id", id);
+
+      setProjectsCount(count || 0);
+    } catch (err) {
+      console.error("Failed to load user audit profile:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchUserDetails();
+  }, [id]);
+
+  const handleUpdateStatus = async (newStatus: string) => {
+    if (!id) return;
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ status: newStatus })
+        .eq("id", id);
+
+      if (!error) {
+        setProfile((prev: any) => (prev ? { ...prev, status: newStatus } : null));
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
+        <span className="text-xs text-neutral-500 font-mono">Loading user audit details...</span>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-10 text-center space-y-4">
+        <p className="text-white text-base font-bold">User profile not found.</p>
+        <Button onClick={() => navigate("/admin/users")} variant="outline">
+          Back to User Operations
+        </Button>
+      </div>
+    );
+  }
+
+  const userStatus = profile.status || "active";
+
   return (
-    <div className="p-6 lg:p-10 space-y-8 text-left max-w-5xl mx-auto">
+    <div className="p-6 lg:p-10 space-y-8 text-left max-w-5xl mx-auto font-sans">
       {/* Page Header */}
       <div className="flex items-center gap-3 border-b border-white/[0.08] pb-5">
         <button
           onClick={() => navigate("/admin/users")}
-          className="p-1.5 rounded-lg border border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.05] text-neutral-450 hover:text-white transition-all cursor-pointer"
+          className="p-1.5 rounded-lg border border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.05] text-neutral-400 hover:text-white transition-all cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
           <h1 className="font-heading text-2xl font-black text-white tracking-wide">
-            User Operations Audit Profile
+            User Audit &amp; Activity Profile
           </h1>
           <p className="text-sm text-neutral-400 mt-1">
-            Analyzing operational statistics, permissions clearances, session logs, and billing tiers for user {userObj.name}.
+            Analyzing operational statistics, profile parameters, tickets history, and notification logs for {profile.full_name || profile.email}.
           </p>
         </div>
       </div>
 
       {/* Profile Overview Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Core Profile info */}
+        {/* Core Profile Info */}
         <div className="bg-gradient-to-b from-[#0a142c]/40 via-[#121319] to-[#121319] border border-blue-900/25 rounded-2xl p-5 space-y-4">
           <div className="flex flex-col items-center justify-center text-center p-3">
             <div className="relative p-[2.5px] rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 shrink-0 mb-3">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-900 text-2xl font-black text-white uppercase border-2 border-[#0B0C0E]">
-                {userObj.name.charAt(0)}
+                {profile.full_name?.charAt(0) || profile.email?.charAt(0) || "U"}
               </div>
             </div>
-            <h2 className="font-heading text-lg font-bold text-white">{userObj.name}</h2>
-            <p className="text-xs text-neutral-500 mt-0.5">{userObj.email}</p>
+            <h2 className="font-heading text-lg font-bold text-white">{profile.full_name || "SaaS User"}</h2>
+            <p className="text-xs text-neutral-400 mt-0.5 font-mono">{profile.email}</p>
             <div className="flex gap-2.5 mt-3">
-              <Badge variant="outline" className="text-[10px] uppercase font-bold bg-orange-500/10 border-orange-500/20 text-orange-400">{userObj.role}</Badge>
-              <Badge variant="outline" className="text-[10px] uppercase font-bold bg-emerald-500/10 border-emerald-500/20 text-emerald-400">{userObj.status}</Badge>
+              <Badge variant="outline" className="text-[10px] uppercase font-bold bg-orange-500/10 border-orange-500/20 text-orange-400">
+                {profile.role}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[10px] uppercase font-bold",
+                  userStatus === "active"
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                    : userStatus === "suspended"
+                      ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                      : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                )}
+              >
+                {userStatus}
+              </Badge>
             </div>
           </div>
 
-          <div className="space-y-2.5 border-t border-white/[0.08] pt-4 text-xs">
-            <div className="flex justify-between">
-              <span className="text-neutral-500">Plan Tier:</span>
-              <span className="font-semibold text-white">{userObj.plan}</span>
-            </div>
+          <div className="space-y-2.5 border-t border-white/[0.08] pt-4 text-xs font-sans">
             <div className="flex justify-between">
               <span className="text-neutral-500">Joined Date:</span>
-              <span className="font-semibold text-white">{userObj.joined}</span>
+              <span className="font-semibold text-white font-mono">
+                {new Date(profile.created_at).toLocaleDateString()}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral-500">Last Login:</span>
-              <span className="font-semibold text-white">{userObj.lastLogin}</span>
+              <span className="text-neutral-500">Last Active Seen:</span>
+              <span className="font-semibold text-white font-mono">
+                {profile.last_seen ? new Date(profile.last_seen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Recently"}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Resources Metrics & telemetry */}
+        {/* Resources Metrics */}
         <div className="md:col-span-2 bg-gradient-to-b from-[#0a142c]/40 via-[#121319] to-[#121319] border border-blue-900/25 rounded-2xl p-5 space-y-5">
           <span className="font-heading text-[15px] font-bold text-white block border-b border-white/[0.08] pb-3">
-            Resource Consumption Telemetries
+            Resource &amp; Activity Summary
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            
-            {/* Storage Card */}
             <div className="bg-[#0B0C0E]/40 p-4 rounded-xl border border-white/5 space-y-2">
               <div className="flex items-center gap-1.5 text-neutral-500">
-                <HardDrive className="h-4 w-4 text-orange-400" />
-                <span className="text-[10.5px] uppercase font-bold tracking-wider">Storage Used</span>
+                <Users className="h-4 w-4 text-orange-400" />
+                <span className="text-[10.5px] uppercase font-bold tracking-wider">Projects</span>
               </div>
-              <p className="text-lg font-heading font-black text-white">{userObj.storageUsed}</p>
-              <span className="text-[9.5px] text-neutral-500 block">Quota Limit: {userObj.storageLimit}</span>
+              <p className="text-lg font-heading font-black text-white">{projectsCount}</p>
+              <span className="text-[9.5px] text-neutral-500 block">Workspaces owned</span>
             </div>
 
-            {/* AI Call Card */}
-            <div className="bg-[#0B0C0E]/40 p-4 rounded-xl border border-white/5 space-y-2">
-              <div className="flex items-center gap-1.5 text-neutral-500">
-                <Cpu className="h-4 w-4 text-indigo-400" />
-                <span className="text-[10.5px] uppercase font-bold tracking-wider">AI Calls</span>
-              </div>
-              <p className="text-lg font-heading font-black text-white">{userObj.apiCalls}</p>
-              <span className="text-[9.5px] text-neutral-500 block">Tokens: {userObj.tokensUsed}</span>
-            </div>
-
-            {/* Tickets Card */}
             <div className="bg-[#0B0C0E]/40 p-4 rounded-xl border border-white/5 space-y-2">
               <div className="flex items-center gap-1.5 text-neutral-500">
                 <Ticket className="h-4 w-4 text-cyan-400" />
                 <span className="text-[10.5px] uppercase font-bold tracking-wider">Support Desk</span>
               </div>
-              <p className="text-lg font-heading font-black text-white">{userObj.tickets.length}</p>
-              <span className="text-[9.5px] text-neutral-500 block">1 active ticket open</span>
+              <p className="text-lg font-heading font-black text-white">{tickets.length}</p>
+              <span className="text-[9.5px] text-neutral-500 block">
+                {tickets.filter((t) => t.status === "open").length} open queries
+              </span>
             </div>
 
+            <div className="bg-[#0B0C0E]/40 p-4 rounded-xl border border-white/5 space-y-2">
+              <div className="flex items-center gap-1.5 text-neutral-500">
+                <Bell className="h-4 w-4 text-purple-400" />
+                <span className="text-[10.5px] uppercase font-bold tracking-wider">Notifications</span>
+              </div>
+              <p className="text-lg font-heading font-black text-white">{notifications.length}</p>
+              <span className="text-[9.5px] text-neutral-500 block">Delivered history</span>
+            </div>
           </div>
 
-          {/* User Operations Control */}
+          {/* Quick Account Controls */}
           <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between text-xs gap-3">
-            <span className="text-neutral-500">Administrative Actions:</span>
+            <span className="text-neutral-500 font-medium">Modify Status State:</span>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1.5 bg-red-500/10 border border-red-500/25 hover:bg-red-500/20 text-red-400 font-bold rounded-lg transition-all cursor-pointer">
-                Suspend Account
-              </button>
-              <button className="px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/25 hover:bg-indigo-500/20 text-indigo-400 font-bold rounded-lg transition-all cursor-pointer">
-                Reset Consumption
-              </button>
+              {userStatus !== "active" && (
+                <button
+                  onClick={() => handleUpdateStatus("active")}
+                  className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/20 text-emerald-400 font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Reactivate Account
+                </button>
+              )}
+              {userStatus !== "suspended" && (
+                <button
+                  onClick={() => handleUpdateStatus("suspended")}
+                  className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-amber-400 font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Suspend Account
+                </button>
+              )}
+              {userStatus !== "banned" && (
+                <button
+                  onClick={() => handleUpdateStatus("banned")}
+                  className="px-3 py-1.5 bg-rose-500/10 border border-rose-500/25 hover:bg-rose-500/20 text-rose-400 font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Ban User
+                </button>
+              )}
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* Widescreen Columns: Session History and Support Tickets */}
+      {/* Tickets & Notifications Audit Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Session history */}
-        <div className="bg-[#0B0C0E]/40 border border-white/[0.06] rounded-2xl p-5 space-y-4">
-          <span className="font-heading text-[15px] font-bold text-white block border-b border-white/[0.08] pb-3">
-            Active Sessions Log
-          </span>
-          <div className="space-y-3.5">
-            {userObj.sessions.map((ses, i) => (
-              <div key={i} className="flex justify-between items-start text-xs border-b border-white/[0.02] pb-3 last:border-b-0 last:pb-0">
-                <div className="space-y-1">
-                  <p className="font-mono text-white">{ses.ip}</p>
-                  <p className="text-[10.5px] text-neutral-450">{ses.device}</p>
-                </div>
-                <span className="text-[10px] text-neutral-500 font-mono">{ses.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Support tickets list */}
         <div className="bg-[#0B0C0E]/40 border border-white/[0.06] rounded-2xl p-5 space-y-4">
           <span className="font-heading text-[15px] font-bold text-white block border-b border-white/[0.08] pb-3">
-            Related Support Tickets
+            User Support Tickets ({tickets.length})
           </span>
-          <div className="space-y-3.5">
-            {userObj.tickets.map((tk, i) => (
-              <div key={i} className="flex justify-between items-start text-xs border-b border-white/[0.02] pb-3 last:border-b-0 last:pb-0">
-                <div className="space-y-1">
-                  <p className="font-semibold text-white leading-normal">{tk.subject}</p>
-                  <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-mono mt-1">
-                    <span>Created: {tk.created}</span>
-                    <span>•</span>
-                    <Badge variant="outline" className="text-[9.5px] bg-red-500/5 text-red-400 border-red-500/20 px-1 py-0">{tk.priority}</Badge>
+          <div className="space-y-3 max-h-72 overflow-y-auto">
+            {tickets.length === 0 ? (
+              <p className="text-xs text-neutral-500 py-4 font-mono text-center">No support tickets submitted.</p>
+            ) : (
+              tickets.map((tk) => (
+                <div key={tk.id} className="flex justify-between items-start text-xs border-b border-white/[0.03] pb-3 last:border-b-0">
+                  <div className="space-y-1">
+                    <p className="font-semibold text-white leading-normal">{tk.subject}</p>
+                    <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-mono mt-0.5">
+                      <span>{new Date(tk.created_at).toLocaleDateString()}</span>
+                      <span>•</span>
+                      <span className="capitalize">{tk.priority} priority</span>
+                    </div>
                   </div>
+                  <Badge variant="outline" className="text-[9.5px] uppercase font-bold">
+                    {tk.status}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className={`text-[10px] font-bold uppercase ${
-                  tk.status === "resolved" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-orange-500/10 border-orange-500/20 text-orange-400"
-                }`}>
-                  {tk.status}
-                </Badge>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
+        {/* Notifications list */}
+        <div className="bg-[#0B0C0E]/40 border border-white/[0.06] rounded-2xl p-5 space-y-4">
+          <span className="font-heading text-[15px] font-bold text-white block border-b border-white/[0.08] pb-3">
+            Target Notification Logs ({notifications.length})
+          </span>
+          <div className="space-y-3 max-h-72 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <p className="text-xs text-neutral-500 py-4 font-mono text-center">No notifications delivered.</p>
+            ) : (
+              notifications.map((n) => (
+                <div key={n.id} className="flex justify-between items-start text-xs border-b border-white/[0.03] pb-3 last:border-b-0">
+                  <div className="space-y-1">
+                    <p className="font-semibold text-white leading-normal">{n.title}</p>
+                    <p className="text-[11px] text-neutral-400 line-clamp-1">{n.message}</p>
+                  </div>
+                  <span className="text-[9.5px] text-neutral-500 font-mono shrink-0 ml-2">
+                    {new Date(n.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
-
     </div>
   );
 }
+
 export default AdminUserDetailsPage;

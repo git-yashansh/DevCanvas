@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   GitBranch,
   FileText,
-  Rocket,
+  MoreHorizontal,
   Settings,
   LifeBuoy,
   Menu,
@@ -19,6 +19,7 @@ import {
   Plus,
   ArrowUpRight,
   User,
+  Server,
   type LucideIcon,
 } from "lucide-react";
 import { useUIStore } from "@/lib/ui-store";
@@ -42,14 +43,26 @@ const mainNav: NavItem[] = [
   { id: "chat", label: "AI Chat", short: "AI Chat", href: "/app/chat", icon: MessageSquare },
 ];
 
-const toolsNav: NavItem[] = [
+const collapsedToolsNav: NavItem[] = [
   { id: "architecture", label: "Architecture", short: "Arch", href: "/app/architecture", icon: Boxes },
   { id: "database", label: "Database", short: "Database", href: "/app/database", icon: Database },
   { id: "api-generator", label: "API Spec", short: "API", href: "/app/api-generator", icon: Code2 },
   { id: "security", label: "Security", short: "Security", href: "/app/security", icon: ShieldCheck },
   { id: "repo", label: "Repo Analyzer", short: "Repo", href: "/app/repo", icon: GitBranch },
   { id: "documentation", label: "Docs", short: "Docs", href: "/app/documentation", icon: FileText },
-  { id: "deployment", label: "Deployment", short: "Deploy", href: "/app/deployment", icon: Rocket },
+  { id: "more", label: "More", short: "More", href: "#", icon: MoreHorizontal },
+];
+
+const expandedToolsNav: NavItem[] = [
+  { id: "architecture", label: "Architecture", short: "Arch", href: "/app/architecture", icon: Boxes },
+  { id: "database", label: "Database", short: "Database", href: "/app/database", icon: Database },
+  { id: "api-generator", label: "API Spec", short: "API", href: "/app/api-generator", icon: Code2 },
+  { id: "security", label: "Security", short: "Security", href: "/app/security", icon: ShieldCheck },
+  { id: "repo", label: "Repo Analyzer", short: "Repo", href: "/app/repo", icon: GitBranch },
+  { id: "documentation", label: "Docs", short: "Docs", href: "/app/documentation", icon: FileText },
+  { id: "ui-generator", label: "UI Generator", short: "UI Gen", href: "/app/ui-generator", icon: LayoutDashboard },
+  { id: "docker-architect", label: "Docker Architect", short: "Docker", href: "/app/deployment", icon: Server },
+  { id: "cicd-actions", label: "CI/CD Actions", short: "CI/CD", href: "/app/deployment", icon: Zap },
 ];
 
 const bottomNav: NavItem[] = [
@@ -91,14 +104,25 @@ function NavItemRow({
   isActive: boolean;
 }) {
   const Icon = item.icon;
+  const { toggleSidebar } = useUIStore();
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (item.id === "more") {
+      e.preventDefault();
+      if (collapsed) {
+        toggleSidebar();
+      }
+    }
+  };
 
   const inner = (
     <NavLink
       to={item.href}
+      onClick={handleClick}
       end={item.href === "/app" || item.href === "/app/workspace"}
       aria-label={item.label}
       className={cn(
-        "group relative flex items-center transition-all duration-200 outline-none select-none rounded-xl",
+        "group relative flex items-center transition-all duration-300 outline-none select-none rounded-xl",
         collapsed
           ? "flex-col gap-1 py-2 px-1 w-16 justify-center text-center"
           : "gap-3 px-3.5 py-2.5 w-full",
@@ -110,7 +134,7 @@ function NavItemRow({
       {/* Icon */}
       <Icon
         className={cn(
-          "shrink-0 transition-colors duration-200",
+          "shrink-0 transition-colors duration-300",
           collapsed ? "h-5 w-5" : "h-4.5 w-4.5",
           isActive ? "text-white" : "text-neutral-400 group-hover:text-neutral-200"
         )}
@@ -119,9 +143,9 @@ function NavItemRow({
       {/* Label (Full text readability when expanded) */}
       <span
         className={cn(
-          "transition-colors duration-200",
+          "transition-colors duration-300 whitespace-nowrap truncate",
           collapsed
-            ? "font-heading text-[11px] font-semibold tracking-tight leading-none text-center w-full mt-0.5 truncate"
+            ? "font-heading text-[11px] font-semibold tracking-tight leading-none text-center w-full mt-0.5"
             : "flex-1 font-heading text-[15px] font-semibold tracking-normal text-left"
         )}
       >
@@ -159,7 +183,7 @@ export function Sidebar() {
   return (
     <aside
       style={{
-        width: sidebarCollapsed ? 82 : 256,
+        width: sidebarCollapsed ? "5.125rem" : "16rem",
         background: "#050505",
         borderRight: "1px solid rgba(255, 255, 255, 0.06)",
         boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.02), 4px 0 24px rgba(0, 0, 0, 0.3)",
@@ -189,7 +213,10 @@ export function Sidebar() {
       </div>
 
       {/* ── 2. Navigation Rail (Full Rich Text Filling) ── */}
-      <nav className="flex-1 overflow-hidden px-3 py-3.5 flex flex-col justify-between space-y-4">
+      <nav className={cn(
+        "flex-1 overflow-hidden px-3 py-3.5 flex flex-col justify-between space-y-4 relative",
+        !sidebarCollapsed && "pb-[190px]"
+      )}>
         <div className="space-y-3.5">
           {/* Main Nav Section */}
           <div className="space-y-1 flex flex-col items-center">
@@ -215,14 +242,19 @@ export function Sidebar() {
           </div>
 
           {/* Generators / Tools Nav Section */}
-          <div className="space-y-1 flex flex-col items-center">
+          <div
+            className={cn(
+              "space-y-1 flex flex-col items-center w-full",
+              !sidebarCollapsed && "max-h-[calc(100vh-420px)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+            )}
+          >
             {!sidebarCollapsed && (
               <p className="w-full font-heading text-[12px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">
                 Generators
               </p>
             )}
 
-            {toolsNav.map((item) => (
+            {(sidebarCollapsed ? collapsedToolsNav : expandedToolsNav).map((item) => (
               <NavItemRow
                 key={item.id}
                 item={item}
@@ -234,7 +266,10 @@ export function Sidebar() {
         </div>
 
         {/* ── 3. Bottom Section: Help & Settings + Free Plan Card ── */}
-        <div className="shrink-0 pt-3 border-t border-white/[0.06] space-y-2.5">
+        <div className={cn(
+          "shrink-0 pt-3 border-t border-white/[0.06] space-y-2.5",
+          !sidebarCollapsed ? "absolute bottom-0 left-0 right-0 bg-[#050505] p-3 pb-5 z-20" : ""
+        )}>
           <div className="space-y-1 flex flex-col items-center">
             {!sidebarCollapsed && (
               <p className="w-full font-heading text-[12px] font-extrabold uppercase tracking-widest text-neutral-400 px-3 mb-1.5">

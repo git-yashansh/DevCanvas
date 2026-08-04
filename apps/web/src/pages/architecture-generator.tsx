@@ -831,7 +831,7 @@ export function ArchitectureGeneratorPage() {
           >
             {/* 1. Engineering Score Dashboard */}
             {scores && (
-              <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div className="col-span-2 md:col-span-1 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 flex flex-col items-center justify-center text-center">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-primary-400">Engineering Score</span>
                   <span className="text-3xl font-heading font-black text-white mt-1.5">{scores.overall}%</span>
@@ -886,7 +886,7 @@ export function ArchitectureGeneratorPage() {
                   <DollarSign className="h-4 w-4 text-emerald-400" />
                   Monthly Infrastructure Cost Breakdown
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
                   {[
                     { name: "Frontend", val: costBreakdown.frontend, desc: "Hosting & CDN Edge" },
                     { name: "Backend Compute", val: costBreakdown.backend, desc: "API Gateways & VMs" },

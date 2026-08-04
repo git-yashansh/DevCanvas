@@ -37,6 +37,7 @@ import { supabase } from "@/lib/supabase";
 import { useAIQueue } from "@/lib/ai-queue-context";
 import { cn } from "@utils/index";
 import { AILoader } from "@/components/dashboard/AILoader";
+import { Stack } from "@/lib/algorithms";
 import type {
   DatabaseSchema,
   SchemaTable,
@@ -255,6 +256,32 @@ export function DatabaseDesignerPage() {
   const [breadcrumb, setBreadcrumb] = useState<string[]>([]);
   const [activeRecommendationId, setActiveRecommendationId] = useState<number | null>(null);
 
+  // Undo / Redo Stacks using custom algorithms class
+  const undoStack = useMemo(() => new Stack<DatabaseSchema>(), []);
+  const redoStack = useMemo(() => new Stack<DatabaseSchema>(), []);
+
+  const updateSchema = useCallback((newSchema: DatabaseSchema | null) => {
+    if (schema) {
+      undoStack.push({ ...schema });
+    }
+    redoStack.clear();
+    setSchema(newSchema);
+  }, [schema, undoStack, redoStack]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.isEmpty() || !schema) return;
+    const prev = undoStack.pop()!;
+    redoStack.push({ ...schema });
+    setSchema(prev);
+  }, [schema, undoStack, redoStack]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.isEmpty() || !schema) return;
+    const next = redoStack.pop()!;
+    undoStack.push({ ...schema });
+    setSchema(next);
+  }, [schema, undoStack, redoStack]);
+
   const projectId = searchParams.get("projectId");
 
   useEffect(() => {
@@ -302,7 +329,7 @@ export function DatabaseDesignerPage() {
       const data = await aiQueue.enqueue('generate-database-schema', input, { prompt: input, dialect: 'postgresql' });
       if (!data.schema) throw new Error("No schema returned.");
 
-      setSchema(normalizeSchema(data.schema));
+      updateSchema(normalizeSchema(data.schema));
       setFinishedLoading(true);
       setGenerating(false);
     } catch (err) {
@@ -575,7 +602,28 @@ export function DatabaseDesignerPage() {
         description="Describe your data model and get a normalized schema with ER diagram, indexes, and migration-ready SQL."
         actions={
           schema ? (
-            <div className="flex gap-2 relative">
+            <div className="flex gap-2 relative items-center">
+              {/* Undo / Redo Control Actions */}
+              <div className="flex rounded-xl border border-white/10 bg-white/[0.02] p-0.5">
+                <button
+                  onClick={handleUndo}
+                  disabled={undoStack.isEmpty()}
+                  className="px-2.5 py-1 text-[10.5px] font-bold text-neutral-400 hover:text-white hover:bg-white/[0.04] disabled:opacity-20 disabled:pointer-events-none rounded-lg transition-all"
+                  title="Undo previous change"
+                >
+                  Undo
+                </button>
+                <div className="w-[1px] bg-white/10 my-1" />
+                <button
+                  onClick={handleRedo}
+                  disabled={redoStack.isEmpty()}
+                  className="px-2.5 py-1 text-[10.5px] font-bold text-neutral-400 hover:text-white hover:bg-white/[0.04] disabled:opacity-20 disabled:pointer-events-none rounded-lg transition-all"
+                  title="Redo undone change"
+                >
+                  Redo
+                </button>
+              </div>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -815,7 +863,7 @@ export function DatabaseDesignerPage() {
           >
             {/* 1. Database Health score Dashboard */}
             {healthScores && (
-              <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div className="col-span-2 md:col-span-1 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 flex flex-col items-center justify-center text-center">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-primary-400">Database Score</span>
                   <span className="text-3xl font-heading font-black text-white mt-1.5">{healthScores.overall}%</span>
@@ -990,26 +1038,28 @@ export function DatabaseDesignerPage() {
                         <h4 className="text-xs font-bold text-neutral-255 font-mono">{table.name}</h4>
                         <span className="text-[10px] text-neutral-500 font-sans italic">{table.description}</span>
                       </div>
-                      <table className="w-full text-left text-[11px] text-neutral-400">
-                        <thead>
-                          <tr className="text-neutral-500 border-b border-neutral-900">
-                            <th className="py-1">Column</th>
-                            <th className="py-1">Data Type</th>
-                            <th className="py-1">Attributes</th>
-                            <th className="py-1">Description</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-900/40">
-                          {table.columns.map((c, cIdx) => (
-                            <tr key={cIdx}>
-                              <td className="py-1.5 font-semibold text-neutral-300 font-mono">{c.name}</td>
-                              <td className="py-1.5 font-mono">{c.type}</td>
-                              <td className="py-1.5 text-warning-400 font-semibold">{c.primaryKey ? "PK" : c.unique ? "UQ" : c.nullable ? "NULL" : "NOT NULL"}</td>
-                              <td className="py-1.5 text-neutral-450">{c.description}</td>
+                      <div className="overflow-x-auto w-full scrollbar-thin">
+                        <table className="w-full text-left text-[11px] text-neutral-400 min-w-[500px]">
+                          <thead>
+                            <tr className="text-neutral-500 border-b border-neutral-900">
+                              <th className="py-1">Column</th>
+                              <th className="py-1">Data Type</th>
+                              <th className="py-1">Attributes</th>
+                              <th className="py-1">Description</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-neutral-900/40">
+                            {table.columns.map((c, cIdx) => (
+                              <tr key={cIdx}>
+                                <td className="py-1.5 font-semibold text-neutral-300 font-mono">{c.name}</td>
+                                <td className="py-1.5 font-mono">{c.type}</td>
+                                <td className="py-1.5 text-warning-400 font-semibold">{c.primaryKey ? "PK" : c.unique ? "UQ" : c.nullable ? "NULL" : "NOT NULL"}</td>
+                                <td className="py-1.5 text-neutral-450">{c.description}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ))}
                 </div>

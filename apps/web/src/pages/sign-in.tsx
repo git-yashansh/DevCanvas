@@ -92,7 +92,7 @@ export function SignInPage() {
   }
 
   return (
-    <div className="h-screen w-screen text-white flex flex-col font-sans overflow-hidden relative selection:bg-emerald-500/30">
+    <div className="min-h-screen lg:h-screen w-screen text-white flex flex-col font-sans overflow-y-auto lg:overflow-hidden relative selection:bg-emerald-500/30">
       {/* Silk Animated Background (More visible with color #0e1b2e and noiseIntensity 0.8) */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <Silk speed={1.5} scale={1.2} color="#0e1b2e" noiseIntensity={0.8} />
@@ -120,7 +120,7 @@ export function SignInPage() {
         <div className="flex items-center gap-2">
           {/* Logo.png size increased to h-12 */}
           <Link to="/" className="flex items-center gap-2">
-            <img src={logoImg} alt="DevCanvas" className="h-14 w-auto object-contain" />
+            <img src={logoImg} alt="DevCanvas" className="h-10 sm:h-14 w-auto object-contain" />
           </Link>
         </div>
 
@@ -130,22 +130,22 @@ export function SignInPage() {
           <a href="#" className="hover:text-white transition-colors">Blog</a>
         </nav>
 
-        <div className="flex items-center gap-4">
-          <Link to="/sign-in" className="px-4 py-2 text-sm text-black font-semibold bg-gradient-to-r from-[#9efdd7] to-[#4fa2fe] rounded-lg shadow-[0_0_15px_rgba(79,162,254,0.3)] hover:brightness-105 transition-all">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Link to="/sign-in" className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-black font-semibold bg-gradient-to-r from-[#9efdd7] to-[#4fa2fe] rounded-lg shadow-[0_0_15px_rgba(79,162,254,0.3)] hover:brightness-105 transition-all">
             Log in
           </Link>
-          <Link to="/sign-up" className="px-4 py-2 text-sm text-neutral-300 hover:text-white transition-colors border border-white/10 rounded-lg hover:bg-white/5">
+          <Link to="/sign-up" className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-neutral-300 hover:text-white transition-colors border border-white/10 rounded-lg hover:bg-white/5">
             Sign up
           </Link>
         </div>
       </header>
 
       {/* Main Split Grid */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 relative w-full items-stretch z-10 overflow-hidden">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 relative w-full items-stretch z-10 overflow-y-auto lg:overflow-hidden">
         
         {/* Left Column: Form */}
-        <div className="flex flex-col justify-center items-center px-6 py-6 md:px-12 relative overflow-y-auto">
-          <div className="w-full max-w-[420px] space-y-5">
+        <div className="flex flex-col justify-center items-center px-6 py-8 lg:py-6 md:px-12 relative overflow-y-auto">
+          <div className="w-full max-w-[420px] space-y-5 my-auto">
             <div className="space-y-1">
               <h1 className="font-serif italic font-bold text-4xl text-white text-left tracking-wide drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
                 Log in

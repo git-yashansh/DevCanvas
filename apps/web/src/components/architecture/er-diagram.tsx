@@ -18,6 +18,7 @@ import type {
 } from "@/lib/types/database-schema";
 import { CustomTableNode } from "./custom-table-node";
 import { RelationConnectionEdge } from "./relation-connection-edge";
+import { Graph } from "@/lib/algorithms";
 
 const nodeTypes = {
   tableNode: CustomTableNode,
@@ -61,20 +62,26 @@ function ERDiagramInner({
 
   const tablePositions = useMemo(() => layoutTables(schema.tables), [schema.tables]);
 
+  // Construct a formal Graph structure from the Database schema relations
+  const graph = useMemo(() => {
+    const g = new Graph<SchemaTable>();
+    schema.tables.forEach((t) => g.addNode(t.id, t));
+    schema.relations.forEach((r) => {
+      g.addEdge(r.from, r.to);
+      g.addEdge(r.to, r.from);
+    });
+    return g;
+  }, [schema]);
+
   // Active table is the last item in the relationship breadcrumbs path
   const activeTableId = useMemo(() => {
     return breadcrumb[breadcrumb.length - 1] || null;
   }, [breadcrumb]);
 
-  // Find neighbors of a table node
+  // Find neighbors of a table node using BFS graph traversal
   const getNeighbors = useCallback((tableId: string) => {
-    const neighbors = new Set<string>();
-    schema.relations.forEach(r => {
-      if (r.from === tableId) neighbors.add(r.to);
-      if (r.to === tableId) neighbors.add(r.from);
-    });
-    return neighbors;
-  }, [schema.relations]);
+    return graph.bfs(tableId);
+  }, [graph]);
 
   const activeNeighbors = useMemo(() => {
     if (activeTableId) {

@@ -41,7 +41,7 @@ export function DashboardLayout() {
       ) : null}
       <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
         <Topbar />
-        <main className="flex-1 overflow-y-auto" style={{ paddingTop: "64px", transform: "translateZ(0)" }}>
+        <main className="flex-1 overflow-y-auto" style={{ paddingTop: "4rem", transform: "translateZ(0)" }}>
           <Outlet />
         </main>
       </div>
