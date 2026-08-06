@@ -5,6 +5,15 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@utils/index";
 import type { DBNotification, NotificationType } from "@/lib/types/notifications";
+import {
+  useAdminNotifications,
+  useAdminUserOptions,
+  useCreateNotification,
+  useCreateNotificationsBulk,
+  useUpdateNotification,
+  useDeleteNotification,
+} from "@/services/admin/hooks";
+import { NotificationService } from "@/services/admin/notifications";
 
 interface UserOption {
   id: string;
@@ -14,9 +23,6 @@ interface UserOption {
 
 export function AdminNotificationsPage() {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<DBNotification[]>([]);
-  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   // Form State
@@ -27,60 +33,27 @@ export function AdminNotificationsPage() {
   const [notifType, setNotifType] = useState<NotificationType>("info");
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Load notifications & user list
-  async function loadData() {
-    setLoading(true);
-    try {
-      // 1. Fetch notifications
-      const { data: notifData, error: notifErr } = await supabase
-        .from("notifications")
-        .select("*")
-        .order("created_at", { ascending: false });
+  // React Query hooks
+  const { data: notifications = [], isLoading: loadingNotifs, refetch } = useAdminNotifications();
+  const { data: userOptions = [], isLoading: loadingUsers } = useAdminUserOptions();
+  const { mutateAsync: createNotif } = useCreateNotification();
+  const { mutateAsync: createBulk } = useCreateNotificationsBulk();
+  const { mutateAsync: updateNotif } = useUpdateNotification();
+  const { mutateAsync: deleteNotif } = useDeleteNotification();
 
-      if (notifErr) throw notifErr;
-      setNotifications(notifData || []);
-
-      // 2. Fetch profiles for personal notification user picker
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("id, email, full_name")
-        .order("email", { ascending: true });
-
-      setUserOptions(profilesData || []);
-    } catch (err) {
-      console.error("Failed to load admin notifications data:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const loading = loadingNotifs || loadingUsers;
 
   useEffect(() => {
-    loadData();
-
-    // Supabase Realtime subscription for admin notifications list
     const channel = supabase
-      .channel("admin:notifications")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications" },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            const newNotif = payload.new as DBNotification;
-            setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)]);
-          } else if (payload.eventType === "UPDATE") {
-            const updated = payload.new as DBNotification;
-            setNotifications((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
-          } else if (payload.eventType === "DELETE") {
-            setNotifications((prev) => prev.filter((n) => n.id !== payload.old.id));
-          }
-        }
-      )
+      .channel("admin:notifications:realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
+        refetch();
+      })
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [refetch]);
 
   const handleSubmitNotif = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,32 +67,80 @@ export function AdminNotificationsPage() {
     try {
       if (editingId) {
         // Update existing notification
-        const { error } = await supabase
-          .from("notifications")
-          .update({
+        await updateNotif({
+          id: editingId,
+          patch: {
             title: title.trim(),
             message: message.trim(),
             type: notifType,
             is_broadcast: mode === "broadcast",
-            user_id: mode === "personal" ? targetUserId : null,
-          })
-          .eq("id", editingId);
-
-        if (error) throw error;
+            user_id: mode === "personal" && !targetUserId.startsWith("role:") ? targetUserId : null,
+          }
+        });
         setEditingId(null);
       } else {
-        // Create new notification
-        const { error } = await supabase.from("notifications").insert({
-          title: title.trim(),
-          message: message.trim(),
-          type: notifType,
-          created_by: user.id,
-          is_broadcast: mode === "broadcast",
-          user_id: mode === "personal" ? targetUserId : null,
-          is_read: false,
-        });
+        // Create new notification(s)
+        if (mode === "broadcast") {
+          // ALL USERS: Fetch all profiles and insert individual records
+          const profilesRes = await NotificationService.getUserOptions();
+          if (profilesRes && profilesRes.length > 0) {
+            const inserts = profilesRes.map((u: any) => ({
+              title: title.trim(),
+              message: message.trim(),
+              type: notifType,
+              created_by: user.id,
+              sender_user_id: user.id,
+              is_broadcast: true,
+              user_id: u.id,
+              recipient_user_id: u.id,
+              is_read: false,
+            }));
+            await createBulk(inserts);
+          }
+        } else if (mode === "personal" && targetUserId.startsWith("role:")) {
+          // ROLE: Fetch profiles matching role and insert
+          const targetRole = targetUserId.split(":")[1];
+          const profilesRes = await NotificationService.getUserOptions();
+          // Filter on client or do a db call. Standard is client filter if options already loaded
+          const filtered = profilesRes.filter((p: any) => {
+            // we don't have role in userOptions query, so we query role users if needed or check.
+            // Wait, does userOptions returned profiles have role? Let's check:
+            // "select("id, email, full_name")" - it doesn't have role!
+            // So we need to query role users:
+            return true;
+          });
+          // Wait, let's fetch matching profiles from database to be absolutely correct
+          const { data: roleUsers } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("role", targetRole);
 
-        if (error) throw error;
+          if (roleUsers && roleUsers.length > 0) {
+            const inserts = roleUsers.map((u) => ({
+              title: title.trim(),
+              message: message.trim(),
+              type: notifType,
+              created_by: user.id,
+              sender_user_id: user.id,
+              is_broadcast: false,
+              user_id: u.id,
+              recipient_user_id: u.id,
+              is_read: false,
+            }));
+            await createBulk(inserts);
+          }
+        } else {
+          // SPECIFIC USER: Single insert
+          await createNotif({
+            title: title.trim(),
+            message: message.trim(),
+            type: notifType,
+            created_by: user.id,
+            is_broadcast: false,
+            user_id: targetUserId,
+            recipient_user_id: targetUserId,
+          });
+        }
       }
 
       setTitle("");
@@ -144,13 +165,13 @@ export function AdminNotificationsPage() {
   const handleDeleteNotif = async (id: string) => {
     if (!confirm("Are you sure you want to delete this notification?")) return;
     try {
-      await supabase.from("notifications").delete().eq("id", id);
+      await deleteNotif(id);
     } catch (err) {
       console.error("Failed to delete notification:", err);
     }
   };
 
-  const TYPE_BADGE: Record<NotificationType, string> = {
+  const TYPE_BADGE: Record<string, string> = {
     info: "bg-blue-500/10 text-blue-400 border-blue-500/20",
     success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
@@ -228,18 +249,26 @@ export function AdminNotificationsPage() {
             {/* Target User (If Personal) */}
             {mode === "personal" && (
               <div className="space-y-1.5">
-                <label className="text-neutral-300 font-semibold">Select Target User</label>
+                <label className="text-neutral-300 font-semibold">Select Target User or Role</label>
                 <select
                   value={targetUserId}
                   onChange={(e) => setTargetUserId(e.target.value)}
                   className="w-full bg-neutral-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-[#00e699]"
                 >
-                  <option value="">-- Choose User Profile --</option>
-                  {userOptions.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.full_name ? `${u.full_name} (${u.email})` : u.email}
-                    </option>
-                  ))}
+                  <option value="">-- Choose Recipient Scope --</option>
+                  <optgroup label="All Users with Role">
+                    <option value="role:admin">All Administrators</option>
+                    <option value="role:user">All Regular Users</option>
+                    <option value="role:support">All Support Operators</option>
+                    <option value="role:moderator">All Moderators</option>
+                  </optgroup>
+                  <optgroup label="Specific User Profile">
+                    {userOptions.map((u: any) => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name ? `${u.full_name} (${u.email})` : u.email}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
             )}
@@ -323,8 +352,8 @@ export function AdminNotificationsPage() {
             </div>
           ) : (
             <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
-              {notifications.map((n) => {
-                const targetUser = userOptions.find((u) => u.id === n.user_id);
+              {notifications.map((n: any) => {
+                const targetUser = userOptions.find((u: any) => u.id === n.user_id);
                 const recipientLabel = n.is_broadcast
                   ? "Global Broadcast (All Users)"
                   : targetUser

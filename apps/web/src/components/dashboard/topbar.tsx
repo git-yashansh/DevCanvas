@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import gsap from "gsap";
-import { Search, Bell, Menu, Plus, LogOut, LifeBuoy, Settings, Check, Sparkles, ChevronDown, ShieldCheck, Bot, GitBranch, FileText, Boxes, Database, Code2, BookOpen, Users, HelpCircle, MessageSquare, Home, LayoutDashboard, Server } from "lucide-react";
+import { Search, Bell, Menu, Plus, LogOut, LifeBuoy, Settings, Check, Sparkles, ChevronDown, ShieldCheck, Bot, GitBranch, FileText, Boxes, Database, Code2, BookOpen, Users, HelpCircle, MessageSquare, Home, LayoutDashboard, Server, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useUIStore } from "@/lib/ui-store";
 import { cn } from "@utils/index";
@@ -37,6 +37,9 @@ export function Topbar() {
     unreadCount,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    hasMore,
+    loadMore,
   } = useRealtimeNotifications();
 
   const [search, setSearch] = useState("");
@@ -351,29 +354,54 @@ export function Topbar() {
                 )}
               </div>
 
-              <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+              <div className="mt-3 space-y-2 max-h-64 overflow-y-auto pr-1">
                 {notifications.length === 0 ? (
                   <p className="text-center text-xs text-neutral-500 py-4">No notifications yet</p>
                 ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      onClick={() => markAsRead(n.id)}
-                      className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                        n.is_read
-                          ? "border-white/[0.06] bg-white/[0.02] text-neutral-400"
-                          : "border-emerald-500/20 bg-emerald-950/20 text-white font-medium"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs truncate text-neutral-200">{n.title}</span>
-                        <span className="text-[10px] text-neutral-500 shrink-0 ml-2">
-                          {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                  <>
+                    {notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        onClick={() => markAsRead(n.id)}
+                        className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all relative group/notif ${
+                          n.is_read
+                            ? "border-white/[0.06] bg-white/[0.02] text-neutral-400"
+                            : "border-emerald-500/20 bg-emerald-950/20 text-white font-medium"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs truncate text-neutral-200 pr-4">{n.title}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-[9px] text-neutral-500">
+                              {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(n.id);
+                              }}
+                              className="p-1 text-neutral-500 hover:text-rose-400 rounded opacity-0 group-hover/notif:opacity-100 transition-opacity cursor-pointer animate-in fade-in"
+                              title="Delete notification"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-neutral-400 mt-0.5 pr-2 line-clamp-2">{n.message}</p>
                       </div>
-                      <p className="text-[11px] text-neutral-400 mt-0.5 line-clamp-2">{n.message}</p>
-                    </div>
-                  ))
+                    ))}
+                    {hasMore && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          loadMore();
+                        }}
+                        className="w-full text-center py-2 text-[10px] text-emerald-400 hover:text-emerald-300 font-bold transition-colors cursor-pointer border border-dashed border-white/5 rounded-xl hover:bg-white/5"
+                      >
+                        Load More Notifications
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -501,12 +529,12 @@ export function Topbar() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/30 rounded-full blur-xl pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-cyan-400/20 rounded-full blur-lg pointer-events-none" />
                 <div className="relative z-10">
-                  <h3 className="font-heading font-extrabold text-sm tracking-tight text-white">
+                  <h3 className="font-sans text-[15px] font-medium text-white tracking-normal">
                     {activeMenu === "products" && "Platform Overview"}
                     {activeMenu === "resources" && "Learning Center"}
                     {activeMenu === "company" && "Company Portal"}
                   </h3>
-                  <p className="text-[11px] text-white/80 mt-1 leading-normal font-medium font-sans">
+                  <p className="text-[13px] text-white/80 mt-1 leading-normal font-normal font-sans">
                     {activeMenu === "products" && "See how DevCanvas works."}
                     {activeMenu === "resources" && "Guides, APIs, and articles."}
                     {activeMenu === "company" && "Our mission to optimize code."}
@@ -518,23 +546,23 @@ export function Topbar() {
               <div className="flex flex-col gap-3 pl-1">
                 {activeMenu === "products" && (
                   <>
-                    <Link to="/app/repo" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-emerald-400 transition-colors font-sans">
+                    <Link to="/app/repo" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-emerald-400 transition-colors font-sans">
                       <GitBranch className="h-4 w-4 text-neutral-500" />
                       Connectors &amp; Actions
                     </Link>
-                    <Link to="/app/api-generator" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-emerald-400 transition-colors font-sans">
+                    <Link to="/app/api-generator" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-emerald-400 transition-colors font-sans">
                       <Code2 className="h-4 w-4 text-neutral-500" />
                       APIs Spec Manager
                     </Link>
-                    <Link to="/app/architecture" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-emerald-400 transition-colors font-sans">
+                    <Link to="/app/architecture" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-emerald-400 transition-colors font-sans">
                       <Boxes className="h-4 w-4 text-neutral-500" />
                       Model Grapher Hub
                     </Link>
-                    <Link to="/app/chat" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-emerald-400 transition-colors font-sans">
+                    <Link to="/app/chat" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-emerald-400 transition-colors font-sans">
                       <Bot className="h-4 w-4 text-neutral-500" />
                       AI Gateway Assistant
                     </Link>
-                    <Link to="/app/security" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-emerald-400 transition-colors font-sans">
+                    <Link to="/app/security" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-emerald-400 transition-colors font-sans">
                       <ShieldCheck className="h-4 w-4 text-neutral-500" />
                       Security Checkup
                     </Link>
@@ -543,15 +571,15 @@ export function Topbar() {
 
                 {activeMenu === "resources" && (
                   <>
-                    <a href="https://github.com" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-indigo-400 transition-colors font-sans">
+                    <a href="https://github.com" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-indigo-400 transition-colors font-sans">
                       <BookOpen className="h-4 w-4 text-neutral-500" />
                       Core Documentation
                     </a>
-                    <a href="https://github.com" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-indigo-400 transition-colors font-sans">
+                    <a href="https://github.com" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-indigo-400 transition-colors font-sans">
                       <Code2 className="h-4 w-4 text-neutral-500" />
                       SDK Github Repos
                     </a>
-                    <a href="https://discord.com" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-indigo-400 transition-colors font-sans">
+                    <a href="https://discord.com" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-indigo-400 transition-colors font-sans">
                       <Users className="h-4 w-4 text-neutral-500" />
                       Discord Lounge
                     </a>
@@ -560,15 +588,15 @@ export function Topbar() {
 
                 {activeMenu === "company" && (
                   <>
-                    <Link to="/app/support" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-amber-400 transition-colors font-sans">
+                    <Link to="/app/support" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-amber-400 transition-colors font-sans">
                       <Users className="h-4 w-4 text-neutral-500" />
                       Meet Our Team
                     </Link>
-                    <Link to="/app/security" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-amber-400 transition-colors font-sans">
+                    <Link to="/app/security" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-amber-400 transition-colors font-sans">
                       <ShieldCheck className="h-4 w-4 text-neutral-500" />
                       Security Posture
                     </Link>
-                    <Link to="/app/support" className="flex items-center gap-2.5 text-xs font-bold text-neutral-450 hover:text-amber-400 transition-colors font-sans">
+                    <Link to="/app/support" className="flex items-center gap-2.5 text-[13px] font-normal text-neutral-300 hover:text-amber-400 transition-colors font-sans">
                       <HelpCircle className="h-4 w-4 text-neutral-500" />
                       SOC2 Compliance
                     </Link>
@@ -587,15 +615,15 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <Bot className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">DevCanvas Assistant</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">Your personal AI builder</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">DevCanvas Assistant</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">Your personal AI builder</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <Link to="/app/chat" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Proactive Suggestions</Link>
-                        <Link to="/app/architecture" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Architecture Verification</Link>
-                        <Link to="/app/database" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Database Schema Optimizer</Link>
-                        <Link to="/app/chat" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Logic Code Generation</Link>
+                        <Link to="/app/chat" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Proactive Suggestions</Link>
+                        <Link to="/app/architecture" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Architecture Verification</Link>
+                        <Link to="/app/database" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Database Schema Optimizer</Link>
+                        <Link to="/app/chat" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Logic Code Generation</Link>
                       </div>
                     </div>
 
@@ -604,15 +632,15 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <Sparkles className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">DevCanvas Agents</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">Build and orchestrate blueprints</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">DevCanvas Agents</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">Build and orchestrate blueprints</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <Link to="/app/database" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Schema Architect</Link>
-                        <Link to="/app/api-generator" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Route Spec Optimizer</Link>
-                        <Link to="/app/security" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Security Policy Builder</Link>
-                        <Link to="/app/deployment" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Docker Compose Specs</Link>
+                        <Link to="/app/database" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Schema Architect</Link>
+                        <Link to="/app/api-generator" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Route Spec Optimizer</Link>
+                        <Link to="/app/security" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Security Policy Builder</Link>
+                        <Link to="/app/deployment" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Docker Compose Specs</Link>
                       </div>
                     </div>
 
@@ -621,15 +649,15 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <Boxes className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">Enterprise Context</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">Context for it all</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">Enterprise Context</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">Context for it all</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <Link to="/app/workspace" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Global Search Specs</Link>
-                        <Link to="/app/architecture" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Interactive Simulations</Link>
-                        <Link to="/app/repo" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Live Execution Trace</Link>
-                        <Link to="/app/architecture" className="block text-xs font-medium text-neutral-300 hover:text-emerald-400 transition-colors font-sans">Cost Estimation Reports</Link>
+                        <Link to="/app/workspace" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Global Search Specs</Link>
+                        <Link to="/app/architecture" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Interactive Simulations</Link>
+                        <Link to="/app/repo" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Live Execution Trace</Link>
+                        <Link to="/app/architecture" className="block text-[13px] font-normal text-neutral-400 hover:text-emerald-400 transition-colors font-sans">Cost Estimation Reports</Link>
                       </div>
                     </div>
                   </>
@@ -642,14 +670,14 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <BookOpen className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">Documentation</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">Complete manuals &amp; guides</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">Documentation</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">Complete manuals &amp; guides</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans">Getting Started Guide</a>
-                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans">CLI Integration Guide</a>
-                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans">Deployment Playbooks</a>
+                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans">Getting Started Guide</a>
+                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans">CLI Integration Guide</a>
+                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans">Deployment Playbooks</a>
                       </div>
                     </div>
 
@@ -658,14 +686,14 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <Boxes className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">Integrations</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">Connect your workflows</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">Integrations</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">Connect your workflows</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans">GitHub Actions Setup</a>
-                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans">GitLab CI Templates</a>
-                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans">Slack Webhooks Setup</a>
+                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans">GitHub Actions Setup</a>
+                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans">GitLab CI Templates</a>
+                        <a href="https://github.com" target="_blank" rel="noreferrer" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans">Slack Webhooks Setup</a>
                       </div>
                     </div>
 
@@ -674,14 +702,14 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <HelpCircle className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">Support &amp; Learning</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">We are here to help</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">Support &amp; Learning</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">We are here to help</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans font-sans">Interactive Tutorials</Link>
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans font-sans">Video Walkthroughs</Link>
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-indigo-500 transition-colors font-sans font-sans">Help Support Desk</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans font-sans">Interactive Tutorials</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans font-sans">Video Walkthroughs</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-indigo-500 transition-colors font-sans font-sans">Help Support Desk</Link>
                       </div>
                     </div>
                   </>
@@ -694,14 +722,14 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">About DevCanvas</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">Empowering developers</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">About DevCanvas</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">Empowering developers</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Our Mission &amp; Values</Link>
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Leadership Team</Link>
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Press &amp; Media Kit</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Our Mission &amp; Values</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Leadership Team</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Press &amp; Media Kit</Link>
                       </div>
                     </div>
 
@@ -710,14 +738,14 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <Bot className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">Careers</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">Shape future of AI engineering</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">Careers</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">Shape future of AI engineering</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Open Positions</Link>
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Working Culture</Link>
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Internships Program</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Open Positions</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Working Culture</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Internships Program</Link>
                       </div>
                     </div>
 
@@ -726,14 +754,14 @@ export function Topbar() {
                       <div className="flex items-start gap-2.5 pb-2.5 border-b border-white/[0.06]">
                         <Settings className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-[13px] font-bold text-white leading-none font-sans">Legal &amp; Terms</h4>
-                          <span className="text-[10px] text-neutral-400 mt-1 block leading-tight font-sans">Policies and trust details</span>
+                          <h4 className="text-[15px] font-medium text-white leading-none font-sans tracking-normal">Legal &amp; Terms</h4>
+                          <span className="text-[13px] text-neutral-400 mt-1.5 block leading-normal font-sans">Policies and trust details</span>
                         </div>
                       </div>
                       <div className="space-y-3 pl-1">
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Privacy Policy</Link>
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Terms of Service</Link>
-                        <Link to="/app/support" className="block text-xs font-medium text-neutral-300 hover:text-amber-500 transition-colors font-sans">Security Overview</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Privacy Policy</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Terms of Service</Link>
+                        <Link to="/app/support" className="block text-[13px] font-normal text-neutral-400 hover:text-amber-500 transition-colors font-sans">Security Overview</Link>
                       </div>
                     </div>
                   </>

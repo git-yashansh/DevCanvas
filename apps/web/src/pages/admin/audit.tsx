@@ -1,59 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Search, Loader2, Download, ClipboardList, RefreshCw } from "lucide-react";
 import { Badge } from "@ui/index";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@utils/index";
+import { useAdminAuditLogs } from "@/services/admin/hooks";
 
 export function AdminAuditLogsPage() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [resultFilter, setResultFilter] = useState("all");
-
-  async function loadLogs() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("audit_logs")
-        .select(`
-          id,
-          created_at,
-          action,
-          entity,
-          details,
-          ip_address,
-          user_agent,
-          result,
-          profiles:actor_id (
-            full_name,
-            email
-          )
-        `)
-        .order("created_at", { ascending: false });
-
-      if (data) {
-        setLogs(data);
-      }
-    } catch (err) {
-      console.error("Failed to load audit logs:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadLogs();
-
-    // Supabase Realtime Listener for audit_logs
-    const channel = supabase
-      .channel("admin:audit_logs")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "audit_logs" }, () => loadLogs())
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const { data: logs = [], isLoading: loading, refetch } = useAdminAuditLogs();
 
   const handleExportCSV = () => {
     const headers = "ID,Timestamp,Actor,Action,Entity,Result,IP Address,Details\n";
@@ -109,7 +63,7 @@ export function AdminAuditLogsPage() {
             Export CSV
           </button>
           <button
-            onClick={loadLogs}
+            onClick={() => refetch()}
             className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 rounded-xl text-xs font-heading font-bold text-orange-400 transition-all cursor-pointer"
           >
             <RefreshCw className="h-4 w-4" />

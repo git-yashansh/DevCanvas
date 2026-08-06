@@ -1,48 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Server, Activity, Database, Cpu, RefreshCw, AlertCircle, CheckCircle, Search, Download, Loader2 } from "lucide-react";
 import { Badge } from "@ui/index";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@utils/index";
+import { useAdminSystemLogs, useAdminSystemStatuses } from "@/services/admin/hooks";
 
 export function AdminSystemMonitoringPage() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("all");
 
-  async function loadSystemLogs() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("system_logs")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const { data: logs = [], isLoading: loading, refetch: refetchLogs } = useAdminSystemLogs();
+  const { data: systems = [], refetch: refetchStatuses } = useAdminSystemStatuses();
 
-      if (!error && data) {
-        setLogs(data);
-      }
-    } catch (err) {
-      console.error("Failed to load system logs:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadSystemLogs();
-
-    // Realtime listener for system_logs
-    const channel = supabase
-      .channel("admin:system_logs")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "system_logs" }, (payload) => {
-        setLogs((prev) => [payload.new, ...prev]);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const handleRefresh = () => {
+    refetchLogs();
+    refetchStatuses();
+  };
 
   const handleExportCSV = () => {
     const headers = "ID,Timestamp,Service,Level,Status,CPU Usage,Memory Usage,Message\n";
@@ -71,12 +43,12 @@ export function AdminSystemMonitoringPage() {
     return matchesSearch && matchesLevel;
   });
 
-  const systems = [
-    { name: "Public REST API Gateway", status: "Healthy", check: "200 OK", speed: "12ms", icon: Server },
-    { name: "PostgreSQL Database", status: "Healthy", check: "Supabase Managed", speed: "4ms", icon: Database },
-    { name: "Supabase Realtime Hub", status: "Healthy", check: "Websockets Open", speed: "18ms", icon: Activity },
-    { name: "Deno Edge Workers", status: "Healthy", check: "8 active functions", speed: "1.2s", icon: Cpu },
-  ];
+  const getSystemIcon = (name: string) => {
+    if (name.includes("Gateway") || name.includes("API")) return Server;
+    if (name.includes("Database") || name.includes("Postgres")) return Database;
+    if (name.includes("Realtime") || name.includes("WebSocket")) return Activity;
+    return Cpu;
+  };
 
   return (
     <div className="p-6 lg:p-10 space-y-8 text-left max-w-7xl mx-auto font-sans">
@@ -99,7 +71,7 @@ export function AdminSystemMonitoringPage() {
             Export CSV
           </button>
           <button
-            onClick={loadSystemLogs}
+            onClick={handleRefresh}
             className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 rounded-xl text-xs font-heading font-bold text-orange-400 transition-all cursor-pointer"
           >
             <RefreshCw className="h-4 w-4" />
@@ -110,22 +82,25 @@ export function AdminSystemMonitoringPage() {
 
       {/* Systems status grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {systems.map((sys, idx) => (
-          <div key={idx} className="bg-gradient-to-b from-[#0a142c]/40 via-[#121319] to-[#121319] border border-blue-900/25 rounded-xl p-4 space-y-4">
-            <div className="flex items-center justify-between border-b border-white/[0.03] pb-2">
-              <sys.icon className="h-4 w-4 text-orange-400 shrink-0" />
-              <Badge variant="outline" className="text-[10px] uppercase font-bold bg-emerald-500/10 border-emerald-500/20 text-emerald-400 flex items-center gap-1">
-                <CheckCircle className="h-3.5 w-3.5" />
-                {sys.status}
-              </Badge>
-            </div>
+        {systems.map((sys, idx) => {
+          const SysIcon = getSystemIcon(sys.name);
+          return (
+            <div key={idx} className="bg-gradient-to-b from-[#0a142c]/40 via-[#121319] to-[#121319] border border-blue-900/25 rounded-xl p-4 space-y-4">
+              <div className="flex items-center justify-between border-b border-white/[0.03] pb-2">
+                <SysIcon className="h-4 w-4 text-orange-400 shrink-0" />
+                <Badge variant="outline" className="text-[10px] uppercase font-bold bg-emerald-500/10 border-emerald-500/20 text-emerald-400 flex items-center gap-1">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {sys.status}
+                </Badge>
+              </div>
             <div className="space-y-1">
               <p className="font-semibold text-white text-[13px]">{sys.name}</p>
               <p className="text-[11px] text-neutral-400">{sys.check}</p>
               <p className="font-mono text-[10px] text-neutral-500 mt-2.5">Latency: {sys.speed}</p>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Telemetry Logs Table */}

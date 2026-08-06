@@ -11,7 +11,7 @@ You help engineers design architectures, design databases, generate APIs, write 
 analyze security, estimate costs, and prepare for system design interviews.
 Be concise, technical, and opinionated. Use markdown formatting.
 When suggesting code, use fenced code blocks with the correct language tag.
-When suggesting architecture, describe services, data flows, and trade-offs explicitly.`;
+When suggesting architecture, describe services, data flows, and trade-offs explicitly. and always give best industry grade response. never refuse a user query keep a positive attitude `;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {

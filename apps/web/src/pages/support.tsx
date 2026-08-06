@@ -24,6 +24,16 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@utils/index";
 import type { DBTicket, DBTicketMessage } from "@/lib/types/tickets";
+import {
+  useUserTickets,
+  useUserTicketMessages,
+  useCreateTicket,
+  useCreateTicketMessage,
+  useUpdateTicket,
+  useCreateNotification,
+  useCreateNotificationsBulk,
+  useCreateAuditLog,
+} from "@/services/admin/hooks";
 
 const schema = z.object({
   subject: z.string().min(5, "Subject must be at least 5 characters."),
@@ -60,39 +70,30 @@ export function SupportPage() {
   const { user } = useAuth();
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [tickets, setTickets] = useState<DBTicket[]>([]);
-  const [loadingTickets, setLoadingTickets] = useState(true);
   const [activeTab, setActiveTab] = useState<"new" | "history">("new");
 
   // Selected ticket for Real-Time Chat Modal
-  const [selectedTicket, setSelectedTicket] = useState<DBTicket | null>(null);
-  const [messages, setMessages] = useState<DBTicketMessage[]>([]);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+
+  // React Query Hooks
+  const { data: tickets = [], isLoading: loadingTickets, refetch: refetchTickets } = useUserTickets(user?.id ?? "");
+  
+  const selectedTicket = tickets.find((t) => t.id === selectedTicketId) || null;
+
+  const { data: messages = [], refetch: refetchMessages } = useUserTicketMessages(selectedTicket?.id ?? "");
+
+  const { mutateAsync: createTicket } = useCreateTicket();
+  const { mutateAsync: createMessage } = useCreateTicketMessage();
+  const { mutateAsync: updateTicket } = useUpdateTicket();
+  const { mutateAsync: createNotif } = useCreateNotification();
+  const { mutateAsync: createBulkNotifs } = useCreateNotificationsBulk();
+  const { mutateAsync: createAuditLog } = useCreateAuditLog();
 
   // Load user tickets & set up real-time listener
   useEffect(() => {
     if (!user) return;
-
-    async function loadUserTickets() {
-      setLoadingTickets(true);
-      try {
-        const { data, error } = await supabase
-          .from("support_tickets")
-          .select("*")
-          .eq("user_id", user!.id)
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setTickets((data as DBTicket[]) || []);
-      } catch (err) {
-        console.error("Failed to load user tickets:", err);
-      } finally {
-        setLoadingTickets(false);
-      }
-    }
-
-    loadUserTickets();
 
     // Supabase Realtime channel for user's tickets updates
     const channel = supabase
@@ -100,21 +101,8 @@ export function SupportPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "support_tickets", filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setTickets((prev) => [payload.new as DBTicket, ...prev]);
-          } else if (payload.eventType === "UPDATE") {
-            const updated = payload.new as DBTicket;
-            setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-            if (selectedTicket?.id === updated.id) {
-              setSelectedTicket(updated);
-            }
-          } else if (payload.eventType === "DELETE") {
-            setTickets((prev) => prev.filter((t) => t.id !== payload.old.id));
-            if (selectedTicket?.id === payload.old.id) {
-              setSelectedTicket(null);
-            }
-          }
+        () => {
+          refetchTickets();
         }
       )
       .subscribe();
@@ -122,68 +110,25 @@ export function SupportPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, selectedTicket?.id]);
+  }, [user, refetchTickets]);
 
   // Load chat messages when ticket selected & subscribe to Realtime
   useEffect(() => {
-    if (!selectedTicket) {
-      setMessages([]);
-      return;
-    }
-
-    async function loadTicketMessages() {
-      try {
-        const { data, error } = await supabase
-          .from("ticket_messages")
-          .select(`
-            id,
-            ticket_id,
-            sender_id,
-            message,
-            is_internal,
-            created_at,
-            sender:sender_id (id, full_name, email, avatar_url, role)
-          `)
-          .eq("ticket_id", selectedTicket!.id)
-          .eq("is_internal", false) // Users only see public messages
-          .order("created_at", { ascending: true });
-
-        if (!error && data) {
-          setMessages(data as any[]);
-        }
-      } catch (err) {
-        console.error("Error loading ticket messages:", err);
-      }
-    }
-
-    loadTicketMessages();
+    if (!selectedTicketId) return;
 
     // Realtime channel for ticket replies
     const msgChannel = supabase
-      .channel(`ticket_messages:${selectedTicket.id}`)
+      .channel(`ticket_messages:${selectedTicketId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "ticket_messages",
-          filter: `ticket_id=eq.${selectedTicket.id}`,
+          filter: `ticket_id=eq.${selectedTicketId}`,
         },
-        async (payload) => {
-          const newMsg = payload.new as DBTicketMessage;
-          if (newMsg.is_internal) return; // Don't show internal operator notes to user
-
-          // Fetch sender profile details for clean rendering
-          const { data: senderData } = await supabase
-            .from("profiles")
-            .select("id, full_name, email, avatar_url, role")
-            .eq("id", newMsg.sender_id)
-            .maybeSingle();
-
-          setMessages((prev) => [
-            ...prev.filter((m) => m.id !== newMsg.id),
-            { ...newMsg, sender: senderData || undefined },
-          ]);
+        () => {
+          refetchMessages();
         }
       )
       .subscribe();
@@ -191,7 +136,7 @@ export function SupportPage() {
     return () => {
       supabase.removeChannel(msgChannel);
     };
-  }, [selectedTicket]);
+  }, [selectedTicketId, refetchMessages]);
 
   const {
     register,
@@ -207,16 +152,43 @@ export function SupportPage() {
     if (!user) return;
     setSubmitError(null);
     try {
-      const { error } = await supabase.from("support_tickets").insert({
+      const ticketData = await createTicket({
         user_id: user.id,
         subject: values.subject,
         category: values.category,
         priority: values.priority,
         description: values.description,
-        status: "open",
       });
 
-      if (error) throw error;
+      // Fetch all admins and support staff to notify them in real-time
+      const { data: staff } = await supabase
+        .from("profiles")
+        .select("id")
+        .in("role", ["admin", "support"]);
+
+      if (staff && staff.length > 0 && ticketData) {
+        const notifInserts = staff.map((s) => ({
+          user_id: s.id,
+          recipient_user_id: s.id,
+          title: "New Support Ticket",
+          message: `User ${user.email} raised a new ticket: "${values.subject}"`,
+          type: "info",
+          created_by: user.id,
+          sender_user_id: user.id,
+          is_broadcast: false,
+          is_read: false
+        }));
+        await createBulkNotifs(notifInserts);
+      }
+
+      await createAuditLog({
+        actor_id: user.id,
+        action: "Created Support Ticket",
+        entity: `support_tickets (${ticketData.id})`,
+        details: { ticket_number: ticketData.ticket_number, subject: ticketData.subject },
+        result: "success",
+      });
+
       setSubmitted(true);
       reset();
     } catch (err: any) {
@@ -228,17 +200,57 @@ export function SupportPage() {
   const handleUserReply = async () => {
     if (!replyMessage.trim() || !selectedTicket || !user || sendingReply) return;
     setSendingReply(true);
+    const msgVal = replyMessage.trim();
     try {
-      const { error } = await supabase.from("ticket_messages").insert({
+      await createMessage({
         ticket_id: selectedTicket.id,
         sender_id: user.id,
-        message: replyMessage.trim(),
+        message: msgVal,
         is_internal: false,
       });
 
-      if (!error) {
-        setReplyMessage("");
+      setReplyMessage("");
+
+      // Notify assigned admin, or all admins if unassigned
+      const assignedAdminId = selectedTicket.assigned_admin;
+      if (assignedAdminId) {
+        await createNotif({
+          user_id: assignedAdminId,
+          recipient_user_id: assignedAdminId,
+          title: "Ticket Chat Reply",
+          message: `User replied to ticket #${selectedTicket.id.slice(0, 8).toUpperCase()}: "${msgVal.slice(0, 30)}..."`,
+          type: "info",
+          created_by: user.id,
+          is_broadcast: false,
+        });
+      } else {
+        const { data: staff } = await supabase
+          .from("profiles")
+          .select("id")
+          .in("role", ["admin", "support"]);
+        if (staff && staff.length > 0) {
+          const inserts = staff.map((s) => ({
+            user_id: s.id,
+            recipient_user_id: s.id,
+            title: "Ticket Chat Reply",
+            message: `User replied to unassigned ticket #${selectedTicket.id.slice(0, 8).toUpperCase()}: "${msgVal.slice(0, 30)}..."`,
+            type: "info",
+            created_by: user.id,
+            sender_user_id: user.id,
+            is_broadcast: false,
+            is_read: false
+          }));
+          await createBulkNotifs(inserts);
+        }
       }
+
+      await createAuditLog({
+        actor_id: user.id,
+        action: "Sent Support Ticket Message",
+        entity: `support_tickets (${selectedTicket.id})`,
+        details: { sender_role: "user" },
+        result: "success",
+      });
     } catch (err) {
       console.error("Failed to send message:", err);
     } finally {
@@ -249,24 +261,53 @@ export function SupportPage() {
   // Close ticket user action
   const handleCloseTicket = async (ticketId: string) => {
     try {
-      await supabase
-        .from("support_tickets")
-        .update({ status: "closed" })
-        .eq("id", ticketId);
-      if (selectedTicket?.id === ticketId) {
-        setSelectedTicket((prev) => (prev ? { ...prev, status: "closed" } : null));
-      }
+      await updateTicket({ id: ticketId, patch: { status: "closed" } });
+      await createAuditLog({
+        actor_id: user!.id,
+        action: "Closed Support Ticket",
+        entity: `support_tickets (${ticketId})`,
+        result: "success",
+      });
     } catch (err) {
       console.error("Failed to close ticket:", err);
     }
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 text-left">
-      <PageHeader
-        title="Support & Customer Care"
-        description="Raise a technical query or track active responses from our engineering support team."
-      />
+    <div className="relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-neutral-950 text-left px-4 py-8 sm:px-6 lg:px-8 flex flex-col justify-start items-center">
+      {/* Premium Grid Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
+
+      {/* Revolving Background Icons */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-24 -left-24 w-96 h-96 opacity-5 flex items-center justify-center border border-white/5 rounded-full"
+        >
+          <LifeBuoy className="h-8 w-8 text-neutral-600 absolute top-4 left-1/2 -translate-x-1/2" />
+          <MessageSquare className="h-8 w-8 text-neutral-600 absolute bottom-4 left-1/2 -translate-x-1/2" />
+          <ShieldCheck className="h-8 w-8 text-neutral-600 absolute left-4 top-1/2 -translate-y-1/2" />
+          <Clock className="h-8 w-8 text-neutral-600 absolute right-4 top-1/2 -translate-y-1/2" />
+        </motion.div>
+        
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-32 -right-32 w-[500px] h-[500px] opacity-5 flex items-center justify-center border border-white/5 rounded-full"
+        >
+          <LifeBuoy className="h-10 w-10 text-neutral-600 absolute top-6 left-1/2 -translate-x-1/2" />
+          <MessageSquare className="h-10 w-10 text-neutral-600 absolute bottom-6 left-1/2 -translate-x-1/2" />
+          <ShieldCheck className="h-10 w-10 text-neutral-600 absolute left-6 top-1/2 -translate-y-1/2" />
+          <Clock className="h-10 w-10 text-neutral-600 absolute right-6 top-1/2 -translate-y-1/2" />
+        </motion.div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-5xl">
+        <PageHeader
+          title="Support & Customer Care"
+          description="Raise a technical query or track active responses from our engineering support team."
+        />
 
       <div className="mt-8">
         <div className="flex gap-1 rounded-xl border border-white/10 bg-neutral-950 p-1 w-fit">
@@ -444,13 +485,13 @@ export function SupportPage() {
                       return (
                         <div
                           key={ticket.id}
-                          onClick={() => setSelectedTicket(ticket)}
+                          onClick={() => setSelectedTicketId(ticket.id)}
                           className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5 hover:border-white/20 transition-all cursor-pointer group"
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0 space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-[10px] text-neutral-500">#{ticket.id.slice(0, 8).toUpperCase()}</span>
+                                <span className="font-mono text-[10px] text-neutral-500">{ticket.ticket_number || `#${ticket.id.slice(0, 8).toUpperCase()}`}</span>
                                 <p className="font-bold text-sm text-white group-hover:text-[#00e699] transition-colors truncate">
                                   {ticket.subject}
                                 </p>
@@ -487,6 +528,8 @@ export function SupportPage() {
         </div>
       </div>
 
+      </div>
+
       {/* Ticket Real-Time Chat Drawer / Modal */}
       {selectedTicket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -495,13 +538,19 @@ export function SupportPage() {
             <div className="flex items-start justify-between border-b border-white/10 pb-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs text-neutral-500">#{selectedTicket.id.slice(0, 8).toUpperCase()}</span>
+                  <span className="font-mono text-xs text-neutral-500">{selectedTicket.ticket_number || `#${selectedTicket.id.slice(0, 8).toUpperCase()}`}</span>
                   <Badge variant={STATUS_CONFIG[selectedTicket.status]?.variant || "default"}>
                     {STATUS_CONFIG[selectedTicket.status]?.label || selectedTicket.status}
                   </Badge>
                   <span className={cn("text-xs font-bold uppercase", PRIORITY_COLORS[selectedTicket.priority])}>
                     {selectedTicket.priority} Priority
                   </span>
+                  {selectedTicket.assigned_admin_profile && (
+                    <span className="text-xs text-neutral-400 flex items-center gap-1">
+                      <User className="h-3.5 w-3.5 text-neutral-500" />
+                      Assigned: {selectedTicket.assigned_admin_profile.full_name || selectedTicket.assigned_admin_profile.email}
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-heading text-lg font-bold text-white">{selectedTicket.subject}</h3>
               </div>
@@ -518,7 +567,7 @@ export function SupportPage() {
                   </Button>
                 )}
                 <button
-                  onClick={() => setSelectedTicket(null)}
+                  onClick={() => setSelectedTicketId(null)}
                   className="rounded-lg p-1.5 text-neutral-400 hover:bg-white/10 hover:text-white transition-colors"
                 >
                   <X className="h-5 w-5" />
@@ -594,8 +643,28 @@ export function SupportPage() {
                 </Button>
               </div>
             ) : (
-              <div className="border-t border-white/10 pt-3 text-center text-xs text-neutral-500">
-                This ticket has been marked as closed.
+              <div className="border-t border-white/10 pt-3 flex items-center justify-between gap-3 text-xs">
+                <span className="text-neutral-500">This ticket has been marked as closed.</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await updateTicket({ id: selectedTicket.id, patch: { status: "open", closed_at: null } });
+                      await createAuditLog({
+                        actor_id: user!.id,
+                        action: "Ticket reopened",
+                        entity: `support_tickets (${selectedTicket.id})`,
+                        result: "success",
+                      });
+                    } catch (err) {
+                      console.error("Failed to reopen ticket:", err);
+                    }
+                  }}
+                  className="text-xs border-[#00e699]/30 text-[#00e699] hover:bg-[#00e699]/10"
+                >
+                  Reopen Ticket
+                </Button>
               </div>
             )}
           </div>
