@@ -1,70 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { MessageSquareCode, Search, CheckCircle, Flame, Star, ThumbsUp, Trash2, Loader2, RefreshCw } from "lucide-react";
 import { Badge } from "@ui/index";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@utils/index";
+import { useAdminFeedback, useUpdateFeedbackStatus, useDeleteFeedback } from "@/services/admin/hooks";
 
 export function AdminFeedbackPage() {
-  const [feedbacks, setFeedbacks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  async function loadFeedback() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("user_feedback")
-        .select(`
-          id,
-          user_id,
-          category,
-          rating,
-          comment,
-          status,
-          votes,
-          created_at,
-          profiles:user_id (
-            full_name,
-            email
-          )
-        `)
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setFeedbacks(data);
-      }
-    } catch (err) {
-      console.error("Failed to load feedback:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadFeedback();
-
-    // Supabase Realtime Listener for user_feedback
-    const channel = supabase
-      .channel("admin:user_feedback")
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_feedback" }, () => loadFeedback())
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const { data: feedbacks = [], isLoading: loading, refetch } = useAdminFeedback();
+  const { mutateAsync: updateStatus } = useUpdateFeedbackStatus();
+  const { mutateAsync: deleteFeedback } = useDeleteFeedback();
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from("user_feedback")
-        .update({ status: newStatus })
-        .eq("id", id);
-
-      if (!error) {
-        setFeedbacks((prev) => prev.map((f) => (f.id === id ? { ...f, status: newStatus } : f)));
-      }
+      await updateStatus({ id, status: newStatus });
     } catch (err) {
       console.error("Failed to update feedback status:", err);
     }
@@ -73,10 +23,7 @@ export function AdminFeedbackPage() {
   const handleDeleteFeedback = async (id: string) => {
     if (!confirm("Are you sure you want to delete this feedback submission?")) return;
     try {
-      const { error } = await supabase.from("user_feedback").delete().eq("id", id);
-      if (!error) {
-        setFeedbacks((prev) => prev.filter((f) => f.id !== id));
-      }
+      await deleteFeedback(id);
     } catch (err) {
       console.error("Failed to delete feedback:", err);
     }
@@ -106,7 +53,7 @@ export function AdminFeedbackPage() {
           </p>
         </div>
         <button
-          onClick={loadFeedback}
+          onClick={() => refetch()}
           className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 rounded-xl text-xs font-heading font-bold text-orange-400 transition-all cursor-pointer"
         >
           <RefreshCw className="h-4 w-4" />

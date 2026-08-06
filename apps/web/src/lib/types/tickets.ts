@@ -9,6 +9,11 @@ export interface DBTicket {
   priority: TicketPriority;
   description: string;
   status: TicketStatus;
+  assigned_admin?: string | null;
+  ticket_number?: string;
+  closed_at?: string | null;
+  resolved_at?: string | null;
+  last_reply_at?: string;
   created_at: string;
   updated_at: string;
   profiles?: {
@@ -18,6 +23,12 @@ export interface DBTicket {
     avatar_url?: string;
     role?: string;
   };
+  assigned_admin_profile?: {
+    id: string;
+    full_name?: string;
+    email?: string;
+    avatar_url?: string;
+  };
 }
 
 export interface DBTicketMessage {
@@ -26,6 +37,8 @@ export interface DBTicketMessage {
   sender_id: string;
   message: string;
   is_internal: boolean;
+  attachment?: string | null;
+  is_read?: boolean;
   created_at: string;
   sender?: {
     id: string;

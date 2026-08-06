@@ -21,15 +21,20 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@utils/index";
 import type { DBTicket, DBTicketMessage } from "@/lib/types/tickets";
+import {
+  useAdminTickets,
+  useAdminTicketMessages,
+  useAdminUsersList,
+  useCreateTicketMessage,
+  useUpdateTicket,
+  useDeleteTicket,
+  useCreateNotification,
+  useCreateAuditLog,
+} from "@/services/admin/hooks";
 
 export function AdminTicketsPage() {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState<DBTicket[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedTicket, setSelectedTicket] = useState<DBTicket | null>(null);
-
-  const [messages, setMessages] = useState<DBTicketMessage[]>([]);
-  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
   const [replyText, setReplyText] = useState("");
   const [internalNoteText, setInternalNoteText] = useState("");
@@ -39,68 +44,37 @@ export function AdminTicketsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
 
-  // Load tickets & subscribe to Realtime updates
-  async function loadTickets() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("support_tickets")
-        .select(`
-          id,
-          user_id,
-          subject,
-          category,
-          priority,
-          status,
-          description,
-          created_at,
-          updated_at,
-          profiles:user_id (id, full_name, email, avatar_url, role)
-        `)
-        .order("created_at", { ascending: false });
+  // React Query Hooks
+  const { data: tickets = [], isLoading: loading, refetch: refetchTickets } = useAdminTickets();
+  const { data: adminUsers = [] } = useAdminUsersList();
+  
+  const selectedTicket = tickets.find(t => t.id === selectedTicketId) || null;
 
-      if (error) throw error;
-      setTickets((data as any[]) || []);
-    } catch (err) {
-      console.error("Failed to load admin tickets:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { data: messages = [], isLoading: loadingMessages, refetch: refetchMessages } = useAdminTicketMessages(selectedTicket?.id ?? "");
+
+  const { mutateAsync: createMessage } = useCreateTicketMessage();
+  const { mutateAsync: updateTicket } = useUpdateTicket();
+  const { mutateAsync: deleteTicket } = useDeleteTicket();
+  const { mutateAsync: createNotif } = useCreateNotification();
+  const { mutateAsync: createAuditLog } = useCreateAuditLog();
 
   useEffect(() => {
-    loadTickets();
-
-    // Supabase Realtime for admin tickets
+    // Realtime listeners for updates
     const channel = supabase
-      .channel("admin:support_tickets")
+      .channel("admin:support_tickets:realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "support_tickets" },
-        async (payload) => {
-          if (payload.eventType === "INSERT") {
-            const newTicket = payload.new as DBTicket;
-            // Fetch profile for new ticket
-            const { data: prof } = await supabase
-              .from("profiles")
-              .select("id, full_name, email, avatar_url, role")
-              .eq("id", newTicket.user_id)
-              .maybeSingle();
-
-            setTickets((prev) => [{ ...newTicket, profiles: prof || undefined }, ...prev]);
-          } else if (payload.eventType === "UPDATE") {
-            const updated = payload.new as DBTicket;
-            setTickets((prev) =>
-              prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t))
-            );
-            if (selectedTicket?.id === updated.id) {
-              setSelectedTicket((prev) => (prev ? { ...prev, ...updated } : null));
-            }
-          } else if (payload.eventType === "DELETE") {
-            setTickets((prev) => prev.filter((t) => t.id !== payload.old.id));
-            if (selectedTicket?.id === payload.old.id) {
-              setSelectedTicket(null);
-            }
+        () => {
+          refetchTickets();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ticket_messages" },
+        () => {
+          if (selectedTicketId) {
+            refetchMessages();
           }
         }
       )
@@ -109,96 +83,44 @@ export function AdminTicketsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedTicket?.id]);
-
-  // Load messages & Realtime subscription when ticket is selected
-  useEffect(() => {
-    if (!selectedTicket) {
-      setMessages([]);
-      return;
-    }
-
-    async function loadTicketMessages() {
-      setLoadingMessages(true);
-      try {
-        const { data, error } = await supabase
-          .from("ticket_messages")
-          .select(`
-            id,
-            ticket_id,
-            sender_id,
-            message,
-            is_internal,
-            created_at,
-            sender:sender_id (id, full_name, email, avatar_url, role)
-          `)
-          .eq("ticket_id", selectedTicket!.id)
-          .order("created_at", { ascending: true });
-
-        if (!error && data) {
-          setMessages(data as any[]);
-        }
-      } catch (err) {
-        console.error("Failed to load ticket messages:", err);
-      } finally {
-        setLoadingMessages(false);
-      }
-    }
-
-    loadTicketMessages();
-
-    // Supabase Realtime subscription for ticket messages
-    const channel = supabase
-      .channel(`admin:messages:${selectedTicket.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "ticket_messages",
-          filter: `ticket_id=eq.${selectedTicket.id}`,
-        },
-        async (payload) => {
-          const newMsg = payload.new as DBTicketMessage;
-          const { data: prof } = await supabase
-            .from("profiles")
-            .select("id, full_name, email, avatar_url, role")
-            .eq("id", newMsg.sender_id)
-            .maybeSingle();
-
-          setMessages((prev) => [
-            ...prev.filter((m) => m.id !== newMsg.id),
-            { ...newMsg, sender: prof || undefined },
-          ]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedTicket?.id]);
+  }, [selectedTicketId, refetchTickets, refetchMessages]);
 
   // Send Public Reply
   const handleSendReply = async () => {
     if (!replyText.trim() || !selectedTicket || !user) return;
+    const replyVal = replyText.trim();
     try {
-      const { error } = await supabase.from("ticket_messages").insert({
+      await createMessage({
         ticket_id: selectedTicket.id,
         sender_id: user.id,
-        message: replyText.trim(),
-        is_internal: false,
+        message: replyVal,
+        is_internal: false
+      });
+      setReplyText("");
+
+      // Log reply audit entry
+      await createAuditLog({
+        actor_id: user.id,
+        action: "Reply sent",
+        entity: `support_tickets (${selectedTicket.id})`,
+        details: { sender_role: "admin", is_internal: false },
+        result: "success"
       });
 
-      if (!error) {
-        setReplyText("");
-        // Auto update status to in_progress if open
-        if (selectedTicket.status === "open") {
-          await supabase
-            .from("support_tickets")
-            .update({ status: "in_progress" })
-            .eq("id", selectedTicket.id);
-        }
+      // Notify user about the new reply
+      await createNotif({
+        user_id: selectedTicket.user_id,
+        recipient_user_id: selectedTicket.user_id,
+        title: "New Support Message Reply",
+        message: `Support replied to ticket ${selectedTicket.ticket_number || `#${selectedTicket.id.slice(0, 8).toUpperCase()}`}: "${replyVal.slice(0, 30)}..."`,
+        type: "success",
+        created_by: user.id,
+        is_broadcast: false
+      });
+
+      // Auto update status to in_progress if open
+      if (selectedTicket.status === "open") {
+        await updateTicket({ id: selectedTicket.id, patch: { status: "in_progress" } });
       }
     } catch (err) {
       console.error("Failed to send reply:", err);
@@ -209,16 +131,23 @@ export function AdminTicketsPage() {
   const handleSendInternalNote = async () => {
     if (!internalNoteText.trim() || !selectedTicket || !user) return;
     try {
-      const { error } = await supabase.from("ticket_messages").insert({
+      await createMessage({
         ticket_id: selectedTicket.id,
         sender_id: user.id,
         message: internalNoteText.trim(),
-        is_internal: true,
+        is_internal: true
       });
+      setReplyText("");
+      setInternalNoteText("");
 
-      if (!error) {
-        setInternalNoteText("");
-      }
+      // Log internal note audit entry
+      await createAuditLog({
+        actor_id: user.id,
+        action: "Sent Support Ticket Message",
+        entity: `support_tickets (${selectedTicket.id})`,
+        details: { sender_role: "admin", is_internal: true },
+        result: "success"
+      });
     } catch (err) {
       console.error("Failed to post internal note:", err);
     }
@@ -228,14 +157,41 @@ export function AdminTicketsPage() {
   const handleUpdateStatus = async (newStatus: string) => {
     if (!selectedTicket || !user) return;
     try {
-      const { error } = await supabase
-        .from("support_tickets")
-        .update({ status: newStatus })
-        .eq("id", selectedTicket.id);
-
-      if (!error) {
-        setSelectedTicket((prev) => (prev ? { ...prev, status: newStatus as any } : null));
+      const patch: any = { status: newStatus };
+      if (newStatus === "closed") {
+        patch.closed_at = new Date().toISOString();
+      } else if (newStatus === "resolved") {
+        patch.resolved_at = new Date().toISOString();
+      } else {
+        patch.closed_at = null;
+        patch.resolved_at = null;
       }
+
+      await updateTicket({ id: selectedTicket.id, patch });
+
+      let auditAction = `Changed Ticket Status to ${newStatus.toUpperCase()}`;
+      if (newStatus === "closed") auditAction = "Ticket closed";
+      else if (newStatus === "open") auditAction = "Ticket reopened";
+      else if (newStatus === "resolved") auditAction = "Ticket resolved";
+
+      await createAuditLog({
+        actor_id: user.id,
+        action: auditAction,
+        entity: `support_tickets (${selectedTicket.id})`,
+        details: { new_status: newStatus },
+        result: "success"
+      });
+
+      // Notify user about status change
+      await createNotif({
+        user_id: selectedTicket.user_id,
+        recipient_user_id: selectedTicket.user_id,
+        title: "Support Ticket Status Updated",
+        message: `Your support ticket status has been updated to "${newStatus.replace("_", " ")}"`,
+        type: "info",
+        created_by: user.id,
+        is_broadcast: false
+      });
     } catch (err) {
       console.error("Failed to change status:", err);
     }
@@ -245,16 +201,57 @@ export function AdminTicketsPage() {
   const handleUpdatePriority = async (newPriority: string) => {
     if (!selectedTicket || !user) return;
     try {
-      const { error } = await supabase
-        .from("support_tickets")
-        .update({ priority: newPriority })
-        .eq("id", selectedTicket.id);
+      await updateTicket({ id: selectedTicket.id, patch: { priority: newPriority } });
 
-      if (!error) {
-        setSelectedTicket((prev) => (prev ? { ...prev, priority: newPriority as any } : null));
-      }
+      await createAuditLog({
+        actor_id: user.id,
+        action: "Priority changed",
+        entity: `support_tickets (${selectedTicket.id})`,
+        details: { new_priority: newPriority },
+        result: "success"
+      });
+
+      // Notify user about priority change
+      await createNotif({
+        user_id: selectedTicket.user_id,
+        recipient_user_id: selectedTicket.user_id,
+        title: "Support Ticket Priority Escalation",
+        message: `Your support ticket priority has been changed to "${newPriority}"`,
+        type: "warning",
+        created_by: user.id,
+        is_broadcast: false
+      });
     } catch (err) {
       console.error("Failed to change priority:", err);
+    }
+  };
+
+  // Assign Ticket
+  const handleAssignTicket = async (adminId: string | null) => {
+    if (!selectedTicket || !user) return;
+    try {
+      await updateTicket({ id: selectedTicket.id, patch: { assigned_admin: adminId } });
+
+      await createAuditLog({
+        actor_id: user.id,
+        action: "Ticket assigned",
+        entity: `support_tickets (${selectedTicket.id})`,
+        details: { assigned_admin: adminId },
+        result: "success"
+      });
+
+      // Notify user they have been assigned
+      await createNotif({
+        user_id: selectedTicket.user_id,
+        recipient_user_id: selectedTicket.user_id,
+        title: "Support Ticket Assigned",
+        message: `Your ticket has been assigned to an operator.`,
+        type: "info",
+        created_by: user.id,
+        is_broadcast: false
+      });
+    } catch (err) {
+      console.error("Failed to assign ticket:", err);
     }
   };
 
@@ -262,8 +259,14 @@ export function AdminTicketsPage() {
   const handleDeleteTicket = async (ticketId: string) => {
     if (!confirm("Are you sure you want to delete this ticket?")) return;
     try {
-      await supabase.from("support_tickets").delete().eq("id", ticketId);
-      if (selectedTicket?.id === ticketId) setSelectedTicket(null);
+      await deleteTicket(ticketId);
+      await createAuditLog({
+        actor_id: user!.id,
+        action: "Deleted Support Ticket",
+        entity: `support_tickets (${ticketId})`,
+        result: "success"
+      });
+      if (selectedTicketId === ticketId) setSelectedTicketId(null);
     } catch (err) {
       console.error("Failed to delete ticket:", err);
     }
@@ -277,7 +280,8 @@ export function AdminTicketsPage() {
       t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prof?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prof?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.id.toLowerCase().includes(searchQuery.toLowerCase());
+      t.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.ticket_number?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || t.status === statusFilter;
     const matchesPriority = priorityFilter === "all" || t.priority === priorityFilter;
@@ -366,7 +370,7 @@ export function AdminTicketsPage() {
                 return (
                   <div
                     key={t.id}
-                    onClick={() => setSelectedTicket(t)}
+                    onClick={() => setSelectedTicketId(t.id)}
                     className={cn(
                       "p-3.5 rounded-xl border transition-all cursor-pointer text-left space-y-2",
                       selectedTicket?.id === t.id
@@ -375,7 +379,7 @@ export function AdminTicketsPage() {
                     )}
                   >
                     <div className="flex justify-between items-start gap-2">
-                      <span className="font-mono text-[9.5px] text-neutral-500">#{t.id.slice(0, 8).toUpperCase()}</span>
+                       <span className="font-mono text-[9.5px] text-neutral-500">{t.ticket_number || `#${t.id.slice(0, 8).toUpperCase()}`}</span>
                       <Badge
                         variant="outline"
                         className={cn(
@@ -412,7 +416,7 @@ export function AdminTicketsPage() {
               <div className="border-b border-white/[0.08] pb-3.5 mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="text-left space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-neutral-500">#{selectedTicket.id.slice(0, 8).toUpperCase()}</span>
+                     <span className="font-mono text-xs text-neutral-500">{selectedTicket.ticket_number || `#${selectedTicket.id.slice(0, 8).toUpperCase()}`}</span>
                     <Badge variant="outline" className="text-xs bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
                       {selectedTicket.category}
                     </Badge>
@@ -433,6 +437,20 @@ export function AdminTicketsPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Assign Admin Select */}
+                  <select
+                    value={selectedTicket.assigned_admin || ""}
+                    onChange={(e) => handleAssignTicket(e.target.value || null)}
+                    className="bg-neutral-950 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-white outline-none focus:border-orange-500"
+                  >
+                    <option value="">Unassigned</option>
+                    {adminUsers.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.full_name || a.email}
+                      </option>
+                    ))}
+                  </select>
+
                   {/* Priority Select */}
                   <select
                     value={selectedTicket.priority}

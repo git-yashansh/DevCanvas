@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { cacheManager } from "@/lib/cache";
+import { useAdminDashboard } from "@/services/admin/hooks";
 import {
   Users,
   Cpu,
@@ -24,7 +25,10 @@ import {
 
 export function AdminDashboardPage() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [counts, setCounts] = useState({
+
+  const { data: dashboardData, isLoading, refetch } = useAdminDashboard();
+
+  const counts = dashboardData?.metrics || {
     users: 0,
     activeUsers24h: 0,
     onlineUsers: 0,
@@ -41,111 +45,26 @@ export function AdminDashboardPage() {
     systemHealthPercent: 100,
     dbStatus: "Healthy",
     apiStatus: "Operational",
-    loading: true,
-  });
-
-  const [recentLogs, setRecentLogs] = useState<any[]>([]);
-
-  const fetchRealMetrics = async () => {
-    try {
-      await cacheManager.getOrSet("admin:dashboard:metrics", async () => {
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
-        const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-
-        // Parallel execution of all database queries for performance
-        const [
-          { count: usersCount },
-          { count: active24hCount },
-          { count: onlineCount },
-          { count: projectsCount },
-          { count: totalAiCount },
-          { count: todayAiCount },
-          { count: totalTicketsCount },
-          { count: openTicketsCount },
-          { count: closedTicketsCount },
-          { count: notificationsCount },
-          { count: flagsCount },
-          { data: feedbackData },
-          { count: errorLogsCount },
-          { data: auditLogsData },
-        ] = await Promise.all([
-          supabase.from("profiles").select("*", { count: "exact", head: true }),
-          supabase.from("profiles").select("*", { count: "exact", head: true }).gte("updated_at", dayAgo),
-          supabase.from("profiles").select("*", { count: "exact", head: true }).gte("last_seen", fiveMinsAgo),
-          supabase.from("projects").select("*", { count: "exact", head: true }),
-          supabase.from("chat_messages").select("*", { count: "exact", head: true }).eq("role", "assistant"),
-          supabase.from("chat_messages").select("*", { count: "exact", head: true }).eq("role", "assistant").gte("created_at", startOfToday.toISOString()),
-          supabase.from("support_tickets").select("*", { count: "exact", head: true }),
-          supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
-          supabase.from("support_tickets").select("*", { count: "exact", head: true }).eq("status", "closed"),
-          supabase.from("notifications").select("*", { count: "exact", head: true }),
-          supabase.from("feature_flags").select("*", { count: "exact", head: true }).eq("value", true),
-          supabase.from("user_feedback").select("rating"),
-          supabase.from("system_logs").select("*", { count: "exact", head: true }).eq("level", "error"),
-          supabase.from("audit_logs").select("id, action, entity, result, ip_address, created_at, profiles:actor_id(full_name, email)").order("created_at", { ascending: false }).limit(5),
-        ]);
-
-        // Compute average feedback rating
-        let computedAvgRating = 0;
-        if (feedbackData && feedbackData.length > 0) {
-          const totalRatingSum = feedbackData.reduce((acc, f) => acc + (f.rating || 5), 0);
-          computedAvgRating = Number((totalRatingSum / feedbackData.length).toFixed(1));
-        }
-
-        // Calculate system health percentage based on error logs
-        const healthPercent = Math.max(0, 100 - (errorLogsCount || 0) * 5);
-
-        const newCounts = {
-          users: usersCount || 0,
-          activeUsers24h: active24hCount || 0,
-          onlineUsers: onlineCount || 0,
-          projects: projectsCount || 0,
-          totalAiGenerations: totalAiCount || 0,
-          todayAiRequests: todayAiCount || 0,
-          totalTickets: totalTicketsCount || 0,
-          openTickets: openTicketsCount || 0,
-          closedTickets: closedTicketsCount || 0,
-          activeNotifications: notificationsCount || 0,
-          featureFlagsCount: flagsCount || 0,
-          totalFeedback: feedbackData?.length || 0,
-          avgRating: computedAvgRating || 5.0,
-          systemHealthPercent: healthPercent,
-          dbStatus: "Healthy",
-          apiStatus: "Operational",
-          loading: false,
-        };
-
-        setCounts(newCounts);
-        if (auditLogsData) setRecentLogs(auditLogsData);
-
-        return newCounts;
-      }, { ttlMs: 15000 });
-    } catch (err) {
-      console.error("Failed to load live admin metrics:", err);
-      setCounts((prev) => ({ ...prev, loading: false }));
-    }
   };
 
-  useEffect(() => {
-    fetchRealMetrics();
+  const recentLogs = dashboardData?.recentLogs || [];
 
+  useEffect(() => {
     // Attach Supabase Realtime listeners across key tables
     const channel = supabase
       .channel("admin:dashboard:live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => fetchRealMetrics())
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => fetchRealMetrics())
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => fetchRealMetrics())
-      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => fetchRealMetrics())
-      .on("postgres_changes", { event: "*", schema: "public", table: "audit_logs" }, () => fetchRealMetrics())
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_feedback" }, () => fetchRealMetrics())
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { refetch(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => { refetch(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => { refetch(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => { refetch(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "audit_logs" }, () => { refetch(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_feedback" }, () => { refetch(); })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [refetch]);
 
   // Primary Operational Stats Cards
   const stats = [
@@ -354,7 +273,7 @@ export function AdminDashboardPage() {
               Flush Cache Layer
             </button>
             <button
-              onClick={fetchRealMetrics}
+              onClick={() => refetch()}
               className="flex flex-col items-center justify-center p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:border-white/10 transition-all text-xs font-semibold text-neutral-300 hover:text-white cursor-pointer gap-2"
             >
               <Database className="h-5 w-5 text-indigo-400" />

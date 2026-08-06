@@ -1,57 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FolderGit2, Loader2, Download, Search, Trash2 } from "lucide-react";
 import { Badge } from "@ui/index";
-import { supabase } from "@/lib/supabase";
+import { useAdminProjects, useDeleteProject } from "@/services/admin/hooks";
 
 export function AdminProjectsPage() {
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
-  async function loadProjects() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("projects")
-        .select(`
-          id,
-          name,
-          description,
-          status,
-          visibility,
-          created_at,
-          profiles:owner_id (
-            full_name,
-            email
-          )
-        `)
-        .order("created_at", { ascending: false });
-
-      if (data) {
-        setProjects(data);
-      }
-    } catch (err) {
-      console.error("Failed to load projects:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  const { data: projects = [], isLoading: loading, refetch } = useAdminProjects();
+  const { mutateAsync: deleteProject } = useDeleteProject();
 
   const handleDeleteProject = async (projectId: string) => {
     if (!confirm("Are you sure you want to delete this project? This will permanently delete all related workspace files and data.")) return;
     try {
-      const { error } = await supabase
-        .from("projects")
-        .delete()
-        .eq("id", projectId);
-
-      if (!error) {
-        setProjects(projects.filter((p) => p.id !== projectId));
-      }
+      await deleteProject(projectId);
     } catch (err) {
       console.error("Failed to delete project:", err);
     }
@@ -79,7 +39,7 @@ export function AdminProjectsPage() {
           </p>
         </div>
         <button
-          onClick={loadProjects}
+          onClick={() => refetch()}
           className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/[0.06] rounded-xl text-xs font-heading font-bold text-white transition-all cursor-pointer"
         >
           Refresh Project Database

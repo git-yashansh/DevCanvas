@@ -7,6 +7,8 @@ export function useRealtimeNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<DBNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [limit, setLimit] = useState(10);
+  const [hasMore, setHasMore] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
     if (!user) {
@@ -16,28 +18,38 @@ export function useRealtimeNotifications() {
     }
 
     try {
-      // Fetch notifications where user_id = user.id OR is_broadcast = true
+      // Fetch user's own notifications only (no global broadcast bypass) with limit + 1 to check hasMore
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
-        .or(`user_id.eq.${user.id},is_broadcast.eq.true`)
-        .order("created_at", { ascending: false });
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(limit + 1);
 
       if (error) throw error;
-      setNotifications(data || []);
+      
+      if (data) {
+        if (data.length > limit) {
+          setNotifications(data.slice(0, limit));
+          setHasMore(true);
+        } else {
+          setNotifications(data);
+          setHasMore(false);
+        }
+      }
     } catch (err) {
       console.error("Failed to load notifications:", err);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, limit]);
 
   useEffect(() => {
     fetchNotifications();
 
     if (!user) return;
 
-    // Set up Supabase Realtime listener
+    // Set up Realtime listener strictly filtered to current user
     const channel = supabase
       .channel(`realtime:notifications:${user.id}`)
       .on(
@@ -46,13 +58,12 @@ export function useRealtimeNotifications() {
           event: "*",
           schema: "public",
           table: "notifications",
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newNotif = payload.new as DBNotification;
-            if (newNotif.user_id === user.id || newNotif.is_broadcast) {
-              setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)]);
-            }
+            setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)]);
           } else if (payload.eventType === "UPDATE") {
             const updatedNotif = payload.new as DBNotification;
             setNotifications((prev) =>
@@ -89,7 +100,7 @@ export function useRealtimeNotifications() {
       await supabase
         .from("notifications")
         .update({ is_read: true })
-        .or(`user_id.eq.${user.id},is_broadcast.eq.true`);
+        .eq("user_id", user.id);
     } catch (err) {
       console.error("Failed to mark all as read:", err);
     }
@@ -104,12 +115,20 @@ export function useRealtimeNotifications() {
     }
   };
 
+  const loadMore = () => {
+    if (hasMore) {
+      setLimit((prev) => prev + 10);
+    }
+  };
+
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return {
     notifications,
     loading,
     unreadCount,
+    hasMore,
+    loadMore,
     markAsRead,
     markAllAsRead,
     deleteNotification,

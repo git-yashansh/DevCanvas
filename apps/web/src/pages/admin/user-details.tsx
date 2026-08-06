@@ -18,82 +18,27 @@ import {
   Trash2,
 } from "lucide-react";
 import { Badge, Button } from "@ui/index";
-import { supabase } from "@/lib/supabase";
 import { cn } from "@utils/index";
 import type { DBTicket } from "@/lib/types/tickets";
 import type { DBNotification } from "@/lib/types/notifications";
+import { useAdminUserDetails, useUpdateUserStatus } from "@/services/admin/hooks";
 
 export function AdminUserDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [profile, setProfile] = useState<any | null>(null);
-  const [tickets, setTickets] = useState<DBTicket[]>([]);
-  const [notifications, setNotifications] = useState<DBNotification[]>([]);
-  const [projectsCount, setProjectsCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { data: userDetails, isLoading: loading } = useAdminUserDetails(id ?? "");
+  const { mutateAsync: updateStatus } = useUpdateUserStatus();
 
-  async function fetchUserDetails() {
-    if (!id) return;
-    setLoading(true);
-    try {
-      // 1. Fetch Profile
-      const { data: profData, error: profErr } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (profErr) throw profErr;
-      setProfile(profData);
-
-      // 2. Fetch User Tickets
-      const { data: ticketsData } = await supabase
-        .from("support_tickets")
-        .select("*")
-        .eq("user_id", id)
-        .order("created_at", { ascending: false });
-
-      setTickets((ticketsData as DBTicket[]) || []);
-
-      // 3. Fetch Personal Notification History
-      const { data: notifData } = await supabase
-        .from("notifications")
-        .select("*")
-        .or(`user_id.eq.${id},is_broadcast.eq.true`)
-        .order("created_at", { ascending: false });
-
-      setNotifications((notifData as DBNotification[]) || []);
-
-      // 4. Fetch User Projects Count
-      const { count } = await supabase
-        .from("projects")
-        .select("*", { count: "exact", head: true })
-        .eq("owner_id", id);
-
-      setProjectsCount(count || 0);
-    } catch (err) {
-      console.error("Failed to load user audit profile:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchUserDetails();
-  }, [id]);
+  const profile = userDetails?.profile;
+  const tickets = userDetails?.tickets || [];
+  const notifications = userDetails?.notifications || [];
+  const projectsCount = userDetails?.projectsCount || 0;
 
   const handleUpdateStatus = async (newStatus: string) => {
     if (!id) return;
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ status: newStatus })
-        .eq("id", id);
-
-      if (!error) {
-        setProfile((prev: any) => (prev ? { ...prev, status: newStatus } : null));
-      }
+      await updateStatus({ userId: id, status: newStatus });
     } catch (err) {
       console.error("Failed to update status:", err);
     }

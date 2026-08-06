@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -10,22 +10,21 @@ import {
   Loader2,
   FolderGit2,
   Ticket,
-  Cpu,
 } from "lucide-react";
 import { Badge } from "@ui/index";
 import { cn } from "@utils/index";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import {
+  useAdminUsers,
+  useUpdateUserRole,
+  useUpdateUserStatus,
+  useDeleteUser,
+  useCreateAuditLog,
+} from "@/services/admin/hooks";
 
 export function AdminUsersPage() {
   const navigate = useNavigate();
   const { user: currentAdminUser } = useAuth();
-
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [projectsCountMap, setProjectsCountMap] = useState<Record<string, number>>({});
-  const [ticketsCountMap, setTicketsCountMap] = useState<Record<string, number>>({});
-  const [aiUsageCountMap, setAiUsageCountMap] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -37,79 +36,24 @@ export function AdminUsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  async function loadData() {
-    setLoading(true);
-    try {
-      // 1. Fetch profiles
-      const { data: profilesData } = await supabase
-        .from("profiles")
-        .select("*")
-        .order(sortBy, { ascending: sortOrder === "asc" });
-
-      // 2. Fetch projects count per user
-      const { data: projectsData } = await supabase.from("projects").select("owner_id");
-
-      // 3. Fetch support tickets count per user
-      const { data: ticketsData } = await supabase.from("support_tickets").select("user_id");
-
-      if (profilesData) {
-        setProfiles(profilesData);
-      }
-
-      if (projectsData) {
-        const counts: Record<string, number> = {};
-        projectsData.forEach((p) => {
-          counts[p.owner_id] = (counts[p.owner_id] || 0) + 1;
-        });
-        setProjectsCountMap(counts);
-      }
-
-      if (ticketsData) {
-        const counts: Record<string, number> = {};
-        ticketsData.forEach((t) => {
-          counts[t.user_id] = (counts[t.user_id] || 0) + 1;
-        });
-        setTicketsCountMap(counts);
-      }
-    } catch (err) {
-      console.error("Failed to load user management details:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadData();
-
-    // Supabase Realtime Listener for profiles
-    const channel = supabase
-      .channel("admin:users:realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => loadData())
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sortBy, sortOrder]);
+  // React Query Hooks
+  const { data: profiles = [], isLoading: loading, refetch } = useAdminUsers({ sortBy, sortOrder });
+  const { mutateAsync: updateRole } = useUpdateUserRole();
+  const { mutateAsync: updateStatus } = useUpdateUserStatus();
+  const { mutateAsync: deleteUser } = useDeleteUser();
+  const { mutateAsync: createAuditLog } = useCreateAuditLog();
 
   const handleUpdateRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: newRole })
-        .eq("id", userId);
-
-      if (!error) {
-        setProfiles((prev) => prev.map((p) => (p.id === userId ? { ...p, role: newRole } : p)));
-        if (currentAdminUser) {
-          await supabase.from("audit_logs").insert({
-            actor_id: currentAdminUser.id,
-            action: `Updated User Role: ${newRole.toUpperCase()}`,
-            entity: `profiles (${userId})`,
-            details: { new_role: newRole },
-            result: "success",
-          });
-        }
+      await updateRole({ userId, role: newRole });
+      if (currentAdminUser) {
+        await createAuditLog({
+          actor_id: currentAdminUser.id,
+          action: `Updated User Role: ${newRole.toUpperCase()}`,
+          entity: `profiles (${userId})`,
+          details: { new_role: newRole },
+          result: "success",
+        });
       }
     } catch (err) {
       console.error("Failed to update user role:", err);
@@ -118,22 +62,15 @@ export function AdminUsersPage() {
 
   const handleUpdateStatus = async (userId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ status: newStatus })
-        .eq("id", userId);
-
-      if (!error) {
-        setProfiles((prev) => prev.map((p) => (p.id === userId ? { ...p, status: newStatus } : p)));
-        if (currentAdminUser) {
-          await supabase.from("audit_logs").insert({
-            actor_id: currentAdminUser.id,
-            action: `Updated User Status: ${newStatus.toUpperCase()}`,
-            entity: `profiles (${userId})`,
-            details: { new_status: newStatus },
-            result: "success",
-          });
-        }
+      await updateStatus({ userId, status: newStatus });
+      if (currentAdminUser) {
+        await createAuditLog({
+          actor_id: currentAdminUser.id,
+          action: `Updated User Status: ${newStatus.toUpperCase()}`,
+          entity: `profiles (${userId})`,
+          details: { new_status: newStatus },
+          result: "success",
+        });
       }
     } catch (err) {
       console.error("Failed to update status:", err);
@@ -143,18 +80,14 @@ export function AdminUsersPage() {
   const handleDeleteUser = async (userId: string) => {
     if (!confirm("Are you sure you want to delete this user profile? This action is irreversible.")) return;
     try {
-      const { error } = await supabase.from("profiles").delete().eq("id", userId);
-
-      if (!error) {
-        setProfiles((prev) => prev.filter((p) => p.id !== userId));
-        if (currentAdminUser) {
-          await supabase.from("audit_logs").insert({
-            actor_id: currentAdminUser.id,
-            action: "Deleted User Profile",
-            entity: `profiles (${userId})`,
-            result: "success",
-          });
-        }
+      await deleteUser(userId);
+      if (currentAdminUser) {
+        await createAuditLog({
+          actor_id: currentAdminUser.id,
+          action: "Deleted User Profile",
+          entity: `profiles (${userId})`,
+          result: "success",
+        });
       }
     } catch (err) {
       console.error("Failed to delete user profile:", err);
@@ -213,7 +146,7 @@ export function AdminUsersPage() {
             Export CSV
           </button>
           <button
-            onClick={loadData}
+            onClick={() => refetch()}
             className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 rounded-xl text-xs font-heading font-bold text-orange-400 transition-all cursor-pointer"
           >
             Refresh List
@@ -315,8 +248,8 @@ export function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-white/[0.04] text-[13px] text-neutral-300">
                 {paginatedUsers.map((u) => {
-                  const pCount = projectsCountMap[u.id] || 0;
-                  const tCount = ticketsCountMap[u.id] || 0;
+                  const pCount = u.projectsCount;
+                  const tCount = u.ticketsCount;
                   const currentStatus = u.status || "active";
 
                   return (

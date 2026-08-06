@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import DarkVeil from "./DarkVeil";
 import {
   Boxes,
   Database,
@@ -97,9 +98,15 @@ export function Features() {
   }, []);
 
   return (
-    <section id="features" ref={sectionRef} className="relative py-32 bg-transparent">
+    <section id="features" ref={sectionRef} className="relative py-32 bg-transparent overflow-hidden">
+      {/* Dynamic background element for the Features section */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <DarkVeil speed={0.25} noiseIntensity={0.02} warpAmount={0.03} />
+        {/* Soft edge-blending gradients to blend with global background color (#06040f) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#06040f] via-transparent to-[#06040f]" />
+      </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div ref={titleRef} className="mb-16 text-center">
           <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-white/50">
             Platform
