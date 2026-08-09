@@ -302,6 +302,7 @@ export function Topbar() {
         {/* 2. New Project CTA Button */}
         <button
           onClick={() => navigate("/app/projects?new=1")}
+          data-tour="projects"
           className="flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2 text-xs font-heading font-bold text-white hover:border-white/15 hover:bg-white/[0.05] active:scale-95 transition-all cursor-pointer shrink-0"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -313,6 +314,7 @@ export function Topbar() {
           <button
             ref={bellRef}
             onClick={handleBellClick}
+            data-tour="notifications"
             className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-white/60 transition-colors hover:border-white/15 hover:bg-white/[0.05] hover:text-white"
             title="Notifications"
             aria-label="Notifications"
@@ -413,6 +415,7 @@ export function Topbar() {
           <div
             ref={profileTriggerRef as any}
             onClick={() => setShowProfileMenu((prev) => !prev)}
+            data-tour="admin"
             className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-1.5 pr-2.5 hover:border-white/15 hover:bg-white/[0.05] transition-all cursor-pointer select-none group"
             title="User Profile"
           >

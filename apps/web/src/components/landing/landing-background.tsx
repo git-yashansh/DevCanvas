@@ -31,6 +31,8 @@ function useFadingVideo(ref: React.RefObject<HTMLVideoElement | null>) {
       video!.style.opacity = "0";
       video!.play().catch(() => {});
       fadeTo(1, FADE_MS);
+      (window as any).bgVideoLoaded = true;
+      window.dispatchEvent(new CustomEvent("bg-video-loaded"));
     }
 
     function onTimeUpdate() {
@@ -151,6 +153,9 @@ export function LandingBackground() {
 
       {/* ── Canvas Floating Particles ───────────────────────────────────── */}
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+
+      {/* ── Scan-line overlay ─────────────────────────────────────────── */}
+      <div className="pointer-events-none absolute inset-0 bg-scanlines opacity-[0.03]" />
     </div>
   );
 }

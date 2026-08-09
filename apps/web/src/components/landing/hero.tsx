@@ -4,73 +4,6 @@ import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import { ArrowUpRight, Sparkles, Cpu, Zap, Shield } from "lucide-react";
 
-/* ─── Video URL ─────────────────────────────────────────────────────────── */
-const VIDEO_SRC =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_065045_c44942da-53c6-4804-b734-f9e07fc22e08.mp4";
-
-const FADE_MS = 500;
-const FADE_OUT_LEAD = 0.55; // seconds before end to start fade
-
-/* ─── rAF-driven video fade ─────────────────────────────────────────────── */
-function useFadingVideo(ref: React.RefObject<HTMLVideoElement | null>) {
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-
-    let rafId = 0;
-    let fadingOut = false;
-
-    function fadeTo(target: number, duration: number) {
-      cancelAnimationFrame(rafId);
-      const start = performance.now();
-      const from = parseFloat(video!.style.opacity) || 0;
-      function step(now: number) {
-        const t = Math.min((now - start) / duration, 1);
-        video!.style.opacity = String(from + (target - from) * t);
-        if (t < 1) rafId = requestAnimationFrame(step);
-      }
-      rafId = requestAnimationFrame(step);
-    }
-
-    function onLoaded() {
-      video!.style.opacity = "0";
-      video!.play().catch(() => {});
-      fadeTo(1, FADE_MS);
-    }
-
-    function onTimeUpdate() {
-      const { duration, currentTime } = video!;
-      if (!fadingOut && duration > 0 && duration - currentTime <= FADE_OUT_LEAD && duration - currentTime > 0) {
-        fadingOut = true;
-        fadeTo(0, FADE_MS);
-      }
-    }
-
-    function onEnded() {
-      video!.style.opacity = "0";
-      cancelAnimationFrame(rafId);
-      fadingOut = false;
-      setTimeout(() => {
-        video!.currentTime = 0;
-        video!.play().catch(() => {});
-        fadeTo(1, FADE_MS);
-      }, 100);
-    }
-
-    video.style.opacity = "0";
-    video.addEventListener("loadeddata", onLoaded);
-    video.addEventListener("timeupdate", onTimeUpdate);
-    video.addEventListener("ended", onEnded);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      video.removeEventListener("loadeddata", onLoaded);
-      video.removeEventListener("timeupdate", onTimeUpdate);
-      video.removeEventListener("ended", onEnded);
-    };
-  }, [ref]);
-}
-
 /* ─── GSAP word blur-in ─────────────────────────────────────────────────── */
 const HEADLINE_WORDS = [
   { text: "Design.", gradient: false },
@@ -85,68 +18,42 @@ function useWordBlur(ref: React.RefObject<HTMLDivElement | null>) {
     if (!el) return;
     const words = el.querySelectorAll<HTMLSpanElement>(".hero-word");
     gsap.set(words, { opacity: 0, filter: "blur(14px)", y: 32, rotationX: -15 });
-    gsap.to(words, {
-      opacity: 1,
-      filter: "blur(0px)",
-      y: 0,
-      rotationX: 0,
-      duration: 0.8,
-      ease: "power4.out",
-      stagger: 0.11,
-      delay: 0.4,
-    });
-  }, [ref]);
-}
 
-/* ─── Canvas particles ──────────────────────────────────────────────────── */
-function useParticles(ref: React.RefObject<HTMLCanvasElement | null>) {
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    let timeoutId: number;
 
-    let animId = 0;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    function resize() {
-      canvas!.width = canvas!.offsetWidth * dpr;
-      canvas!.height = canvas!.offsetHeight * dpr;
-      ctx!.scale(dpr, dpr);
-    }
-    resize();
-    window.addEventListener("resize", resize, { passive: true });
-
-    const particles = Array.from({ length: 100 }, () => ({
-      x: Math.random() * canvas.offsetWidth,
-      y: Math.random() * canvas.offsetHeight,
-      vx: (Math.random() - 0.5) * 0.25,
-      vy: (Math.random() - 0.5) * 0.25,
-      r: Math.random() * 1.5 + 0.3,
-      alpha: Math.random() * 0.45 + 0.08,
-      hue: Math.random() > 0.6 ? 220 : Math.random() > 0.5 ? 260 : 190,
-    }));
-
-    function draw() {
-      const w = canvas!.offsetWidth;
-      const h = canvas!.offsetHeight;
-      ctx!.clearRect(0, 0, w, h);
-      for (const p of particles) {
-        p.x = (p.x + p.vx + w) % w;
-        p.y = (p.y + p.vy + h) % h;
-        ctx!.beginPath();
-        ctx!.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx!.fillStyle = `hsla(${p.hue},90%,70%,${p.alpha})`;
-        ctx!.fill();
-      }
-      animId = requestAnimationFrame(draw);
-    }
-    draw();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
+    const startAnimation = () => {
+      clearTimeout(timeoutId);
+      gsap.to(words, {
+        opacity: 1,
+        filter: "blur(0px)",
+        y: 0,
+        rotationX: 0,
+        duration: 0.8,
+        ease: "power4.out",
+        stagger: 0.11,
+        delay: 0.4,
+      });
     };
+
+    if ((window as any).bgVideoLoaded) {
+      startAnimation();
+    } else {
+      const handleLoad = () => {
+        startAnimation();
+        window.removeEventListener("bg-video-loaded", handleLoad);
+      };
+      window.addEventListener("bg-video-loaded", handleLoad);
+
+      // Fallback timeout of 2.0 seconds in case video doesn't play/load
+      timeoutId = setTimeout(() => {
+        handleLoad();
+      }, 2000) as any;
+
+      return () => {
+        window.removeEventListener("bg-video-loaded", handleLoad);
+        clearTimeout(timeoutId);
+      };
+    }
   }, [ref]);
 }
 
@@ -165,43 +72,14 @@ const LOGO_COLORS = [
 
 /* ─── Hero ──────────────────────────────────────────────────────────────── */
 export function Hero() {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  useFadingVideo(videoRef);
   useWordBlur(headingRef);
-  useParticles(canvasRef);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#06040f]">
-      {/* ── Background video ───────────────────────────────────────────── */}
-      <video
-        ref={videoRef}
-        src={VIDEO_SRC}
-        muted
-        playsInline
-        preload="auto"
-        className="absolute inset-0 h-full w-full object-cover"
-        style={{ opacity: 0 }}
-      />
-
+    <div className="relative min-h-screen overflow-hidden bg-transparent">
       {/* ── Dark gradient scrim — darkens video so content reads cleanly ─ */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#06040f]/70 via-[#06040f]/40 to-[#06040f]/80" />
-
-      {/* ── Radial colour blobs ───────────────────────────────────────── */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[700px] w-[700px] -translate-x-1/2 rounded-full bg-indigo-600/12 blur-[130px]" />
-      <div className="pointer-events-none absolute bottom-0 left-1/4 h-[500px] w-[500px] rounded-full bg-violet-600/10 blur-[110px]" />
-      <div className="pointer-events-none absolute right-1/4 top-1/3 h-[350px] w-[350px] rounded-full bg-cyan-500/8 blur-[90px]" />
-
-      {/* ── Dot grid ─────────────────────────────────────────────────── */}
-      <div className="absolute inset-0 bg-dots opacity-20 [mask-image:radial-gradient(ellipse_70%_50%_at_50%_40%,black,transparent)]" />
-
-      {/* ── Canvas particles ─────────────────────────────────────────── */}
-      <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />
-
-      {/* ── Scan-line overlay ─────────────────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0 bg-scanlines opacity-[0.03]" />
 
       {/* ── Content layer ─────────────────────────────────────────────── */}
       <section className="relative z-10 flex min-h-screen flex-col">
@@ -233,7 +111,7 @@ export function Hero() {
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/30">
                 <Sparkles className="h-3 w-3 text-indigo-300" />
               </span>
-              AI-powered engineering platform · Gemini 2.5 Flash
+              · AI-powered engineering platform ·
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
             </span>
           </motion.div>
@@ -245,7 +123,7 @@ export function Hero() {
                 <span
                   key={i}
                   className={`hero-word inline-block ${i < HEADLINE_WORDS.length - 1 ? "mr-2 sm:mr-3 lg:mr-4" : ""}`}
-                  style={{ willChange: "transform, opacity, filter" }}
+                  style={{ willChange: "transform, opacity, filter", opacity: 0 }}
                 >
                   {w.gradient ? (
                     <span className="bg-gradient-to-r from-indigo-200 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
