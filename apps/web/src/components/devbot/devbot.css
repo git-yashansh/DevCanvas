@@ -1,0 +1,56 @@
+/* ── DevBot floating button breathing animation ── */
+@keyframes devbot-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.devbot-bubble {
+  animation: devbot-float 4s ease-in-out infinite;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.2), 0 0 30px rgba(168, 85, 247, 0.1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.devbot-bubble:hover {
+  transform: translateY(-3px) scale(1.06);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.45), 0 0 40px rgba(168, 85, 247, 0.25);
+}
+
+/* ── Tour spotlight pulse animation ── */
+@keyframes spotlight-pulse {
+  0%, 100% {
+    outline-color: rgba(168, 85, 247, 0.6);
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.1), 0 0 0 9999px rgba(0,0,0,0.7);
+  }
+  50% {
+    outline-color: rgba(236, 72, 153, 0.8);
+    box-shadow: 0 0 0 8px rgba(236, 72, 153, 0.3), 0 0 0 9999px rgba(0,0,0,0.7);
+  }
+}
+
+.tour-spotlight {
+  outline: 2px solid rgba(168, 85, 247, 0.6);
+  animation: spotlight-pulse 2s infinite ease-in-out;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Typings bubble dot animations ── */
+@keyframes typing-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.typing-dot {
+  animation: typing-bounce 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }

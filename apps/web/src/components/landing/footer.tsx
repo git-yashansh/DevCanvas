@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Github, Twitter, Linkedin } from "lucide-react";
 import { site } from "@config/index";
+import logoImg from "../../logo.png";
 
 const columns = [
   {
@@ -8,35 +9,35 @@ const columns = [
     links: [
       { label: "Features", href: "#features" },
       { label: "How it works", href: "#how-it-works" },
-      { label: "Security", href: "#security" },
+      { label: "Security", href: "#features" },
       { label: "Pricing", href: "#pricing" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Careers", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "About", href: "#features" },
+      { label: "Blog", href: "#features" },
+      { label: "Careers", href: "#features" },
+      { label: "Contact", href: "mailto:support@devcanvas.com" },
     ],
   },
   {
     title: "Resources",
     links: [
       { label: "Documentation", href: "#faq" },
-      { label: "API reference", href: "#" },
-      { label: "Changelog", href: "#" },
-      { label: "Status", href: "#" },
+      { label: "API reference", href: "#features" },
+      { label: "Changelog", href: "#faq" },
+      { label: "Status", href: "#faq" },
     ],
   },
   {
     title: "Legal",
     links: [
-      { label: "Privacy", href: "#" },
-      { label: "Terms", href: "#" },
-      { label: "Security", href: "#" },
-      { label: "DPA", href: "#" },
+      { label: "Privacy", href: "#faq" },
+      { label: "Terms", href: "#faq" },
+      { label: "Security", href: "#faq" },
+      { label: "DPA", href: "#faq" },
     ],
   },
 ];
@@ -56,11 +57,13 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-6">
           <div className="col-span-2">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 shadow-md shadow-primary-500/30">
-                <span className="font-heading text-sm font-bold text-white">D</span>
-              </div>
-              <span className="font-heading text-lg font-semibold text-white">{site.name}</span>
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <img
+                src={logoImg}
+                alt="DevCanvas"
+                className="h-19 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              />
+              {/* <span className="font-heading text-lg font-semibold text-white">{site.name}</span> */}
             </Link>
             <p className="mt-4 max-w-xs text-sm text-white/35">
               {site.tagline}. The AI engineering platform for teams that ship.
@@ -96,7 +99,7 @@ export function Footer() {
           <p className="text-xs text-white/25">
             © {new Date().getFullYear()} {site.name}, Inc. All rights reserved.
           </p>
-          <p className="text-xs text-white/25">Built with Gemini · Supabase · React</p>
+          <p className="text-xs text-white/25">Powered by Nexora Technologies.</p>
         </div>
       </div>
     </footer>

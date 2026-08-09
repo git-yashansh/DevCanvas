@@ -1,4 +1,4 @@
-export type UserRole = "user" | "admin";
+export type UserRole = "user" | "admin" | "moderator" | "support";
 
 export type ProjectStatus = "draft" | "active" | "archived";
 
@@ -10,6 +10,9 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   role: UserRole;
+  tour_completed?: boolean;
+  tour_skipped?: boolean;
+  tour_eligible?: boolean;
   created_at: string;
   updated_at: string;
 }

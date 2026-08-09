@@ -6,6 +6,10 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
 import { MobileSidebar } from "@/components/dashboard/mobile-sidebar";
 import { GraphiteAnimatedBackground } from "@/components/dashboard/graphite-animated-background";
+import { DevBotProvider } from "@/components/devbot/DevBotProvider";
+import { DevBotButton } from "@/components/devbot/DevBotButton";
+import { DevBotWindow } from "@/components/devbot/DevBotWindow";
+import { DevBotTour } from "@/components/devbot/DevBotTour";
 
 export function DashboardLayout() {
   const { user, loading } = useAuth();
@@ -31,20 +35,27 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-[#09090B] text-neutral-200">
-      {/* ── Neutral Graphite Animated GSAP Background (No Purple) ── */}
-      <GraphiteAnimatedBackground />
+    <DevBotProvider>
+      <div className="relative flex h-screen overflow-hidden bg-[#09090B] text-neutral-200">
+        {/* ── Neutral Graphite Animated GSAP Background (No Purple) ── */}
+        <GraphiteAnimatedBackground />
 
-      <Sidebar />
-      {mobileSidebarOpen ? (
-        <MobileSidebar onClose={() => setMobileSidebar(false)} />
-      ) : null}
-      <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
-        <Topbar />
-        <main className="flex-1 overflow-y-auto" style={{ paddingTop: "4rem", transform: "translateZ(0)" }}>
-          <Outlet />
-        </main>
+        <Sidebar />
+        {mobileSidebarOpen ? (
+          <MobileSidebar onClose={() => setMobileSidebar(false)} />
+        ) : null}
+        <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
+          <Topbar />
+          <main className="flex-1 overflow-y-auto" style={{ paddingTop: "4rem", transform: "translateZ(0)" }}>
+            <Outlet />
+          </main>
+        </div>
+
+        {/* Global floating AI Guide bubble button & chat panel widgets */}
+        <DevBotButton />
+        <DevBotWindow />
+        <DevBotTour />
       </div>
-    </div>
+    </DevBotProvider>
   );
 }

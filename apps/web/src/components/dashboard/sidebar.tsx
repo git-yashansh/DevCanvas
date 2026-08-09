@@ -119,6 +119,7 @@ function NavItemRow({
     <NavLink
       to={item.href}
       onClick={handleClick}
+      data-tour={item.id}
       end={item.href === "/app" || item.href === "/app/workspace"}
       aria-label={item.label}
       className={cn(
